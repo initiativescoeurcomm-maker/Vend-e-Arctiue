@@ -4634,7 +4634,7 @@ const Globe = (() => {
       // Boat SPRITES are base-1-unit billboards (NOT the old 0.001 sphere), so
       // the marker world-size IS this scalar — keep it tiny. The old *3.2 dot
       // formula made the sprite fill the whole screen ("giant boat icon").
-      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.0003, mAlt * 0.02));
+      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
       // Re-tile the HD overlay to the current view once things are still (not
       // playing, not being dragged) so the imagery matches the zoom. Never
       // during playback/interaction → no stutter; double-buffered → no flash.
@@ -4745,29 +4745,33 @@ const Globe = (() => {
   let fleetUnit = [];        // unit-sphere positions of EVERY boat (for framing)
   let fleetFrameN = 0;
   let fleetFrame = null;     // dynamic {center, distance} fitting the live pack
-  let _boatIconTex = null;   // shared stylised-boat sprite texture (lazy)
-  // A small stylised sailing-boat icon (hull + sail + jib), drawn white on a
-  // transparent canvas so each competitor's SpriteMaterial.color tints it to
-  // the boat's colour. Replaces the old plain coloured dot marker.
+  let _boatIconTex = null;   // shared stylised-boat texture (lazy)
+  const _mkN = new THREE.Vector3(), _mkH = new THREE.Vector3(), _mkX = new THREE.Vector3(), _mkM = new THREE.Matrix4();
+  // A stylised IMOCA seen FROM ABOVE, bow pointing +Y (= the heading once the
+  // plane is laid flat on the sea). Drawn white → each competitor's material
+  // colour tints it; the foils + cockpit are drawn darker so they read as
+  // detail on the tinted hull.
   function makeBoatIconTexture() {
     const c = document.createElement('canvas');
-    c.width = c.height = 64;
+    c.width = 64; c.height = 96;
     const g = c.getContext('2d');
-    g.fillStyle = '#fff';
-    g.strokeStyle = 'rgba(0,0,0,0.42)';
-    g.lineJoin = 'round';
-    g.lineWidth = 3;
-    // mainsail (triangle, behind the mast)
-    g.beginPath(); g.moveTo(33, 7); g.lineTo(33, 42); g.lineTo(54, 42); g.closePath();
-    g.fill(); g.stroke();
-    // jib (small triangle, in front of the mast)
-    g.beginPath(); g.moveTo(31, 13); g.lineTo(31, 42); g.lineTo(15, 42); g.closePath();
-    g.fill(); g.stroke();
-    // hull
+    g.clearRect(0, 0, 64, 96);
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    // foils first (under the hull), darker
+    g.strokeStyle = 'rgba(0,0,0,0.40)'; g.lineWidth = 4.5;
+    g.beginPath(); g.moveTo(42, 53); g.lineTo(61, 63); g.stroke();   // starboard foil
+    g.beginPath(); g.moveTo(22, 53); g.lineTo(3, 63);  g.stroke();   // port foil
+    // hull (white → tinted), slender with a pointed bow at the top
+    g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,0.55)'; g.lineWidth = 3;
     g.beginPath();
-    g.moveTo(11, 45); g.lineTo(57, 45); g.lineTo(48, 57);
-    g.quadraticCurveTo(34, 61, 22, 57); g.closePath();
-    g.fill(); g.stroke();
+    g.moveTo(32, 6);                          // bow tip
+    g.bezierCurveTo(45, 27, 46, 55, 41, 86);  // starboard side → stern quarter
+    g.lineTo(23, 86);                         // transom (flat stern)
+    g.bezierCurveTo(18, 55, 19, 27, 32, 6);   // port side → back to bow
+    g.closePath(); g.fill(); g.stroke();
+    // cockpit / mast hint
+    g.fillStyle = 'rgba(0,0,0,0.38)';
+    g.beginPath(); g.arc(32, 52, 3.4, 0, 6.3); g.fill();
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = (typeof MAX_ANISO !== 'undefined') ? MAX_ANISO : 1;
     return tex;
@@ -4810,9 +4814,11 @@ const Globe = (() => {
       line.renderOrder = 3; line.frustumCulled = false;
       fleetGroup.add(line);
       if (!_boatIconTex) _boatIconTex = makeBoatIconTexture();
-      const marker = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: _boatIconTex, color: col, transparent: true, depthWrite: false
-      }));
+      // A flat plane (1 wide × 1.5 tall, matching the 64×96 icon) laid on the
+      // sea and oriented to the heading each frame — NOT a camera-facing sprite.
+      const marker = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 1.5),
+        new THREE.MeshBasicMaterial({ map: _boatIconTex, color: col, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
       marker.renderOrder = 5; marker.frustumCulled = false;
       fleetGroup.add(marker);
       let labelEl = null;
@@ -4840,12 +4846,19 @@ const Globe = (() => {
       const z = p[i0*3+2] + (p[i1*3+2] - p[i0*3+2]) * t;
       fb.marker.position.set(x, y, z);
       fb._lp.set(x, y, z);
-      // Constant-ish on-screen marker size (~small dot): scale with camera
-      // altitude above the surface so it stays readable at any zoom.
+      // Constant-ish on-screen size: scale with camera altitude. Tunable.
       const alt = Math.max(0.004, camLen - 1.0);
-      // Sprite world-size ≈ constant on-screen (counters perspective shrink),
-      // ~2.5× the old dot so the little boat icon stays readable. Tunable.
-      fb.marker.scale.setScalar(Math.max(0.0003, alt * 0.02));
+      fb.marker.scale.setScalar(Math.max(0.00026, alt * 0.018));
+      // Lay the icon FLAT on the sea (plane normal = radial) with the bow
+      // (icon +Y) pointing along the heading (travel direction p[i0]→p[i1]).
+      _mkN.set(x, y, z).normalize();
+      _mkH.set(p[i1*3] - p[i0*3], p[i1*3+1] - p[i0*3+1], p[i1*3+2] - p[i0*3+2]);
+      _mkH.addScaledVector(_mkN, -_mkH.dot(_mkN));           // project onto tangent plane
+      if (_mkH.lengthSq() < 1e-12) _mkH.set(1, 0, 0).addScaledVector(_mkN, -_mkN.x);
+      _mkH.normalize();
+      _mkX.crossVectors(_mkH, _mkN).normalize();
+      _mkM.makeBasis(_mkX, _mkH, _mkN);                      // X→right, Y→bow(heading), Z→normal
+      fb.marker.quaternion.setFromRotationMatrix(_mkM);
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
       // Draw the passed samples 0..i0 (true positions) then place the head
