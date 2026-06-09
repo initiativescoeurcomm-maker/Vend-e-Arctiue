@@ -2437,7 +2437,12 @@ const Globe = (() => {
     // map; the close-up sharpness comes from the EOX Sentinel-2 tiles anyway.
     // Each texture resolves independently so any one of them can paint
     // the moment it's ready, instead of waiting for the slowest.
-    const dayP   = load(TEX.day, TEX_FALLBACK.day);
+    // Base day map = the unpkg 4K Blue Marble (TEX_FALLBACK.day), NOT the 8K.
+    // The 8K weserv texture and locally-downscaled (sips) JPEGs both load but
+    // render as a flat untextured sphere on real GPUs here, whereas this clean
+    // 4K image actually paints. Crisp close-up detail comes from the EOX
+    // Sentinel-2 overlay tiles, so a 4K base is plenty.
+    const dayP   = load(TEX_FALLBACK.day);
     const nightP = load(TEX.night,  TEX_FALLBACK.night);
     const specP  = load(TEX.spec,   TEX_FALLBACK.spec);
     const cloudP = load(TEX.clouds, TEX_FALLBACK.clouds);
