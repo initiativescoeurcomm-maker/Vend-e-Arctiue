@@ -4651,6 +4651,21 @@ const Globe = (() => {
       if (Math.abs(zoomTarget - next) < 1e-4) zoomTarget = null;
     }
 
+    // Adaptive near/far clip planes (GPS): a fixed tiny near (0.002) needed for
+    // the very close start view collapses depth-buffer precision once you dezoom
+    // (camera far away) — the globe's front and back faces then sit at almost
+    // the same depth, so they z-fight and FLICKER and the far side bleeds
+    // through. Tie the clip planes to the camera distance so the depth range
+    // stays tight at every zoom. Bounds keep the atmosphere shell (r≈1.09) and
+    // the globe back (camD+1) inside the frustum.
+    if (ACTIVE_KEY === 'gps') {
+      const camD = camera.position.length();
+      const near = Math.max(0.002, (camD - 1.12) * 0.4);
+      const far  = camD + 1.6;
+      if (Math.abs(camera.near - near) > 1e-4 || Math.abs(camera.far - far) > 2e-3) {
+        camera.near = near; camera.far = far; camera.updateProjectionMatrix();
+      }
+    }
     controls.update();
     renderer.render(scene, camera);
     if (typeof window.__renderLabels === 'function') window.__renderLabels();
