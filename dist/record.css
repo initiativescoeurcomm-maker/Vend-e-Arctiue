@@ -1,0 +1,451 @@
+/* ============================================================
+   Recording palette · "Capture trajet" (R key / triple-tap)
+   ------------------------------------------------------------
+   Hidden by default. Pops up to let the user pick a start/end on the
+   timeline and an aspect ratio (16:9, 9:16, or both). Layer toggles
+   (clouds, atmosphere, grid…) keep their state from the existing
+   palettes — we only hide DOM overlays during the actual capture.
+   ============================================================ */
+
+.record-palette {
+  --drag-x: 0px;
+  --drag-y: 0px;
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translate(calc(-50% + var(--drag-x)), calc(100% + 96px + var(--drag-y)));
+  transition: transform 0.32s cubic-bezier(0.2, 0.86, 0.36, 1.18), opacity 0.2s;
+  background: rgba(8, 14, 22, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 18px 22px 20px;
+  color: #e5e7eb;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.record-palette.visible {
+  transform: translate(calc(-50% + var(--drag-x)), calc(0px + var(--drag-y)));
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.record-palette.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+
+.record-palette__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+  margin: -4px -6px 0;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+.record-palette__head:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.record-palette__head:active {
+  cursor: grabbing;
+}
+
+.record-palette__title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.record-palette__title::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 12px #ef4444;
+}
+
+.record-palette__close {
+  background: transparent;
+  border: 0;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.record-palette__close:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.record-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.record-row__label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.record-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.record-range input[type='range'] {
+  flex: 1;
+  accent-color: #ef4444;
+  cursor: pointer;
+}
+
+.record-range__chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: white;
+  min-width: 60px;
+  text-align: right;
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+
+.record-row__inline {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.record-format-toggles {
+  display: flex;
+  gap: 8px;
+}
+
+.record-format-btn {
+  flex: 1;
+  padding: 12px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.record-format-btn .ratio-icon {
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: block;
+}
+.record-format-btn[data-ratio='16:9'] .ratio-icon {
+  width: 22px;
+  height: 12px;
+}
+.record-format-btn[data-ratio='9:16'] .ratio-icon {
+  width: 12px;
+  height: 22px;
+}
+
+.record-format-btn.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.record-extra {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.record-extra label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.record-extra select {
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.record-go {
+  padding: 13px 22px;
+  background: #ef4444;
+  color: white;
+  border: 0;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+.record-go:hover { background: #dc2626; }
+.record-go:active { transform: scale(0.98); }
+.record-go:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.record-go__sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.7;
+  letter-spacing: 0.08em;
+}
+
+.record-progress {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+}
+.record-progress.visible { display: flex; }
+
+.record-progress__bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.record-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f59e0b);
+  width: 0%;
+  transition: width 0.15s;
+}
+
+.record-progress__label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ----- Generated MP4s: visible "Télécharger" buttons (download fallback) ----- */
+.record-downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.record-downloads:empty { display: none; }
+
+.record-download-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.record-download {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 10px;
+  color: #86efac;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  transition: background 0.15s;
+}
+.record-download:hover { background: rgba(34, 197, 94, 0.2); }
+.record-download__icon { font-size: 14px; }
+.record-download__name { flex: 1; color: white; }
+.record-download__size { color: #94a3b8; }
+
+/* Mobile / tablet: native share-sheet button. Lets the user save the
+   recorded MP4 directly to Photos / Galerie by tapping "Save Video". */
+.record-share {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  width: 100%;
+}
+.record-share:hover { filter: brightness(1.1); }
+.record-share:active { transform: scale(0.98); }
+.record-share__icon { font-size: 16px; }
+
+/* Inline status / error message */
+.record-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: none;
+}
+.record-status.visible { display: block; }
+.record-status.is-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.record-status.is-info {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+/* ----- Markers on the existing scrubber when palette is open ----- */
+.record-marker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: #ef4444;
+  pointer-events: none;
+  z-index: 4;
+  display: none;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+.record-marker::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #ef4444;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+.record-marker--end::before {
+  top: auto;
+  bottom: -16px;
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+}
+
+body.record-palette-open .record-marker {
+  display: block;
+}
+
+/* ----- Recording mode: hide every DOM overlay except #scene + banner ----- */
+body.is-recording > *:not(#scene):not(.record-recording-banner) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body.is-recording {
+  background: black;
+  cursor: none;
+}
+body.is-recording #scene {
+  pointer-events: none;
+}
+
+/* Recording feedback banner — visible to the user, not in the captured frame */
+.record-recording-banner {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.88);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: none;
+  z-index: 1000;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.record-recording-banner.visible { display: flex; }
+.record-recording-banner__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: rec-blink 1s infinite;
+}
+.record-recording-banner__cancel {
+  margin-left: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 0;
+  color: white;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.record-recording-banner__cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+@keyframes rec-blink {
+  50% { opacity: 0.3; }
+}
+
+/* Mobile tweaks */
+@media (max-width: 720px) {
+  .record-palette {
+    bottom: 16px;
+    width: calc(100vw - 24px);
+    padding: 14px 16px 16px;
+  }
+}

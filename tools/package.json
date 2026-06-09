@@ -1,0 +1,9 @@
+{
+  "name": "va-fleet-tools",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}

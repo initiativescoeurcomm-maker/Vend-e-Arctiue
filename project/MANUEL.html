@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Initiatives-Cœur · Vendée Globe — Manuel</title>
+<style>
+  @page { margin: 18mm 16mm; size: A4; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+    color: #111;
+    background: #fff;
+    line-height: 1.55;
+  }
+  body { max-width: 720px; margin: 0 auto; padding: 28px 22px 60px; }
+  h1 {
+    font-size: 28px; margin: 0 0 4px;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600; letter-spacing: -0.01em;
+  }
+  h1 b { color: #E30613; }
+  .subtitle {
+    color: #666; font-size: 13px; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 22px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+  }
+  h2 {
+    margin-top: 30px;
+    font-size: 17px; font-weight: 600;
+    color: #0A1F44;
+    border-bottom: 2px solid #E30613;
+    padding-bottom: 4px;
+    page-break-after: avoid;
+  }
+  h3 {
+    margin-top: 18px; margin-bottom: 4px;
+    font-size: 14px; font-weight: 600; color: #0A1F44;
+    page-break-after: avoid;
+  }
+  p { margin: 6px 0 12px; }
+  ul { margin: 4px 0 14px; padding-left: 20px; }
+  li { margin: 4px 0; }
+  kbd {
+    display: inline-block;
+    padding: 1px 6px; min-width: 18px;
+    text-align: center;
+    border-radius: 4px;
+    background: #f3f3f6;
+    border: 1px solid #cdcdd4;
+    color: #222;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 11px;
+    margin: 0 2px;
+  }
+  code {
+    background: #f3f3f6; padding: 1px 6px;
+    border-radius: 3px; font-size: 12px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+  }
+  table { border-collapse: collapse; margin: 10px 0; }
+  th, td {
+    text-align: left; padding: 6px 14px;
+    border-bottom: 1px solid #ddd;
+    font-size: 13px;
+  }
+  th { font-weight: 600; color: #0A1F44; }
+  .footer {
+    margin-top: 40px; padding-top: 14px;
+    border-top: 1px solid #ddd;
+    color: #888; font-size: 11px;
+  }
+  a { color: #E30613; }
+  @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+
+<h1>Initiatives <b>Cœur</b> · Vendée Globe</h1>
+<div class="subtitle">Manuel utilisateur</div>
+
+<p>Visualisation 3D interactive du tour du monde à la voile en
+solitaire, à bord du bateau Initiatives-Cœur. L'application affiche
+un globe terrestre haute-résolution sur lequel le bateau parcourt
+le tracé de la course choisie, avec sa trace, sa météo locale et
+les points de passage clés.</p>
+
+<h2>1. À propos</h2>
+<p><b>Initiatives-Cœur</b> est un projet voile-solidaire associé à
+l'association <a href="https://www.mecenat-cardiaque.org">Mécénat
+Chirurgie Cardiaque</a> — chaque mille parcouru contribue à
+financer des opérations cardiaques pour des enfants.</p>
+<p>Cette appli n'est pas une simulation officielle ni un suivi GPS
+temps-réel : c'est une <b>mise en scène interactive</b> d'un tour
+du monde stylisé, avec un parcours plausible, une météo
+synthétique, et des éléments réels (textures Blue Marble 8K,
+modèle 3D du vrai bateau Initiatives-Cœur).</p>
+
+<h2>2. Vue d'ensemble de l'écran</h2>
+
+<h3>En haut</h3>
+<ul>
+  <li><b>Logo + titre</b> « Initiatives Cœur · Vendée Globe » à gauche.</li>
+  <li><b>Sélecteur de courses</b> (centré) :
+    <ul>
+      <li><b>Vendée Globe</b> — tour du monde, 94 jours, 28 800 nm</li>
+      <li><b>Route du Rhum</b> — Saint-Malo → Pointe-à-Pitre</li>
+      <li><b>Vendée Arctique</b> — boucle nord-Atlantique-Arctique</li>
+      <li><b>1000 Race</b> — Bermudes 1000, qualif IMOCA</li>
+    </ul>
+  </li>
+  <li><b>Métadonnées de course</b> (à droite, écrans larges) : date
+  de départ, distance théorique, classe.</li>
+</ul>
+
+<h3>À gauche</h3>
+<ul>
+  <li><b>POSITION · LIVE</b> : J+xx.x, date, lat/lon, vitesse en
+  nœuds, distance parcourue en milles nautiques.</li>
+  <li><b>LÉGENDES</b> : 7 toggles (caps & escales, courants, anti-
+  cyclones, continents, capitales côtières, pays côtiers, étape
+  suivante).</li>
+</ul>
+
+<h3>À droite</h3>
+<ul>
+  <li><b>VENT · STYLISÉ</b> : rose des vents avec direction +
+  force, état de la mer.</li>
+  <li><b>OPTIONS</b> : ambiance Jour/Nuit, nuages, atmosphère, zone
+  antarctique, courants & hautes pressions, méridiens & parallèles,
+  Station Spatiale (ISS), rotation auto.</li>
+</ul>
+
+<h3>En bas</h3>
+<ul>
+  <li><b>Scrubber</b> de J+0 à la fin de la course, glissable. Les
+  points marquent les caps majeurs.</li>
+  <li><b>Boutons</b> Lancer/Pause, Reset, ×1, ×2, ×5, ×10.</li>
+  <li><b>Masquer palettes</b> (à droite) : escamote les 4 panneaux
+  pour avoir le globe en plein écran.</li>
+</ul>
+
+<h3>Le bateau</h3>
+<ul>
+  <li>Modèle 3D du <b>vrai Initiatives-Cœur</b> : coque rouge,
+  voiles avec cœur rouge et logos sponsors (K-LINE, VINCI,
+  Chocolats du Cœur, etc.), gréement complet et quille à bulbe.</li>
+  <li>Le bateau <b>gîte</b> en alternance bâbord/tribord pour
+  qu'on voie la décoration des voiles.</li>
+  <li><b>Trace rouge</b> semi-transparente derrière le bateau,
+  marquant le parcours depuis le départ.</li>
+  <li><b>Anneau de pulsation</b> rouge — symbole de battement
+  cardiaque.</li>
+</ul>
+
+<h2>3. Utilisation de base</h2>
+<ul>
+  <li>Choisis une course → <b>Lancer</b> ou <kbd>␣</kbd>.</li>
+  <li>Vitesse <b>×1</b> (lent) à <b>×10</b> (rapide).</li>
+  <li><b>Reset</b> ou <kbd>R</kbd> pour revenir à J+0.</li>
+  <li><b>Glisser</b> le globe pour le tourner, <b>molette</b> ou
+  <b>pinch</b> pour zoomer.</li>
+  <li>Le suivi automatique du bateau revient après 3 s
+  d'inactivité.</li>
+  <li>Glisse le <b>scrubber</b> pour sauter à un jour précis.</li>
+  <li>Tape sur un autre bouton du sélecteur pour <b>changer de
+  course</b> — le globe se recadre automatiquement.</li>
+</ul>
+
+<h3>Mobile (iPhone, iPad)</h3>
+<ul>
+  <li>Les palettes POSITION/VENT/LÉGENDES/OPTIONS sont
+  <b>auto-collapsées</b>. Tape sur le <code>+</code> pour les
+  déplier.</li>
+  <li>Le sélecteur de courses devient une <b>bande horizontale
+  scrollable</b>.</li>
+  <li>Le <b>gyroscope</b> est actif automatiquement après le premier
+  tap (popup iOS si demandé) — voir §5.</li>
+</ul>
+
+<h2>4. Raccourcis clavier</h2>
+<table>
+  <tr><th>Touche</th><th>Action</th></tr>
+  <tr><td><kbd>␣</kbd></td><td>Lancer / Pause</td></tr>
+  <tr><td><kbd>R</kbd></td><td>Reset à J+0</td></tr>
+  <tr><td><kbd>T</kbd></td><td>Active / coupe le mode tempête</td></tr>
+  <tr><td><kbd>B</kbd></td><td>Lâche une bouteille à la mer</td></tr>
+  <tr><td><kbd>H</kbd> ou <kbd>?</kbd></td><td>Ouvre / ferme l'aide intégrée</td></tr>
+</table>
+
+<h2>5. Fonctionnalités cachées (easter eggs)</h2>
+
+<h3>Tap sur le bateau — séquence showcase</h3>
+<p>Un <b>tap</b> rapide sur le bateau déclenche une mise en valeur
+du modèle 3D sur 5 secondes :</p>
+<ol>
+  <li>Sortie de l'eau (~1 hauteur de coque)</li>
+  <li>Bascule à 90° sur le flanc, quille pointée vers la caméra</li>
+  <li>Pose de 2 secondes</li>
+  <li>Redressement et descente</li>
+</ol>
+<p>Pendant cette séquence, la lecture est <b>ralentie ×4</b>
+automatiquement.</p>
+
+<h3>Touche T — mode tempête</h3>
+<p>Tempête de 15 secondes :</p>
+<ul>
+  <li>Vignette sombre + bandeau « ⚡ Avis de tempête · Force 11 »</li>
+  <li>Pluie battante (200-360 gouttes inclinées)</li>
+  <li>Éclairs blancs aléatoires en plein écran</li>
+  <li>Vent à 55-80 nœuds, direction qui oscille, mer « Tempête »</li>
+  <li>Bateau qui tangue (±10° de roulis rapide), bow qui plonge,
+  surf vertical sur la houle</li>
+  <li>Nuages 15× plus rapides</li>
+  <li>Tremor de l'écran</li>
+</ul>
+<p>Re-tape <kbd>T</kbd> ou triple-tap sur la palette VENT pour
+couper avant la fin.</p>
+
+<h3>Touche B — bouteille à la mer</h3>
+<p>Lâche une bouteille en verre vert qui apparaît à l'arrière du
+bateau et dérive lentement dans le sillage sur 30 secondes, puis
+s'estompe. Plusieurs bouteilles peuvent coexister.</p>
+
+<h3>Mobile — gyroscope automatique</h3>
+<p>Après le premier tap (popup iOS), incliner le téléphone gîte le
+bateau dans la direction <b>opposée</b> :</p>
+<ul>
+  <li><b>Téléphone à gauche</b> → bateau gîte à tribord (voiles
+  côté droit visibles)</li>
+  <li><b>Téléphone à droite</b> → gîte à bâbord</li>
+  <li><b>Téléphone vers l'avant</b> → étrave plonge</li>
+  <li><b>Téléphone vers l'arrière</b> → étrave se relève</li>
+</ul>
+<p>Limites : ±60° de gîte, ±20° de pitch.</p>
+
+<h3>Triple-tap sur la palette VENT</h3>
+<p>Alternative à <kbd>T</kbd> : trois taps rapides sur la rose des
+vents pour activer/couper la tempête.</p>
+
+<h3>Auto-démarrage Vendée Globe</h3>
+<p>Au chargement, un zoom intro de 3 s cadre la France. Au bout
+des 3 s, la course se lance toute seule.</p>
+
+<h3>Activation auto des légendes</h3>
+<p>Au premier appui sur Lancer, deux légendes s'allument toutes
+seules : Capitales côtières (+3 s), Pays côtiers (+8 s).</p>
+
+<h2>6. Compatibilité</h2>
+<ul>
+  <li><b>Desktop</b> : Chrome, Firefox, Safari (macOS), Edge —
+  toutes versions récentes (WebGL 2 requis).</li>
+  <li><b>Mobile</b> : iOS 13+ Safari, Android Chrome.</li>
+  <li>Textures 8K (≈ 4 Mo) chargées progressivement : carte 2K
+  visible en moins d'une seconde, upgrade 8K en arrière-plan.</li>
+</ul>
+
+<h2>7. Dépannage</h2>
+<ul>
+  <li><b>Globe noir</b> : vérifie WebGL activé + connexion HTTPS.</li>
+  <li><b>Bateau invisible</b> : un fallback 2D s'affiche pendant le
+  chargement du modèle 3D (3,5 Mo).</li>
+  <li><b>Gyro iOS muet</b> : iOS exige un tap pour autoriser le
+  capteur. Si refusé : Réglages Safari → effacer données de site,
+  recharger.</li>
+</ul>
+
+<div class="footer">
+  Manuel généré automatiquement avec l'application — pour exporter
+  en PDF : ouvre ce fichier dans Safari, <b>Fichier → Exporter en
+  PDF…</b>
+</div>
+
+</body>
+</html>

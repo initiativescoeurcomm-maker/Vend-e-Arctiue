@@ -1,0 +1,74 @@
+CHANGELOG — Initiatives-Cœur Vendée Globe viz
+==============================================
+Sauvegarde courante vs précédente (vendee-initiatives-coeur_20260428_154957.zip)
+
+Nouveautés depuis la dernière version
+--------------------------------------
+
+1. Easter-egg : mode tempête
+   - Déclencheurs : touche T au clavier, ou triple-tap sur la
+     palette VENT (rose des vents en haut à droite). Re-tape T
+     pour couper avant la fin.
+   - Durée : 15 secondes (peut être interrompu à tout moment).
+   - Effets pendant la tempête :
+     a) Vignette sombre (transition douce 1,2 s, dégradé radial
+        + voile bleu nuit).
+     b) Bandeau rouge "⚡ Avis de tempête · Force 11" centré
+        sous le topbar.
+     c) Éclairs blancs en plein écran à intervalles aléatoires
+        de 1,4 à 4,5 s, animation 220 ms avec rebond de double
+        flash (gros éclair + lueur de retour).
+     d) Tremor de l'écran : keyframes CSS sur #app, vibrations
+        de ±1,5 px à ~5 Hz.
+     e) Vent HUD piraté :
+          - Vitesse 55–80 nœuds gusty (sin lent + bruit rapide)
+          - Direction qui oscille de ±18° autour de SW 235°
+          - État mer affiché : « Tempête »
+          - Aiguille de la rose des vents qui tremble en sync
+        Refresh à 5 Hz même quand la lecture est en pause, pour
+        que le HUD reste vivant.
+
+2. Pluie battante (canvas overlay)
+   - Canvas plein écran (mix-blend-mode: screen) couvrant la
+     zone du globe pendant la tempête.
+   - 160 à 360 gouttes (densité adaptée à la largeur de
+     viewport), inclinées, longueurs 10–32 px, vitesses 16–30
+     px/frame, slant horizontal ~7–11 px.
+   - Animation requestAnimationFrame, redraw uniquement quand
+     le mode tempête est actif. Resize window → re-population
+     immédiate des gouttes.
+
+3. Mer agitée (mouvement du bateau)
+   - Nouveau Globe.setStormFactor(0..1) exposé pour que l'UI
+     puisse moduler l'intensité de la tempête côté bateau.
+   - Roulis :
+     - ±10° de wobble (sin 2,3 Hz)
+     - ±4° de wobble plus rapide (sin 5,7 Hz)
+     ajoutés à la gîte naturelle ; le bateau lutte visiblement
+     contre le clapot.
+   - Tangage (pitch) : ±5,7° de plongée bow-up / bow-down
+     (sin 1,9 Hz).
+   - Bob radial : ±0,0035 unités-monde, le bateau monte et
+     descend comme s'il surfait la houle.
+   - Tous ces effets s'arrêtent quand le showcase 90° est
+     en cours, pour ne pas perturber la rotation propre.
+
+4. Nuages 15× plus rapides en tempête
+   - clouds.rotation.y est multiplié par (1 + stormFactor*14).
+     Le front nuageux file devant le bateau pendant la tempête,
+     et reprend son rythme calme dès la fin.
+
+Fichiers modifiés
+-----------------
+- project/Vendee Globe - Initiatives Coeur.html : tous les
+  changements (CSS storm-vignette / storm-flash / storm-banner /
+  storm-rain / @keyframes stormShake & stormFlash, HTML overlay,
+  inline-script Globe pour stormFactor + heel wobble + bob, et
+  inline-script UI pour storm controller + canvas pluie + binding
+  T / triple-tap).
+- project/CHANGELOG.txt : ce fichier, mis à jour.
+
+Fichiers inchangés
+------------------
+- initiatives-coeur.glb, imoca.glb, uploads/, debug/, route.js,
+  ui.js, globe.js : aucun changement.

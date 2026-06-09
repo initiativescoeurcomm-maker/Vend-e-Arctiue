@@ -1,0 +1,47 @@
+name: Rafraîchir la flotte & déployer
+
+# Récupère les positions à jour depuis la carto officielle Geovoile,
+# puis redéploie sur Cloudflare Pages — sans dépendre d'un poste allumé.
+on:
+  schedule:
+    # Toutes les 15 min (UTC). GitHub peut décaler les crons sous charge :
+    # considère ~15-25 min entre deux exécutions réelles.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}   # bouton « Run workflow » pour déclencher à la main
+
+# Empêche deux exécutions de se chevaucher (déploiements concurrents).
+concurrency:
+  group: refresh-fleet
+  cancel-in-progress: false
+
+jobs:
+  refresh-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Installer Chrome (pour piloter la carto Geovoile)
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Installer les dépendances de l'outil
+        working-directory: tools
+        run: npm ci
+
+      - name: Importer les positions depuis Geovoile
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: node tools/refresh-fleet.mjs
+
+      - name: Déployer sur Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 pages deploy dist --project-name vendee-arctique-2026 --branch main --commit-dirty=true

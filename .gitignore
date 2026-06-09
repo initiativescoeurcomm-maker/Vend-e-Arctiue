@@ -1,0 +1,25 @@
+# macOS / éditeur
+.DS_Store
+**/.DS_Store
+
+# Dépendances (réinstallées en CI via `npm ci`)
+node_modules/
+**/node_modules/
+
+# Cache local Wrangler / Cloudflare (contient des infos de compte)
+.wrangler/
+
+# Fichiers de travail / sources lourdes non nécessaires au déploiement
+work/
+vend-e-globe.zip
+**/debug/
+**/uploads/
+*.gpx
+
+# Réglages Claude locaux
+.claude/
+**/.claude/
+
+# Binaires lourds dupliqués dans project/ (identiques à dist/, non déployés)
+project/*.jpg
+project/*.glb
