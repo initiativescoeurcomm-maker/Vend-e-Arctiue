@@ -1331,8 +1331,8 @@
         <span id="btn-play-label">Lancer</span>
       </button>
       <div class="spd-group" id="spd-group">
-        <button class="btn" data-spd="1">×1</button>
-        <button class="btn active" data-spd="2">×2</button>
+        <button class="btn active" data-spd="1">×1</button>
+        <button class="btn" data-spd="2">×2</button>
         <button class="btn" data-spd="5">×5</button>
         <button class="btn" data-spd="10">×10</button>
       </div>
@@ -4183,10 +4183,24 @@ const Globe = (() => {
       trailPositions[i*3 + 1] = p.y;
       trailPositions[i*3 + 2] = p.z;
     }
-    trailPositions[cutIdx*3 + 3] = pos.x;
-    trailPositions[cutIdx*3 + 4] = pos.y;
-    trailPositions[cutIdx*3 + 5] = pos.z;
-    const count = cutIdx + 2;
+    // Append the interpolated boat position as the ribbon HEAD only when it
+    // sits meaningfully ahead of the last passed sample. When the boat is
+    // almost exactly on a sample (fraction ≈ 0) the extra near-coincident
+    // segment makes the ribbon head flare in an arbitrary direction — which
+    // reads as a stray bit of trail poking PAST the boat. Skipping it then
+    // keeps the trail strictly behind the hull.
+    const hx = pos.x - routePoints[cutIdx].x;
+    const hy = pos.y - routePoints[cutIdx].y;
+    const hz = pos.z - routePoints[cutIdx].z;
+    let count;
+    if (hx*hx + hy*hy + hz*hz > 1e-8) {
+      trailPositions[cutIdx*3 + 3] = pos.x;
+      trailPositions[cutIdx*3 + 4] = pos.y;
+      trailPositions[cutIdx*3 + 5] = pos.z;
+      count = cutIdx + 2;
+    } else {
+      count = cutIdx + 1;
+    }
 
     // Build the ribbon mesh positions: for each centerline point emit two
     // vertices offset ±halfWidth along the tangent direction within the
@@ -4370,7 +4384,7 @@ const Globe = (() => {
     // All Légendes toggles start ON.
     legendPoi: true, legendCurrents: true, legendHighs: true,
     legendContinents: true, legendCapitals: true, legendCountries: true,
-    legendMilestone: true,
+    legendMilestone: false,
     autoRotate: true
   };
 
@@ -4722,6 +4736,33 @@ const Globe = (() => {
   let fleetUnit = [];        // unit-sphere positions of EVERY boat (for framing)
   let fleetFrameN = 0;
   let fleetFrame = null;     // dynamic {center, distance} fitting the live pack
+  let _boatIconTex = null;   // shared stylised-boat sprite texture (lazy)
+  // A small stylised sailing-boat icon (hull + sail + jib), drawn white on a
+  // transparent canvas so each competitor's SpriteMaterial.color tints it to
+  // the boat's colour. Replaces the old plain coloured dot marker.
+  function makeBoatIconTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.strokeStyle = 'rgba(0,0,0,0.42)';
+    g.lineJoin = 'round';
+    g.lineWidth = 3;
+    // mainsail (triangle, behind the mast)
+    g.beginPath(); g.moveTo(33, 7); g.lineTo(33, 42); g.lineTo(54, 42); g.closePath();
+    g.fill(); g.stroke();
+    // jib (small triangle, in front of the mast)
+    g.beginPath(); g.moveTo(31, 13); g.lineTo(31, 42); g.lineTo(15, 42); g.closePath();
+    g.fill(); g.stroke();
+    // hull
+    g.beginPath();
+    g.moveTo(11, 45); g.lineTo(57, 45); g.lineTo(48, 57);
+    g.quadraticCurveTo(34, 61, 22, 57); g.closePath();
+    g.fill(); g.stroke();
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = (typeof MAX_ANISO !== 'undefined') ? MAX_ANISO : 1;
+    return tex;
+  }
   function clearFleet() {
     while (fleetGroup.children.length) {
       const c = fleetGroup.children.pop();
@@ -4759,9 +4800,10 @@ const Globe = (() => {
       const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.92, depthWrite: false }));
       line.renderOrder = 3; line.frustumCulled = false;
       fleetGroup.add(line);
-      const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.001, 12, 12),
-        new THREE.MeshBasicMaterial({ color: col }));
+      if (!_boatIconTex) _boatIconTex = makeBoatIconTexture();
+      const marker = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: _boatIconTex, color: col, transparent: true, depthWrite: false
+      }));
       marker.renderOrder = 5; marker.frustumCulled = false;
       fleetGroup.add(marker);
       let labelEl = null;
@@ -4792,7 +4834,9 @@ const Globe = (() => {
       // Constant-ish on-screen marker size (~small dot): scale with camera
       // altitude above the surface so it stays readable at any zoom.
       const alt = Math.max(0.004, camLen - 1.0);
-      fb.marker.scale.setScalar(Math.max(0.045, alt * 3.2));
+      // Sprite world-size ≈ constant on-screen (counters perspective shrink),
+      // ~2.5× the old dot so the little boat icon stays readable. Tunable.
+      fb.marker.scale.setScalar(Math.max(0.00022, alt * 0.016));
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
       // Draw the passed samples 0..i0 (true positions) then place the head
@@ -5059,7 +5103,7 @@ const Globe = (() => {
   // ----- playback state -----
   let progress = 0; // 0..1
   let playing = false;
-  let speed = 2; // race-days per real-second (base)
+  let speed = 1; // race-days per real-second (base)
   const SPEED_BASE = 0.8; // race-days per second at ×1
 
   // ----- populate cape list / scrubber markers / POI labels (rebuildable) -----
