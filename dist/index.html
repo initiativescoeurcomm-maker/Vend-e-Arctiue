@@ -2213,15 +2213,15 @@ const Globe = (() => {
   // For simplicity and portability with MeshPhongMaterial, we set the
   // night texture as emissiveMap; day becomes the main map.
   // This gives "city lights" on the dark side.
+  let earthNightTex = null;   // kept for a future overlay-based day/night effect
   function applyNightMap(tex) {
-    earthMat.emissive = new THREE.Color(0xffffff);
-    earthMat.emissiveMap = tex;
-    // City-lights emissive ONLY in night mode. In day mode it must stay 0: if
-    // the night texture itself fails to render (large textures do on some GPUs)
-    // the unbound emissiveMap samples as white and washes the whole globe to a
-    // flat orange. Day mode keeps emissive off entirely.
-    earthMat.emissiveIntensity = (typeof state !== 'undefined' && state.theme === 'night') ? 0.8 : 0;
-    earthMat.needsUpdate = true;
+    // The Earth is an unlit MeshBasicMaterial — it has NO emissive channel.
+    // Setting earthMat.emissive / emissiveMap on it makes three.min.js throw
+    // "undefined is not an object (e.emissive.value)" on EVERY rendered frame
+    // (console flood + heavy per-frame cost + render glitches). So we do NOT
+    // apply the night map to the material; just keep a reference for the
+    // future overlay-based day/night feature.
+    earthNightTex = tex;
   }
 
   // ---- cloud sphere (fallback transparent)
@@ -4393,7 +4393,6 @@ const Globe = (() => {
         // legible, especially in social-media-format exports.
         cloudMat.opacity = ACTIVE_KEY === 'bermudes1000' ? 0.20 : 0.40;
       }
-      earthMat.emissiveIntensity = 0.8;
     } else {
       document.body.style.background =
         'radial-gradient(ellipse at top, #0a1f44 0%, #040d24 80%)';
@@ -4401,7 +4400,6 @@ const Globe = (() => {
       sun.color.set(0xfff4e0);
       ambient.intensity = 0.35;
       ambient.color.set(0x8aa3c8);
-      earthMat.emissiveIntensity = 0;   // no city-lights wash in day mode
       atmoMat.uniforms.glowColor.value.set(0x88b3ff);
       atmoMat.uniforms.intensity.value = 1.2;
       stars.visible = false;
@@ -4411,7 +4409,6 @@ const Globe = (() => {
         // breathe instead of papering over them.
         cloudMat.opacity = ACTIVE_KEY === 'bermudes1000' ? 0.30 : 0.55;
       }
-      earthMat.emissiveIntensity = 0.35;
     }
 
     const red = 0xE30613, ivory = 0xf6f1e7;
