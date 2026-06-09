@@ -4849,15 +4849,21 @@ const Globe = (() => {
       // Constant-ish on-screen size: scale with camera altitude. Tunable.
       const alt = Math.max(0.004, camLen - 1.0);
       fb.marker.scale.setScalar(Math.max(0.00026, alt * 0.018));
-      // Lay the icon FLAT on the sea (plane normal = radial) with the bow
-      // (icon +Y) pointing along the heading (travel direction p[i0]→p[i1]).
+      // Lay the icon FLAT on the sea (plane normal = radial) and turn the bow
+      // along the heading. Heading is taken over a MULTI-SAMPLE span (look a few
+      // samples ahead) so it stays stable when the boats barely move at the
+      // start — a single-segment heading there is pure noise and made the icon
+      // flicker between orientations ("doubled"). The span is REVERSED
+      // (p[i0]→p[iE] not p[iE]→p[i0]) so the pointed bow ends up pointing the
+      // way the boat is going, not back down its own wake (was 180° off).
+      const iE = Math.min(n - 1, i0 + 4);
       _mkN.set(x, y, z).normalize();
-      _mkH.set(p[i1*3] - p[i0*3], p[i1*3+1] - p[i0*3+1], p[i1*3+2] - p[i0*3+2]);
-      _mkH.addScaledVector(_mkN, -_mkH.dot(_mkN));           // project onto tangent plane
-      if (_mkH.lengthSq() < 1e-12) _mkH.set(1, 0, 0).addScaledVector(_mkN, -_mkN.x);
+      _mkH.set(p[i0*3] - p[iE*3], p[i0*3+1] - p[iE*3+1], p[i0*3+2] - p[iE*3+2]);
+      _mkH.addScaledVector(_mkN, -_mkH.dot(_mkN));           // tangential component
+      if (_mkH.lengthSq() < 1e-12) _mkH.set(0, 1, 0).addScaledVector(_mkN, -_mkN.y);
       _mkH.normalize();
       _mkX.crossVectors(_mkH, _mkN).normalize();
-      _mkM.makeBasis(_mkX, _mkH, _mkN);                      // X→right, Y→bow(heading), Z→normal
+      _mkM.makeBasis(_mkX, _mkH, _mkN);                      // X→right, Y→bow, Z→normal(out)
       fb.marker.quaternion.setFromRotationMatrix(_mkM);
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
