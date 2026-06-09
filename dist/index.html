@@ -4631,7 +4631,10 @@ const Globe = (() => {
         boat.scale.setScalar(Math.max(0.0006, Math.min(3.0, dfb / 1.45)));
       }
       const mAlt = Math.max(0.004, camera.position.length() - 1.0);
-      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.045, mAlt * 3.2));
+      // Boat SPRITES are base-1-unit billboards (NOT the old 0.001 sphere), so
+      // the marker world-size IS this scalar — keep it tiny. The old *3.2 dot
+      // formula made the sprite fill the whole screen ("giant boat icon").
+      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.0003, mAlt * 0.02));
       // Re-tile the HD overlay to the current view once things are still (not
       // playing, not being dragged) so the imagery matches the zoom. Never
       // during playback/interaction → no stutter; double-buffered → no flash.
@@ -4842,7 +4845,7 @@ const Globe = (() => {
       const alt = Math.max(0.004, camLen - 1.0);
       // Sprite world-size ≈ constant on-screen (counters perspective shrink),
       // ~2.5× the old dot so the little boat icon stays readable. Tunable.
-      fb.marker.scale.setScalar(Math.max(0.00022, alt * 0.016));
+      fb.marker.scale.setScalar(Math.max(0.0003, alt * 0.02));
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
       // Draw the passed samples 0..i0 (true positions) then place the head
