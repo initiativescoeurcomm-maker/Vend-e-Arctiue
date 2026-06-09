@@ -2194,13 +2194,33 @@ const Globe = (() => {
   // and the continents already carry enough visual detail from the 8K
   // day texture alone.
   const earthGeo = new THREE.SphereGeometry(1, 128, 128);
-  const earthMat = new THREE.MeshPhongMaterial({
-    map: fallbackTex,
-    shininess: 10,
-    specular: new THREE.Color(0x1d3350)
+  // Unlit MeshBasicMaterial — same material the EOX overlay tiles use, which
+  // DO render here, whereas the lit MeshPhongMaterial earth was rendering as a
+  // flat untextured sphere on this user's GPU. Unlit means the world map is
+  // always fully visible (ideal for a tracker). Day/night will be reintroduced
+  // separately later. emissive/specular setters elsewhere become harmless
+  // no-ops on MeshBasicMaterial.
+  const earthMat = new THREE.MeshBasicMaterial({
+    map: fallbackTex
   });
   const earth = new THREE.Mesh(earthGeo, earthMat);
   earthGroup.add(earth);
+
+  // TEMP on-screen diagnostic — read this line back to confirm the fix / GPU.
+  (function () {
+    const d = document.createElement('div');
+    d.id = '__diag';
+    d.style.cssText = 'position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(0,0,0,.82);color:#5f5;font:11px/1.4 ui-monospace,monospace;padding:5px 10px;border-radius:6px;white-space:pre;pointer-events:none';
+    document.body.appendChild(d);
+    setInterval(function () {
+      const m = earthMat.map;
+      d.textContent = 'DIAG  maxTex=' + renderer.capabilities.maxTextureSize +
+        '  THREE=r' + THREE.REVISION +
+        '  earthMat=' + earthMat.type +
+        '  dayImg=' + (m && m.image ? (m.image.width + 'x' + m.image.height) : 'none') +
+        '  fallback=' + (m === fallbackTex);
+    }, 800);
+  })();
 
   // night side emissive texture (only shown when sun is on other side)
   // We use a dedicated night sphere slightly below, with custom shader that
