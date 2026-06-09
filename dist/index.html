@@ -1106,6 +1106,7 @@
 
   /* ----- GPS import: welcome prompt + toast ----- */
   .gps-welcome {
+    display: none;   /* hidden by default — no startup flash; shown only on a real fleet-load failure */
     position: fixed; top: 122px; left: 50%; transform: translateX(-50%);
     z-index: 40; width: calc(100% - 48px); max-width: 430px;
     background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
@@ -1113,7 +1114,7 @@
     backdrop-filter: blur(14px) saturate(140%);
     box-shadow: 0 18px 50px rgba(0,0,0,.42);
   }
-  body.gps-loaded .gps-welcome { display: none; }
+  body.gps-failed .gps-welcome { display: block; }
   .gps-welcome-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
   .gps-welcome-title { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 20px; margin: 0 0 8px; letter-spacing: -.01em; }
   .gps-welcome-title b { color: var(--rouge-soft); font-weight: 600; }
@@ -2514,6 +2515,7 @@ const Globe = (() => {
   });
   const atmo = new THREE.Mesh(atmoGeo, atmoMat);
   scene.add(atmo);
+  atmo.visible = false;   // start hidden; applyTheme() shows it iff state.atmosphere (default OFF, force-OFF in GPS). Prevents the cyan-limb flash before the first applyTheme().
 
   // ---- stars (night)
   const starGeo = new THREE.BufferGeometry();
@@ -4517,6 +4519,12 @@ const Globe = (() => {
     if (fleetMode && fleetFrame) {
       centerLocal = fleetFrame.center;
       desiredDist = fleetFrame.distance;
+    } else if (fleetMode) {
+      // fleetFrame not ready yet (first frame): aim at the BOAT, not the
+      // whole-fleet centre (which sits mid-Atlantic and would point the start
+      // view at empty ocean). followTarget is the boat's local position.
+      centerLocal = followTarget.clone();
+      desiredDist = Math.max(1.018, Math.min(1.12, raceView.distance || 1.05));
     } else {
       desiredDist = (ACTIVE_KEY === 'gps')
         ? raceView.distance
@@ -4923,6 +4931,19 @@ const Globe = (() => {
     // pack moves; the idle re-tiler then sharpens the view again on pause.
     coverFleetWide() {
       if (ACTIVE_KEY === 'gps' && RACE && RACE.gpsBbox) { buildGpsOverlay(RACE.gpsBbox, 2.0); _tileSig = ''; }
+    },
+    // Tile the START view by the boat's real start coordinates, independent of
+    // where the camera/fleetFrame happens to be on the first frame. Without this
+    // the single load-time retile could land mid-Atlantic (when fleetFrame is
+    // briefly null) and Les Sables got no EOX overlay → dark start.
+    coverStartView() {
+      if (ACTIVE_KEY !== 'gps') return;
+      const f = window.__FLEET; if (!f || !f.boats || !f.boats.length) return;
+      const pb = f.boats.find(b => b.isPrimary) || f.boats[0];
+      const la = pb.lat[0], lo = pb.lng[0];
+      const d = 0.6;   // ~0.6° half-span around the start line off Les Sables
+      buildGpsOverlay({ latS: la - d, latN: la + d, lonW: lo - d, lonE: lo + d }, 0.4);
+      _tileSig = '';   // let the idle gate re-sharpen once the camera settles
     },
     retileToView: (force) => retileToView(force),
     updateBoat(progress) {
@@ -5739,9 +5760,10 @@ const Globe = (() => {
     if (Globe.buildFleet) Globe.buildFleet(window.__FLEET, fleetLayer);
     buildRaceUI();
     progress = 0;
-    update();                                   // sets the start-frame + boat
+    update();                                   // builds fleetBoats, positions boat
+    update();                                   // 2nd pass: fleetFrame now populated → snap lands on Les Sables, not mid-Atlantic
     if (Globe.snapFollowCamera) Globe.snapFollowCamera(true);  // jump straight to Les Sables (no Île d'Yeu intro)
-    if (Globe.retileToView) Globe.retileToView(true);          // load sharp tiles for that view now
+    if (Globe.coverStartView) Globe.coverStartView();          // sharp EOX tiles ON the start view, by geo bbox (camera-independent)
     document.body.classList.add('gps-loaded');
     const n = RACES.gps.fleetCount || (data.boats ? data.boats.length : 0);
     const p2 = x => String(x).padStart(2, '0');
@@ -5753,12 +5775,14 @@ const Globe = (() => {
 
   // On startup, auto-load the fleet dataset if present (the app's main view).
   (async () => {
+    const showWelcome = () => document.body.classList.add('gps-failed');  // reveal the GPX-import overlay ONLY on a genuine failure
     try {
       const res = await fetch('va-fleet.json', { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) { showWelcome(); return; }
       const data = await res.json();
       if (data && data.boats && data.boats.length) loadFleetData(data);
-    } catch (e) { /* no fleet file → fall back to the welcome / GPX import */ }
+      else showWelcome();   // fetched but empty/invalid fleet
+    } catch (e) { showWelcome(); /* no fleet file → welcome / GPX import */ }
   })();
 
   // GPS import is now a manual fallback only (the palette button was removed);
