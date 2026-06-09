@@ -2429,15 +2429,15 @@ const Globe = (() => {
   });
 
   (async () => {
-    // Day map = a LOCAL 8K NASA Blue Marble (8192×4096, served from Cloudflare,
-    // cached → fast + instant on reload). We deliberately do NOT load the 16K
-    // texture any more: at ~512 MB decompressed it pushed desktop Safari over
-    // its per-tab memory limit (the tab reloaded and the map vanished). The 8K
-    // is ~128 MB — the same footprint as the other 8K maps — and the close-up
-    // sharpness comes from the EOX Sentinel-2 overlay tiles anyway.
+    // Day map = the external 8K (same source/proxy as the 2K fallback, which
+    // renders fine). We deliberately do NOT load the local 16K texture any
+    // more: at ~512 MB decompressed it pushed the tab over its memory limit
+    // (the page reloaded and the map vanished). Locally-downscaled JPEGs were
+    // also rendering black on real GPUs, so we stick with the proven external
+    // map; the close-up sharpness comes from the EOX Sentinel-2 tiles anyway.
     // Each texture resolves independently so any one of them can paint
     // the moment it's ready, instead of waiting for the slowest.
-    const dayP   = load('blue-marble-4k.jpg', TEX_FALLBACK.day);
+    const dayP   = load(TEX.day, TEX_FALLBACK.day);
     const nightP = load(TEX.night,  TEX_FALLBACK.night);
     const specP  = load(TEX.spec,   TEX_FALLBACK.spec);
     const cloudP = load(TEX.clouds, TEX_FALLBACK.clouds);
@@ -4383,15 +4383,10 @@ const Globe = (() => {
     } else {
       document.body.style.background =
         'radial-gradient(ellipse at top, #0a1f44 0%, #040d24 80%)';
-      sun.intensity = 1.05;
+      sun.intensity = 1.45;
       sun.color.set(0xfff4e0);
-      // Strong, near-white ambient so the base world map stays clearly
-      // visible everywhere — including over open ocean at the tight start
-      // zoom, where the fixed-sun shading otherwise left it near-black once
-      // the EOX satellite tiles weren't covering the view. The sun now only
-      // adds gentle shading on top.
-      ambient.intensity = 0.85;
-      ambient.color.set(0xc4cfdd);
+      ambient.intensity = 0.35;
+      ambient.color.set(0x8aa3c8);
       atmoMat.uniforms.glowColor.value.set(0x88b3ff);
       atmoMat.uniforms.intensity.value = 1.2;
       stars.visible = false;
