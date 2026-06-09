@@ -2151,8 +2151,8 @@ const Globe = (() => {
   // Night map shrinks to 4K (still used only when the user picks the
   // Nuit theme).
   const TEX = {
-    day:     'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg',
-    night:   'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg&w=4096&output=jpg&q=82',
+    day:     'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg&w=2048&output=jpg&q=85',
+    night:   'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg&w=2048&output=jpg&q=82',
     bump:    'https://cdn.jsdelivr.net/gh/turban/webgl-earth@master/images/elev_bump_4k.jpg',
     spec:    'https://cdn.jsdelivr.net/gh/turban/webgl-earth@master/images/water_4k.png',
     clouds:  'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_clouds.jpg&output=jpg&q=88'
@@ -2211,7 +2211,11 @@ const Globe = (() => {
   function applyNightMap(tex) {
     earthMat.emissive = new THREE.Color(0xffffff);
     earthMat.emissiveMap = tex;
-    earthMat.emissiveIntensity = 0.55;
+    // City-lights emissive ONLY in night mode. In day mode it must stay 0: if
+    // the night texture itself fails to render (large textures do on some GPUs)
+    // the unbound emissiveMap samples as white and washes the whole globe to a
+    // flat orange. Day mode keeps emissive off entirely.
+    earthMat.emissiveIntensity = (typeof state !== 'undefined' && state.theme === 'night') ? 0.8 : 0;
     earthMat.needsUpdate = true;
   }
 
@@ -2422,7 +2426,7 @@ const Globe = (() => {
   //            just a progressive sharpening of the map.
   let hiResDayApplied = false;   // 8K day map applied
   let ultraDayApplied = false;   // 16K NASA day map applied (final, sharpest)
-  load(TEX_FALLBACK.day).then((t) => {
+  load(TEX.day).then((t) => {
     if (hiResDayApplied || ultraDayApplied) return;  // a sharper map already won
     earthMat.map = t;
     earthMat.needsUpdate = true;
@@ -2437,12 +2441,11 @@ const Globe = (() => {
     // map; the close-up sharpness comes from the EOX Sentinel-2 tiles anyway.
     // Each texture resolves independently so any one of them can paint
     // the moment it's ready, instead of waiting for the slowest.
-    // Base day map = the unpkg 4K Blue Marble (TEX_FALLBACK.day), NOT the 8K.
-    // The 8K weserv texture and locally-downscaled (sips) JPEGs both load but
-    // render as a flat untextured sphere on real GPUs here, whereas this clean
-    // 4K image actually paints. Crisp close-up detail comes from the EOX
-    // Sentinel-2 overlay tiles, so a 4K base is plenty.
-    const dayP   = load(TEX_FALLBACK.day);
+    // Base day map at 2048 px. On this user's GPU, textures ≥ 4096 px load but
+    // render as a flat untextured sphere (orange); only ≤ 2048 paints — same as
+    // the EOX overlay tiles. Crisp close-up detail comes from EOX anyway, so a
+    // 2K base is fine. No fallback to the 4K unpkg map (it would also stay flat).
+    const dayP   = load(TEX.day);
     const nightP = load(TEX.night,  TEX_FALLBACK.night);
     const specP  = load(TEX.spec,   TEX_FALLBACK.spec);
     const cloudP = load(TEX.clouds, TEX_FALLBACK.clouds);
@@ -4392,6 +4395,7 @@ const Globe = (() => {
       sun.color.set(0xfff4e0);
       ambient.intensity = 0.35;
       ambient.color.set(0x8aa3c8);
+      earthMat.emissiveIntensity = 0;   // no city-lights wash in day mode
       atmoMat.uniforms.glowColor.value.set(0x88b3ff);
       atmoMat.uniforms.intensity.value = 1.2;
       stars.visible = false;
