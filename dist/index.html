@@ -2429,17 +2429,15 @@ const Globe = (() => {
   });
 
   (async () => {
-    // Kick the 16K ultra texture off NOW — in parallel with the 8K maps —
-    // instead of waiting for the 8K day map to finish downloading first. It's
-    // served locally (Cloudflare, fast) and the browser caches it, so the HD
-    // map lands sooner on a cold load and is instant on reload. Whichever of
-    // 8K/16K arrives first paints; the 8K handler below won't downgrade a map
-    // the 16K has already applied.
-    kickUltraDayTexture();
-
+    // Day map = a LOCAL 8K NASA Blue Marble (8192×4096, served from Cloudflare,
+    // cached → fast + instant on reload). We deliberately do NOT load the 16K
+    // texture any more: at ~512 MB decompressed it pushed desktop Safari over
+    // its per-tab memory limit (the tab reloaded and the map vanished). The 8K
+    // is ~128 MB — the same footprint as the other 8K maps — and the close-up
+    // sharpness comes from the EOX Sentinel-2 overlay tiles anyway.
     // Each texture resolves independently so any one of them can paint
     // the moment it's ready, instead of waiting for the slowest.
-    const dayP   = load(TEX.day,    TEX_FALLBACK.day);
+    const dayP   = load('blue-marble-8k.jpg', TEX_FALLBACK.day);
     const nightP = load(TEX.night,  TEX_FALLBACK.night);
     const specP  = load(TEX.spec,   TEX_FALLBACK.spec);
     const cloudP = load(TEX.clouds, TEX_FALLBACK.clouds);
@@ -2474,36 +2472,6 @@ const Globe = (() => {
     if (loadingEl) loadingEl.classList.add('hidden');
   })();
 
-  // ULTRA-HIGH-RES day texture — NASA Blue Marble Next Generation
-  // (21600 × 10800 source, downsampled offline to 16384 × 8192 JPEG @ q=85,
-  // ~20 MB). The 8K solarsystemscope map pixelates visibly on the tight zoom
-  // (~1.30 unit-Earth); this 16K NASA texture keeps Brittany / the Atlantic
-  // loop crisp. Started in parallel with the 8K maps (see call above) so it's
-  // not gated behind them. The 16K texture is ~512 MB decompressed in VRAM;
-  // iOS Safari (and most mobile browsers) kill the tab when allocating that
-  // much, even when maxTextureSize reports 16384 — the GPU cap is not a memory
-  // budget. Restrict to clearly-desktop devices.
-  function kickUltraDayTexture() {
-    const maxTex = renderer.capabilities.maxTextureSize || 4096;
-    const ua = navigator.userAgent || '';
-    const isIOS = /iPhone|iPad|iPod/i.test(ua) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isAndroid = /Android/i.test(ua);
-    const isCoarseSmall = (typeof matchMedia === 'function' &&
-                           matchMedia('(pointer: coarse)').matches &&
-                           Math.min(innerWidth, innerHeight) < 1024);
-    const lowMemory = (navigator.deviceMemory && navigator.deviceMemory < 4);
-    const canAffordHugeTexture = !isIOS && !isAndroid && !isCoarseSmall && !lowMemory;
-    if (maxTex >= 16384 && canAffordHugeTexture) {
-      load('blue-marble-16k.jpg').then((tex) => {
-        if (tex && tex.image && tex.image.width >= 12000) {
-          ultraDayApplied = true;
-          earthMat.map = tex;
-          earthMat.needsUpdate = true;
-        }
-      }).catch(() => {});
-    }
-  }
 
   // ---- atmosphere glow
   const atmoGeo = new THREE.SphereGeometry(1.09, 72, 72);
@@ -2885,6 +2853,11 @@ const Globe = (() => {
       const dot = new THREE.Mesh(dotGeo, dotMat);
       dot.position.copy(v);
       poiGroup.add(dot);
+
+      // Avoid a 1-frame flash of the full-size marker before projectPOIs()
+      // rescales it for the tight GPS/fleet zoom: start hidden in GPS mode
+      // (projectPOIs shows it at the correct small size on the next frame).
+      if (ACTIVE_KEY === 'gps') { ring.visible = false; dot.visible = false; }
 
       poiList.push({ cape: c, worldPos: v.clone(), ring, dot });
     });
