@@ -5059,7 +5059,8 @@ const Globe = (() => {
       // keeps them from rolling in robotic lockstep. headingQ holds the per-frame
       // heading so animate can re-compose heading × heel without compounding.
       const _hsum = String(b.name || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
-      fb.heelFactor = 0.85 + (_hsum % 7) * 0.05;
+      // Half the primary's heel — at full heel they looked flat on the water.
+      fb.heelFactor = (0.85 + (_hsum % 7) * 0.05) * 0.5;
       fb.headingQ = new THREE.Quaternion();
       marker.visible = false;
       build3DFleetBoat(fb, hullHex, 0xf1eee7, hasFoils);
@@ -5411,7 +5412,7 @@ const Globe = (() => {
   let progress = 0; // 0..1
   let playing = false;
   let speed = 1; // race-days per real-second (base)
-  const SPEED_BASE = 0.4; // race-days per second at ×1 (vitesses divisées par 2)
+  const SPEED_BASE = 0.2; // race-days per second at ×1 (vitesses divisées par 2 deux fois)
 
   // ----- populate cape list / scrubber markers / POI labels (rebuildable) -----
   const capeList = $('#cape-list');
@@ -5733,7 +5734,7 @@ const Globe = (() => {
         // track plays at a readable pace whatever its real length (6 h or
         // 10 days). 40 s for the whole trace at ×1; the speed buttons scale.
         // (Vitesses divisées par 2 à la demande : 40 s plutôt que 20 s.)
-        const GPS_PLAY_SECONDS = 40;
+        const GPS_PLAY_SECONDS = 80;
         inc = (speed * showcaseFactor * dt) / GPS_PLAY_SECONDS;
       } else {
         // Regional races (under ~30 race-days — Route du Rhum, Vendée Arctique,
