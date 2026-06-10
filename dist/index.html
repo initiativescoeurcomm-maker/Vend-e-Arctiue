@@ -5883,9 +5883,10 @@ const Globe = (() => {
     document.body.classList.add('gps-loaded');
     const n = RACES.gps.fleetCount || (data.boats ? data.boats.length : 0);
     const p2 = x => String(x).padStart(2, '0');
-    const endUtc = (() => { const d = new Date((data.t1 || 0) * 1000); return p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()); })();
-    // ~2 s confirmation that fresh data was pulled from Geovoile.
-    gpsToast(`✓ Données à jour récupérées chez Geovoile — ${n} bateaux · positions jusqu'à ${endUtc} UTC`, 2300);
+    const endUtc = (() => { const d = new Date((data.t1 || 0) * 1000); return p2(d.getUTCDate()) + '/' + p2(d.getUTCMonth() + 1) + ' ' + p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()); })();
+    // 5 s confirmation that fresh data was pulled from Geovoile — shows the full
+    // date+time of the LAST position so the freshness can be checked at a glance.
+    gpsToast(`✓ Données à jour récupérées chez Geovoile — ${n} bateaux · dernière position le ${endUtc} UTC`, 5000);
     setPlaying(false);
   }
 
