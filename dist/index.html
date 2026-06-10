@@ -1423,12 +1423,17 @@
   }/*EDITMODE-END*/;
 </script>
 
-<!-- Global failsafe: force-hide the loading overlay after 3 s no matter what -->
+<!-- Loading reveal gate. In GPS mode the loader stays up until the persistent HD
+     course overlay has finished loading (buildGpsBaseOverlay's onReady clears the
+     gate), so the map is NEVER revealed in low resolution. A 9 s backstop force-
+     hides no matter what (slow network / fleet-fetch failure). -->
 <script>
-  setTimeout(() => {
+  window.__gpsBootGate = true;
+  window.__revealMap = function () {
     const l = document.getElementById('loading');
     if (l) l.classList.add('hidden');
-  }, 3000);
+  };
+  setTimeout(() => window.__revealMap(), 9000);
   window.addEventListener('error', (ev) => {
     console.error('[global error]', ev.error || ev.message);
   });
@@ -2320,9 +2325,74 @@ const Globe = (() => {
       if (m.material) { if (m.material.map) m.material.map.dispose(); m.material.dispose(); }
     }
   }
-  function clearGpsOverlay() {
+  function clearDetailOverlay() {
     disposeTiles(gpsTilesPrev); disposeTiles(gpsTilesCurrent);
     gpsTilesPrev = []; gpsTilesCurrent = []; gpsOverlayToken++;
+  }
+  function clearGpsOverlay() {
+    clearDetailOverlay();
+    disposeTiles(gpsBaseTiles); gpsBaseTiles = []; gpsBaseToken++;
+  }
+  // --- Persistent COURSE base layer (renderOrder 1, BENEATH the per-view detail
+  // tiles at renderOrder 2). Built ONCE over the whole track bbox and never
+  // replaced while the race plays/exports, so the boats' area is ALWAYS covered by
+  // loaded EOX imagery: the low-res 2K base earth never shows and there is no
+  // "2K → HD" pop-in. The only transition left is course-HD → sharper detail-HD
+  // when buildGpsOverlay lands a tighter tile on top. `onReady` fires once all its
+  // tiles have loaded — used to gate the loading-screen reveal so the map is never
+  // shown in low resolution.
+  let gpsBaseTiles = [];
+  let gpsBaseToken = 0;
+  function buildGpsBaseOverlay(bbox, onReady) {
+    if (!bbox) { if (onReady) onReady(); return; }
+    const token = ++gpsBaseToken;
+    disposeTiles(gpsBaseTiles); gpsBaseTiles = [];
+    const pf = 0.6;
+    const latSpan = Math.max(0.02, bbox.latN - bbox.latS);
+    const lonSpan = Math.max(0.02, bbox.lonE - bbox.lonW);
+    const latS = Math.max(-85, bbox.latS - latSpan * pf), latN = Math.min(85, bbox.latN + latSpan * pf);
+    const lonW = Math.max(-180, bbox.lonW - lonSpan * pf), lonE = Math.min(180, bbox.lonE + lonSpan * pf);
+    const dLat = latN - latS, dLon = lonE - lonW;
+    const deg = Math.PI / 180;
+    const cols = Math.min(4, Math.max(1, Math.ceil(dLon / 1.0)));
+    const rows = Math.min(4, Math.max(1, Math.ceil(dLat / 1.0)));
+    const tilePx = 2048;          // one fixed set, sharp across the wide play views
+    const fresh = [];
+    let pending = 0, fired = false;
+    const settle = () => {
+      if (token !== gpsBaseToken || fired) return;
+      if (pending > 0) return;
+      fired = true; if (onReady) onReady();
+    };
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const tLonW = lonW + dLon * c / cols, tLonE = lonW + dLon * (c + 1) / cols;
+        const tLatS = latS + dLat * r / rows, tLatN = latS + dLat * (r + 1) / rows;
+        const tDLon = tLonE - tLonW, tDLat = tLatN - tLatS;
+        let W, H;
+        if (tDLon >= tDLat) { W = tilePx; H = Math.max(16, Math.round(tilePx * tDLat / tDLon)); }
+        else { H = tilePx; W = Math.max(16, Math.round(tilePx * tDLon / tDLat)); }
+        const url = 'https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap' +
+          '&layers=s2cloudless-2024&styles=&format=image/jpeg&srs=EPSG:4326' +
+          `&width=${W}&height=${H}&bbox=${tLonW},${tLatS},${tLonE},${tLatN}`;
+        const geo = new THREE.SphereGeometry(1.0008, 48, 48,
+          (tLonW + 180) * deg, tDLon * deg, (90 - tLatN) * deg, tDLat * deg);
+        const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.renderOrder = 1; mesh.frustumCulled = false;
+        earthGroup.add(mesh);
+        fresh.push(mesh);
+        pending++;
+        gpsOverlayLoader.load(url, (tex) => {
+          if (token !== gpsBaseToken) { tex.dispose(); return; }
+          tex.anisotropy = MAX_ANISO; tex.encoding = THREE.sRGBEncoding;
+          mat.map = tex; mat.opacity = 1; mat.needsUpdate = true;
+          pending--; settle();
+        }, undefined, () => { pending--; settle(); });
+      }
+    }
+    gpsBaseTiles = fresh;
+    setTimeout(settle, 8000);   // failsafe: reveal even if a tile stalls
   }
   // Tile the given bbox with EOX Sentinel-2 imagery. Double-buffered: the
   // previous tiles stay up until the new ones finish loading (no flash), so it
@@ -2416,12 +2486,16 @@ const Globe = (() => {
     if (ACTIVE_KEY !== 'gps') return;
     const b = currentViewBbox();
     if (!isFinite(b._r) || b._r <= 0) return;
+    // Only build a DETAIL layer when the user has zoomed IN past the persistent
+    // course base's resolution. At wider views the base already looks sharp, so a
+    // detail layer would just duplicate it — and stacking two full tile sets risks
+    // the Safari per-tab texture-memory limit. So drop the detail when zoomed out.
+    if (b._r > 2.2) { clearDetailOverlay(); _tileSig = ''; return; }
     const sig = b._cx.toFixed(1) + ',' + b._cy.toFixed(1) + ',' + b._r.toExponential(1);
     if (!force && sig === _tileSig) return;
     _tileSig = sig;
-    // Hug the view tightly for sharpness. A small extra margin while the pack is
-    // moving (0.45 vs 0.3 idle) covers the camera drift between re-tiles without
-    // ballooning the tiled area into low resolution.
+    // Hug the view tightly for sharpness. The persistent course base shows
+    // underneath while these load, so there is never a low-res gap.
     buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, moving ? 0.45 : 0.3);
   }
 
@@ -2484,8 +2558,9 @@ const Globe = (() => {
     // the one the user perceives as "earth is loaded"). The rest
     // finish quietly in the background.
     await dayP;
-    const loadingEl = document.getElementById('loading');
-    if (loadingEl) loadingEl.classList.add('hidden');
+    // In GPS mode, wait for the HD course overlay rather than revealing on the
+    // (low-res) base day texture — see buildGpsBaseOverlay / __gpsBootGate.
+    if (!window.__gpsBootGate) window.__revealMap();
   })();
 
 
@@ -4963,14 +5038,12 @@ const Globe = (() => {
     buildGeoLabels: buildGeoLabelsImpl,
     projectGeoLabels: projectGeoLabelsImpl,
     buildFleet, updateFleet, clearFleet, projectFleetLabels,
-    // On play, PRELOAD the whole course tightly (the fleet bbox already spans the
-    // entire route, so a modest 0.6 pad still covers every boat) — same 16-tile
-    // budget concentrated on the route instead of being spread over ~33° by the old 2.0
-    // pad, so it's ~2.5× sharper at no extra memory and the moving pack stays
-    // covered without mid-play tile loading. `_tileSig=''` lets the idle re-tiler
-    // sharpen further to whatever sub-view the user settles on once paused.
+    // On play, drop the per-view DETAIL layer so only the persistent HD course
+    // base (always loaded, renderOrder 1) shows while the pack moves — no
+    // re-tiling, no tile-load lag, no pop-in. The idle re-tiler rebuilds a sharper
+    // detail layer once the user pauses on a sub-view.
     coverFleetWide() {
-      if (ACTIVE_KEY === 'gps' && RACE && RACE.gpsBbox) { buildGpsOverlay(RACE.gpsBbox, 0.6); _tileSig = ''; }
+      if (ACTIVE_KEY === 'gps') { clearDetailOverlay(); _tileSig = ''; }
     },
     // Tile the START view by the boat's real start coordinates, independent of
     // where the camera/fleetFrame happens to be on the first frame. Without this
@@ -5122,11 +5195,11 @@ const Globe = (() => {
       // 3072×1792 source ≈ 91 px/° at lat 50°N, ~3× the resolution
       // of the 16K NASA Blue Marble base over the same area.
       setRegionOverlayActive(key === 'bermudes1000');
-      // High-res Sentinel-2 overlay fitted to the imported track's bbox.
-      // Modest 0.6 pad (NOT the 2.0 default): the track bbox already spans the
-      // whole course, so this preloads it sharply (16 tiles concentrated on the
-      // real route) instead of smearing them across a 33°-wide margin.
-      if (key === 'gps') buildGpsOverlay(RACE.gpsBbox, 0.6);
+      // Persistent HD course base over the whole track bbox (renderOrder 1). It
+      // stays loaded for the whole race so the boats are ALWAYS on HD imagery — no
+      // 2K→HD pop-in, in the browser or in exports. The reveal of the loading
+      // screen is gated on its onReady so the map never appears in low-res.
+      if (key === 'gps') buildGpsBaseOverlay(RACE.gpsBbox, () => { window.__gpsBootGate = false; window.__revealMap(); });
       else clearGpsOverlay();
       // Compute race view BEFORE building the scene so POI sizes and other
       // per-race parameters can depend on it.
@@ -5818,7 +5891,7 @@ const Globe = (() => {
 
   // On startup, auto-load the fleet dataset if present (the app's main view).
   (async () => {
-    const showWelcome = () => document.body.classList.add('gps-failed');  // reveal the GPX-import overlay ONLY on a genuine failure
+    const showWelcome = () => { window.__gpsBootGate = false; window.__revealMap(); document.body.classList.add('gps-failed'); };  // reveal the GPX-import overlay ONLY on a genuine failure
     try {
       const res = await fetch('va-fleet.json', { cache: 'no-store' });
       if (!res.ok) { showWelcome(); return; }
@@ -6094,8 +6167,8 @@ const Globe = (() => {
   if (mobileMql.addEventListener) mobileMql.addEventListener('change', syncMobileLayout);
   else if (mobileMql.addListener)  mobileMql.addListener(syncMobileLayout);
 
-  // hide loading
-  setTimeout(() => document.getElementById('loading').classList.add('hidden'), 400);
+  // hide loading (unless we're holding it for the GPS HD overlay — __gpsBootGate)
+  setTimeout(() => { if (!window.__gpsBootGate) window.__revealMap(); }, 400);
 
   // ----------------------------------------------------------
   // Bridge for record.js: expose the playback knobs it needs to
