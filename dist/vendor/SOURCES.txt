@@ -1,0 +1,34 @@
+# Sources des libs JS auto-hébergées (vendored)
+#
+# Pourquoi : supprimer la dépendance à un CDN tiers au runtime. Avant, une
+# panne/blocage de cdnjs ou jsdelivr affichait un écran blanc (plus de THREE).
+# Servies same-origin, elles profitent du cache 30 j immutable du _middleware.
+#
+# Pour rafraîchir un fichier, re-télécharger depuis l'URL en regard (même
+# version r128 — NE PAS changer de version sans tester : ces scripts d'exemples
+# « legacy » attachés au global THREE n'existent plus dans les three.js récents).
+
+three.min.js              https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
+OrbitControls.js          https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js
+GLTFLoader.js             https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js
+LineSegmentsGeometry.js   https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/lines/LineSegmentsGeometry.js
+LineSegments2.js          https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/lines/LineSegments2.js
+LineGeometry.js           https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/lines/LineGeometry.js
+LineMaterial.js           https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/lines/LineMaterial.js
+Line2.js                  https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/lines/Line2.js
+mp4-muxer.min.js          https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.min.js
+
+# --- Polices (dist/vendor/fonts/) ---
+# CSS Google Fonts récupéré avec un User-Agent moderne (→ woff2), puis filtré
+# aux subsets latin + latin-ext et réécrit en local. Pour rafraîchir :
+#   curl -A '<UA Chrome>' 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&display=swap'
+# puis re-télécharger les woff2 référencés (subsets latin/latin-ext).
+
+# --- Textures Terre (dist/vendor/textures/) ---
+# day/night/clouds : solarsystemscope.com (CC-BY) via le proxy images.weserv.nl,
+# redimensionnées à 2048 px. bump/spec : turban/webgl-earth (jsdelivr), 4K.
+earth-day-2k.jpg     https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg&w=2048&output=jpg&q=85
+earth-night-2k.jpg   https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg&w=2048&output=jpg&q=82
+earth-clouds-2k.jpg  https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_clouds.jpg&w=2048&output=jpg&q=88
+earth-bump-4k.jpg    https://cdn.jsdelivr.net/gh/turban/webgl-earth@master/images/elev_bump_4k.jpg
+earth-spec-4k.png    https://cdn.jsdelivr.net/gh/turban/webgl-earth@master/images/water_4k.png
