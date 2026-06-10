@@ -4799,6 +4799,9 @@ const Globe = (() => {
     { name: "Islande",              lat: 64.9,  lon: -19.0 },
     { name: "Groenland",            lat: 64.0,  lon: -43.0 }
   ];
+  // Names also drawn as GPS landmarks → used to suppress the duplicate coastal-
+  // country clim-label in GPS mode (e.g. a second "Irlande" in another font).
+  const GPS_PLACE_NAMES = new Set(GPS_PLACES.map(p => p.name));
   let geoLabels = [];
   function buildGeoLabelsImpl(layer) {
     if (!layer) return;
@@ -5143,7 +5146,10 @@ const Globe = (() => {
         // The ISS flies on the near side of Earth for ~half its orbit
         // and gets occluded on the far side. facing > 0.18 matches the
         // same horizon fade we use for everything else.
-        const visible = facing > 0.18 && proj.z < 1 && inView && layerOn;
+        // In GPS mode the curated GPS_PLACES already label the big landmarks, so
+        // hide the duplicate coastal-country label (e.g. a second "Irlande").
+        const dupCountry = ACTIVE_KEY === 'gps' && L.kind === 'country' && GPS_PLACE_NAMES.has(L.text);
+        const visible = facing > 0.18 && proj.z < 1 && inView && layerOn && !dupCountry;
         L.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
         L.el.style.opacity = visible ? String(Math.min(0.95, (facing - 0.18) * 2.3)) : '0';
       }
@@ -5215,6 +5221,12 @@ const Globe = (() => {
       // screen is gated on its onReady so the map never appears in low-res.
       if (key === 'gps') buildGpsBaseOverlay(RACE.gpsBbox, () => { window.__gpsBootGate = false; window.__revealMap(); });
       else clearGpsOverlay();
+      // GPS mode: tint the base Earth toward the EOX deep-ocean tone so the bright
+      // Blue-Marble ocean BEYOND the HD overlay's edge no longer reads as a second
+      // sea colour (the visible rectangle boundary west of the fleet). No tint
+      // (white) in the wide-globe races.
+      earthMat.color.setHex(key === 'gps' ? 0xa59074 : 0xffffff);
+      earthMat.needsUpdate = true;
       // Compute race view BEFORE building the scene so POI sizes and other
       // per-race parameters can depend on it.
       raceView = computeRaceView();
@@ -6048,6 +6060,10 @@ const Globe = (() => {
   // ----- keyboard -----
   window.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    // Don't hijack browser/OS shortcuts: ⌘R / Ctrl+R must reload the page (not
+    // reset the animation), ⌘+anything stays native, etc. Our single-key
+    // shortcuts (Space / R / T) only fire without a modifier.
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.code === 'Space') {
       e.preventDefault();
       if (progress >= 1) progress = 0;
