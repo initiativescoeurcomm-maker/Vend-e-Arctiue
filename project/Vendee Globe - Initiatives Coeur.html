@@ -1106,6 +1106,7 @@
 
   /* ----- GPS import: welcome prompt + toast ----- */
   .gps-welcome {
+    display: none;   /* hidden by default — no startup flash; shown only on a real fleet-load failure */
     position: fixed; top: 122px; left: 50%; transform: translateX(-50%);
     z-index: 40; width: calc(100% - 48px); max-width: 430px;
     background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
@@ -1113,7 +1114,7 @@
     backdrop-filter: blur(14px) saturate(140%);
     box-shadow: 0 18px 50px rgba(0,0,0,.42);
   }
-  body.gps-loaded .gps-welcome { display: none; }
+  body.gps-failed .gps-welcome { display: block; }
   .gps-welcome-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
   .gps-welcome-title { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 20px; margin: 0 0 8px; letter-spacing: -.01em; }
   .gps-welcome-title b { color: var(--rouge-soft); font-weight: 600; }
@@ -1331,8 +1332,8 @@
         <span id="btn-play-label">Lancer</span>
       </button>
       <div class="spd-group" id="spd-group">
-        <button class="btn" data-spd="1">×1</button>
-        <button class="btn active" data-spd="2">×2</button>
+        <button class="btn active" data-spd="1">×1</button>
+        <button class="btn" data-spd="2">×2</button>
         <button class="btn" data-spd="5">×5</button>
         <button class="btn" data-spd="10">×10</button>
       </div>
@@ -2151,8 +2152,8 @@ const Globe = (() => {
   // Night map shrinks to 4K (still used only when the user picks the
   // Nuit theme).
   const TEX = {
-    day:     'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg',
-    night:   'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg&w=4096&output=jpg&q=82',
+    day:     'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg&w=2048&output=jpg&q=85',
+    night:   'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_nightmap.jpg&w=2048&output=jpg&q=82',
     bump:    'https://cdn.jsdelivr.net/gh/turban/webgl-earth@master/images/elev_bump_4k.jpg',
     spec:    'https://cdn.jsdelivr.net/gh/turban/webgl-earth@master/images/water_4k.png',
     clouds:  'https://images.weserv.nl/?url=www.solarsystemscope.com/textures/download/8k_earth_clouds.jpg&output=jpg&q=88'
@@ -2194,10 +2195,14 @@ const Globe = (() => {
   // and the continents already carry enough visual detail from the 8K
   // day texture alone.
   const earthGeo = new THREE.SphereGeometry(1, 128, 128);
-  const earthMat = new THREE.MeshPhongMaterial({
-    map: fallbackTex,
-    shininess: 10,
-    specular: new THREE.Color(0x1d3350)
+  // Unlit MeshBasicMaterial — same material the EOX overlay tiles use, which
+  // DO render here, whereas the lit MeshPhongMaterial earth was rendering as a
+  // flat untextured sphere on this user's GPU. Unlit means the world map is
+  // always fully visible (ideal for a tracker). Day/night will be reintroduced
+  // separately later. emissive/specular setters elsewhere become harmless
+  // no-ops on MeshBasicMaterial.
+  const earthMat = new THREE.MeshBasicMaterial({
+    map: fallbackTex
   });
   const earth = new THREE.Mesh(earthGeo, earthMat);
   earthGroup.add(earth);
@@ -2208,11 +2213,15 @@ const Globe = (() => {
   // For simplicity and portability with MeshPhongMaterial, we set the
   // night texture as emissiveMap; day becomes the main map.
   // This gives "city lights" on the dark side.
+  let earthNightTex = null;   // kept for a future overlay-based day/night effect
   function applyNightMap(tex) {
-    earthMat.emissive = new THREE.Color(0xffffff);
-    earthMat.emissiveMap = tex;
-    earthMat.emissiveIntensity = 0.55;
-    earthMat.needsUpdate = true;
+    // The Earth is an unlit MeshBasicMaterial — it has NO emissive channel.
+    // Setting earthMat.emissive / emissiveMap on it makes three.min.js throw
+    // "undefined is not an object (e.emissive.value)" on EVERY rendered frame
+    // (console flood + heavy per-frame cost + render glitches). So we do NOT
+    // apply the night map to the material; just keep a reference for the
+    // future overlay-based day/night feature.
+    earthNightTex = tex;
   }
 
   // ---- cloud sphere (fallback transparent)
@@ -2403,14 +2412,17 @@ const Globe = (() => {
   let _tileSig = '';
   let _lastFleetUpdate = 0;   // last time the fleet positions advanced (play/scrub)
   let _lastRetileCheck = 0;
-  function retileToView(force) {
+  function retileToView(force, moving) {
     if (ACTIVE_KEY !== 'gps') return;
     const b = currentViewBbox();
     if (!isFinite(b._r) || b._r <= 0) return;
     const sig = b._cx.toFixed(1) + ',' + b._cy.toFixed(1) + ',' + b._r.toExponential(1);
     if (!force && sig === _tileSig) return;
     _tileSig = sig;
-    buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, 0.6);
+    // While the pack is moving, pad wider (1.1) so the freshly requested tiles
+    // still cover the view by the time they finish loading and the camera has
+    // drifted on; when idle, hug the view (0.6) for maximum sharpness.
+    buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, moving ? 1.1 : 0.6);
   }
 
   // Two-phase texture loading so the user sees continents within ~1 s
@@ -2422,24 +2434,26 @@ const Globe = (() => {
   //            just a progressive sharpening of the map.
   let hiResDayApplied = false;   // 8K day map applied
   let ultraDayApplied = false;   // 16K NASA day map applied (final, sharpest)
-  load(TEX_FALLBACK.day).then((t) => {
+  load(TEX.day).then((t) => {
     if (hiResDayApplied || ultraDayApplied) return;  // a sharper map already won
     earthMat.map = t;
     earthMat.needsUpdate = true;
   });
 
   (async () => {
-    // Kick the 16K ultra texture off NOW — in parallel with the 8K maps —
-    // instead of waiting for the 8K day map to finish downloading first. It's
-    // served locally (Cloudflare, fast) and the browser caches it, so the HD
-    // map lands sooner on a cold load and is instant on reload. Whichever of
-    // 8K/16K arrives first paints; the 8K handler below won't downgrade a map
-    // the 16K has already applied.
-    kickUltraDayTexture();
-
+    // Day map = the external 8K (same source/proxy as the 2K fallback, which
+    // renders fine). We deliberately do NOT load the local 16K texture any
+    // more: at ~512 MB decompressed it pushed the tab over its memory limit
+    // (the page reloaded and the map vanished). Locally-downscaled JPEGs were
+    // also rendering black on real GPUs, so we stick with the proven external
+    // map; the close-up sharpness comes from the EOX Sentinel-2 tiles anyway.
     // Each texture resolves independently so any one of them can paint
     // the moment it's ready, instead of waiting for the slowest.
-    const dayP   = load(TEX.day,    TEX_FALLBACK.day);
+    // Base day map at 2048 px. On this user's GPU, textures ≥ 4096 px load but
+    // render as a flat untextured sphere (orange); only ≤ 2048 paints — same as
+    // the EOX overlay tiles. Crisp close-up detail comes from EOX anyway, so a
+    // 2K base is fine. No fallback to the 4K unpkg map (it would also stay flat).
+    const dayP   = load(TEX.day);
     const nightP = load(TEX.night,  TEX_FALLBACK.night);
     const specP  = load(TEX.spec,   TEX_FALLBACK.spec);
     const cloudP = load(TEX.clouds, TEX_FALLBACK.clouds);
@@ -2474,36 +2488,6 @@ const Globe = (() => {
     if (loadingEl) loadingEl.classList.add('hidden');
   })();
 
-  // ULTRA-HIGH-RES day texture — NASA Blue Marble Next Generation
-  // (21600 × 10800 source, downsampled offline to 16384 × 8192 JPEG @ q=85,
-  // ~20 MB). The 8K solarsystemscope map pixelates visibly on the tight zoom
-  // (~1.30 unit-Earth); this 16K NASA texture keeps Brittany / the Atlantic
-  // loop crisp. Started in parallel with the 8K maps (see call above) so it's
-  // not gated behind them. The 16K texture is ~512 MB decompressed in VRAM;
-  // iOS Safari (and most mobile browsers) kill the tab when allocating that
-  // much, even when maxTextureSize reports 16384 — the GPU cap is not a memory
-  // budget. Restrict to clearly-desktop devices.
-  function kickUltraDayTexture() {
-    const maxTex = renderer.capabilities.maxTextureSize || 4096;
-    const ua = navigator.userAgent || '';
-    const isIOS = /iPhone|iPad|iPod/i.test(ua) ||
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    const isAndroid = /Android/i.test(ua);
-    const isCoarseSmall = (typeof matchMedia === 'function' &&
-                           matchMedia('(pointer: coarse)').matches &&
-                           Math.min(innerWidth, innerHeight) < 1024);
-    const lowMemory = (navigator.deviceMemory && navigator.deviceMemory < 4);
-    const canAffordHugeTexture = !isIOS && !isAndroid && !isCoarseSmall && !lowMemory;
-    if (maxTex >= 16384 && canAffordHugeTexture) {
-      load('blue-marble-16k.jpg').then((tex) => {
-        if (tex && tex.image && tex.image.width >= 12000) {
-          ultraDayApplied = true;
-          earthMat.map = tex;
-          earthMat.needsUpdate = true;
-        }
-      }).catch(() => {});
-    }
-  }
 
   // ---- atmosphere glow
   const atmoGeo = new THREE.SphereGeometry(1.09, 72, 72);
@@ -2534,6 +2518,7 @@ const Globe = (() => {
   });
   const atmo = new THREE.Mesh(atmoGeo, atmoMat);
   scene.add(atmo);
+  atmo.visible = false;   // start hidden; applyTheme() shows it iff state.atmosphere (default OFF, force-OFF in GPS). Prevents the cyan-limb flash before the first applyTheme().
 
   // ---- stars (night)
   const starGeo = new THREE.BufferGeometry();
@@ -2885,6 +2870,11 @@ const Globe = (() => {
       const dot = new THREE.Mesh(dotGeo, dotMat);
       dot.position.copy(v);
       poiGroup.add(dot);
+
+      // Avoid a 1-frame flash of the full-size marker before projectPOIs()
+      // rescales it for the tight GPS/fleet zoom: start hidden in GPS mode
+      // (projectPOIs shows it at the correct small size on the next frame).
+      if (ACTIVE_KEY === 'gps') { ring.visible = false; dot.visible = false; }
 
       poiList.push({ cape: c, worldPos: v.clone(), ring, dot });
     });
@@ -4183,10 +4173,24 @@ const Globe = (() => {
       trailPositions[i*3 + 1] = p.y;
       trailPositions[i*3 + 2] = p.z;
     }
-    trailPositions[cutIdx*3 + 3] = pos.x;
-    trailPositions[cutIdx*3 + 4] = pos.y;
-    trailPositions[cutIdx*3 + 5] = pos.z;
-    const count = cutIdx + 2;
+    // Append the interpolated boat position as the ribbon HEAD only when it
+    // sits meaningfully ahead of the last passed sample. When the boat is
+    // almost exactly on a sample (fraction ≈ 0) the extra near-coincident
+    // segment makes the ribbon head flare in an arbitrary direction — which
+    // reads as a stray bit of trail poking PAST the boat. Skipping it then
+    // keeps the trail strictly behind the hull.
+    const hx = pos.x - routePoints[cutIdx].x;
+    const hy = pos.y - routePoints[cutIdx].y;
+    const hz = pos.z - routePoints[cutIdx].z;
+    let count;
+    if (hx*hx + hy*hy + hz*hz > 1e-8) {
+      trailPositions[cutIdx*3 + 3] = pos.x;
+      trailPositions[cutIdx*3 + 4] = pos.y;
+      trailPositions[cutIdx*3 + 5] = pos.z;
+      count = cutIdx + 2;
+    } else {
+      count = cutIdx + 1;
+    }
 
     // Build the ribbon mesh positions: for each centerline point emit two
     // vertices offset ±halfWidth along the tangent direction within the
@@ -4292,6 +4296,7 @@ const Globe = (() => {
   function projectPOIs(labelsContainer) {
     const size = renderer.getSize(new THREE.Vector2());
     const camWorldDir = camera.position.clone().normalize();
+    const camDist = camera.position.length();
     // compute dynamic safe zones from visible panels
     const safeZones = [];
     ['.topbar', '.hud', '.wind', '.controls', '.tweaks.visible'].forEach(sel => {
@@ -4308,6 +4313,27 @@ const Globe = (() => {
     );
 
     poiList.forEach(p => {
+      // Keep the POI ring/dot a constant on-screen size in GPS/fleet mode.
+      // They're sized in fixed world units (set once at build time), so at the
+      // very tight zoom used for the 9:16 capture a fixed mesh balloons to fill
+      // the frame. Rescale per frame from camera altitude, and tie visibility
+      // to the near side + start/finish phase so the départ ring doesn't linger.
+      if (ACTIVE_KEY === 'gps' && (p.ring || p.dot)) {
+        const worldN = p.worldPos.clone().normalize().applyQuaternion(earthGroup.quaternion);
+        const facing = worldN.dot(camWorldDir);
+        const ps = (raceView && raceView.poiScale) ? raceView.poiScale : 1.0;
+        const altp = Math.max(0.004, camDist - 1.0);
+        const sc = (altp * 0.011) / (0.022 * ps);   // ring outer radius ≈ alt·0.011 (world)
+        const k = p.cape && p.cape.key;
+        const isStart  = k === 'start' || k === 'sables';
+        const isFinish = k === 'arrivee' || k === 'finish';
+        let phaseOk = true;
+        if (isStart  && currentDay > 1.0)             phaseOk = false;
+        if (isFinish && currentDay < RACE_DAYS - 1.0) phaseOk = false;
+        const vis = facing > 0.08 && phaseOk;
+        if (p.ring) { p.ring.scale.setScalar(sc); p.ring.visible = vis; }
+        if (p.dot)  { p.dot.scale.setScalar(sc); p.dot.visible = vis; }
+      }
       if (!p.labelEl) return;
       const world = p.worldPos.clone().applyMatrix4(earthGroup.matrixWorld);
       const worldN = p.worldPos.clone().normalize().applyQuaternion(earthGroup.quaternion);
@@ -4348,7 +4374,7 @@ const Globe = (() => {
     // All Légendes toggles start ON.
     legendPoi: true, legendCurrents: true, legendHighs: true,
     legendContinents: true, legendCapitals: true, legendCountries: true,
-    legendMilestone: true,
+    legendMilestone: false,
     autoRotate: true
   };
 
@@ -4370,7 +4396,6 @@ const Globe = (() => {
         // legible, especially in social-media-format exports.
         cloudMat.opacity = ACTIVE_KEY === 'bermudes1000' ? 0.20 : 0.40;
       }
-      earthMat.emissiveIntensity = 0.8;
     } else {
       document.body.style.background =
         'radial-gradient(ellipse at top, #0a1f44 0%, #040d24 80%)';
@@ -4387,7 +4412,6 @@ const Globe = (() => {
         // breathe instead of papering over them.
         cloudMat.opacity = ACTIVE_KEY === 'bermudes1000' ? 0.30 : 0.55;
       }
-      earthMat.emissiveIntensity = 0.35;
     }
 
     const red = 0xE30613, ivory = 0xf6f1e7;
@@ -4495,6 +4519,12 @@ const Globe = (() => {
     if (fleetMode && fleetFrame) {
       centerLocal = fleetFrame.center;
       desiredDist = fleetFrame.distance;
+    } else if (fleetMode) {
+      // fleetFrame not ready yet (first frame): aim at the BOAT, not the
+      // whole-fleet centre (which sits mid-Atlantic and would point the start
+      // view at empty ocean). followTarget is the boat's local position.
+      centerLocal = followTarget.clone();
+      desiredDist = Math.max(1.018, Math.min(1.12, raceView.distance || 1.05));
     } else {
       desiredDist = (ACTIVE_KEY === 'gps')
         ? raceView.distance
@@ -4604,14 +4634,22 @@ const Globe = (() => {
         boat.scale.setScalar(Math.max(0.0006, Math.min(3.0, dfb / 1.45)));
       }
       const mAlt = Math.max(0.004, camera.position.length() - 1.0);
-      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.045, mAlt * 3.2));
-      // Re-tile the HD overlay to the current view once things are still (not
-      // playing, not being dragged) so the imagery matches the zoom. Never
-      // during playback/interaction → no stutter; double-buffered → no flash.
+      // Boat SPRITES are base-1-unit billboards (NOT the old 0.001 sphere), so
+      // the marker world-size IS this scalar — keep it tiny. The old *3.2 dot
+      // formula made the sprite fill the whole screen ("giant boat icon").
+      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
+      // Re-tile the HD overlay to the current view so the imagery matches the
+      // zoom. Skipped only while the user is actively dragging/zooming (it would
+      // fight them). DURING playback we now DO re-tile — on a gentler cadence and
+      // with extra pad so the async-loading tiles still cover the advancing pack —
+      // because a single wide low-res cover left the moving view blurry.
+      // Double-buffered → no flash.
       const tnow = performance.now();
-      if (tnow - lastInteract > 320 && tnow - _lastFleetUpdate > 280 && tnow - _lastRetileCheck > 450) {
+      const fleetMoving = (tnow - _lastFleetUpdate) < 280;            // playing/scrubbing
+      const retileDue = (tnow - _lastRetileCheck) > (fleetMoving ? 600 : 450);
+      if (tnow - lastInteract > 320 && retileDue) {
         _lastRetileCheck = tnow;
-        retileToView();
+        retileToView(false, fleetMoving);
       }
     }
 
@@ -4629,6 +4667,21 @@ const Globe = (() => {
       if (Math.abs(zoomTarget - next) < 1e-4) zoomTarget = null;
     }
 
+    // Adaptive near/far clip planes (GPS): a fixed tiny near (0.002) needed for
+    // the very close start view collapses depth-buffer precision once you dezoom
+    // (camera far away) — the globe's front and back faces then sit at almost
+    // the same depth, so they z-fight and FLICKER and the far side bleeds
+    // through. Tie the clip planes to the camera distance so the depth range
+    // stays tight at every zoom. Bounds keep the atmosphere shell (r≈1.09) and
+    // the globe back (camD+1) inside the frustum.
+    if (ACTIVE_KEY === 'gps') {
+      const camD = camera.position.length();
+      const near = Math.max(0.002, (camD - 1.12) * 0.4);
+      const far  = camD + 1.6;
+      if (Math.abs(camera.near - near) > 1e-4 || Math.abs(camera.far - far) > 2e-3) {
+        camera.near = near; camera.far = far; camera.updateProjectionMatrix();
+      }
+    }
     controls.update();
     renderer.render(scene, camera);
     if (typeof window.__renderLabels === 'function') window.__renderLabels();
@@ -4700,6 +4753,37 @@ const Globe = (() => {
   let fleetUnit = [];        // unit-sphere positions of EVERY boat (for framing)
   let fleetFrameN = 0;
   let fleetFrame = null;     // dynamic {center, distance} fitting the live pack
+  let _boatIconTex = null;   // shared stylised-boat texture (lazy)
+  const _mkN = new THREE.Vector3(), _mkH = new THREE.Vector3(), _mkX = new THREE.Vector3(), _mkM = new THREE.Matrix4();
+  // A stylised IMOCA seen FROM ABOVE, bow pointing +Y (= the heading once the
+  // plane is laid flat on the sea). Drawn white → each competitor's material
+  // colour tints it; the foils + cockpit are drawn darker so they read as
+  // detail on the tinted hull.
+  function makeBoatIconTexture() {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 96;
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, 64, 96);
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    // foils first (under the hull), darker
+    g.strokeStyle = 'rgba(0,0,0,0.40)'; g.lineWidth = 4.5;
+    g.beginPath(); g.moveTo(42, 53); g.lineTo(61, 63); g.stroke();   // starboard foil
+    g.beginPath(); g.moveTo(22, 53); g.lineTo(3, 63);  g.stroke();   // port foil
+    // hull (white → tinted), slender with a pointed bow at the top
+    g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,0.55)'; g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(32, 6);                          // bow tip
+    g.bezierCurveTo(45, 27, 46, 55, 41, 86);  // starboard side → stern quarter
+    g.lineTo(23, 86);                         // transom (flat stern)
+    g.bezierCurveTo(18, 55, 19, 27, 32, 6);   // port side → back to bow
+    g.closePath(); g.fill(); g.stroke();
+    // cockpit / mast hint
+    g.fillStyle = 'rgba(0,0,0,0.38)';
+    g.beginPath(); g.arc(32, 52, 3.4, 0, 6.3); g.fill();
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = (typeof MAX_ANISO !== 'undefined') ? MAX_ANISO : 1;
+    return tex;
+  }
   function clearFleet() {
     while (fleetGroup.children.length) {
       const c = fleetGroup.children.pop();
@@ -4737,9 +4821,12 @@ const Globe = (() => {
       const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.92, depthWrite: false }));
       line.renderOrder = 3; line.frustumCulled = false;
       fleetGroup.add(line);
+      if (!_boatIconTex) _boatIconTex = makeBoatIconTexture();
+      // A flat plane (1 wide × 1.5 tall, matching the 64×96 icon) laid on the
+      // sea and oriented to the heading each frame — NOT a camera-facing sprite.
       const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.001, 12, 12),
-        new THREE.MeshBasicMaterial({ color: col }));
+        new THREE.PlaneGeometry(1, 1.5),
+        new THREE.MeshBasicMaterial({ map: _boatIconTex, color: col, transparent: true, depthWrite: false, side: THREE.DoubleSide }));
       marker.renderOrder = 5; marker.frustumCulled = false;
       fleetGroup.add(marker);
       let labelEl = null;
@@ -4750,7 +4837,7 @@ const Globe = (() => {
         labelEl.style.display = 'none';
         fleetLabelLayer.appendChild(labelEl);
       }
-      fleetBoats.push({ b, line, marker, labelEl, pos, n, _lp: new THREE.Vector3() });
+      fleetBoats.push({ b, line, marker, labelEl, pos, posTrue: pos.slice(), n, _lp: new THREE.Vector3(), _headIdx: -1 });
     });
   }
   function updateFleet(progress) {
@@ -4761,17 +4848,50 @@ const Globe = (() => {
       const n = fb.n;
       const idxF = Math.max(0, Math.min(n - 1, progress * (n - 1)));
       const i0 = Math.floor(idxF), i1 = Math.min(n - 1, i0 + 1), t = idxF - i0;
-      const p = fb.pos;
-      const x = p[i0*3]   + (p[i1*3]   - p[i0*3])   * t;
-      const y = p[i0*3+1] + (p[i1*3+1] - p[i0*3+1]) * t;
-      const z = p[i0*3+2] + (p[i1*3+2] - p[i0*3+2]) * t;
+      const p = fb.pos;          // render buffer (carries the moving head vertex)
+      const pT = fb.posTrue;     // pristine source — interpolate from THIS so the
+                                 // spliced-in head never feeds back into the next frame
+      const x = pT[i0*3]   + (pT[i1*3]   - pT[i0*3])   * t;
+      const y = pT[i0*3+1] + (pT[i1*3+1] - pT[i0*3+1]) * t;
+      const z = pT[i0*3+2] + (pT[i1*3+2] - pT[i0*3+2]) * t;
       fb.marker.position.set(x, y, z);
       fb._lp.set(x, y, z);
-      // Constant-ish on-screen marker size (~small dot): scale with camera
-      // altitude above the surface so it stays readable at any zoom.
+      // Constant-ish on-screen size: scale with camera altitude. Tunable.
       const alt = Math.max(0.004, camLen - 1.0);
-      fb.marker.scale.setScalar(Math.max(0.045, alt * 3.2));
-      fb.line.geometry.setDrawRange(0, Math.max(2, i0 + 2));
+      fb.marker.scale.setScalar(Math.max(0.00026, alt * 0.018));
+      // Lay the icon FLAT on the sea (plane normal = radial) and turn the bow
+      // along the heading. Heading is taken over a MULTI-SAMPLE span (look a few
+      // samples AHEAD: future sample − current) so (a) the pointed bow points
+      // the way the boat is going — verified bow·travel = +1 — and (b) it stays
+      // stable at the start where the boats barely move and a single segment is
+      // pure noise (that jitter looked like "doubled" boats).
+      // Stable heading window: ~4 samples ahead, but near the very end the window
+      // slides BACK rather than collapsing to a zero vector (which used to snap
+      // the bow to a fallback "north" on the final frame → the "few degrees left").
+      let iB = Math.min(n - 1, i0 + 4), iA = i0;
+      if (iB - iA < 4) iA = Math.max(0, iB - 4);
+      _mkN.set(x, y, z).normalize();
+      _mkH.set(pT[iB*3] - pT[iA*3], pT[iB*3+1] - pT[iA*3+1], pT[iB*3+2] - pT[iA*3+2]);
+      _mkH.addScaledVector(_mkN, -_mkH.dot(_mkN));           // tangential component
+      if (_mkH.lengthSq() < 1e-12) _mkH.set(0, 1, 0).addScaledVector(_mkN, -_mkN.y);
+      _mkH.normalize();
+      _mkX.crossVectors(_mkH, _mkN).normalize();
+      _mkM.makeBasis(_mkX, _mkH, _mkN);                      // X→right, Y→bow, Z→normal(out)
+      fb.marker.quaternion.setFromRotationMatrix(_mkM);
+      // The trail must end EXACTLY under the marker, not at the next sample
+      // (i1) — otherwise the line overshoots past the boat between samples.
+      // Draw the passed samples 0..i0 (true positions) then place the head
+      // vertex (i0+1) at the interpolated boat position. Restore the previous
+      // head to its true sample when the boat advances a segment.
+      const headIdx = Math.min(n - 1, i0 + 1);
+      if (fb._headIdx >= 0 && fb._headIdx !== headIdx) {
+        const j = fb._headIdx;
+        p[j*3] = pT[j*3]; p[j*3+1] = pT[j*3+1]; p[j*3+2] = pT[j*3+2];
+      }
+      p[headIdx*3] = x; p[headIdx*3+1] = y; p[headIdx*3+2] = z;
+      fb._headIdx = headIdx;
+      fb.line.geometry.attributes.position.needsUpdate = true;
+      fb.line.geometry.setDrawRange(0, headIdx + 1);
     }
     computeFleetFrame(progress);
   }
@@ -4843,6 +4963,19 @@ const Globe = (() => {
     // pack moves; the idle re-tiler then sharpens the view again on pause.
     coverFleetWide() {
       if (ACTIVE_KEY === 'gps' && RACE && RACE.gpsBbox) { buildGpsOverlay(RACE.gpsBbox, 2.0); _tileSig = ''; }
+    },
+    // Tile the START view by the boat's real start coordinates, independent of
+    // where the camera/fleetFrame happens to be on the first frame. Without this
+    // the single load-time retile could land mid-Atlantic (when fleetFrame is
+    // briefly null) and Les Sables got no EOX overlay → dark start.
+    coverStartView() {
+      if (ACTIVE_KEY !== 'gps') return;
+      const f = window.__FLEET; if (!f || !f.boats || !f.boats.length) return;
+      const pb = f.boats.find(b => b.isPrimary) || f.boats[0];
+      const la = pb.lat[0], lo = pb.lng[0];
+      const d = 0.6;   // ~0.6° half-span around the start line off Les Sables
+      buildGpsOverlay({ latS: la - d, latN: la + d, lonW: lo - d, lonE: lo + d }, 0.4);
+      _tileSig = '';   // let the idle gate re-sharpen once the camera settles
     },
     retileToView: (force) => retileToView(force),
     updateBoat(progress) {
@@ -5024,7 +5157,7 @@ const Globe = (() => {
   // ----- playback state -----
   let progress = 0; // 0..1
   let playing = false;
-  let speed = 2; // race-days per real-second (base)
+  let speed = 1; // race-days per real-second (base)
   const SPEED_BASE = 0.8; // race-days per second at ×1
 
   // ----- populate cape list / scrubber markers / POI labels (rebuildable) -----
@@ -5659,9 +5792,10 @@ const Globe = (() => {
     if (Globe.buildFleet) Globe.buildFleet(window.__FLEET, fleetLayer);
     buildRaceUI();
     progress = 0;
-    update();                                   // sets the start-frame + boat
+    update();                                   // builds fleetBoats, positions boat
+    update();                                   // 2nd pass: fleetFrame now populated → snap lands on Les Sables, not mid-Atlantic
     if (Globe.snapFollowCamera) Globe.snapFollowCamera(true);  // jump straight to Les Sables (no Île d'Yeu intro)
-    if (Globe.retileToView) Globe.retileToView(true);          // load sharp tiles for that view now
+    if (Globe.coverStartView) Globe.coverStartView();          // sharp EOX tiles ON the start view, by geo bbox (camera-independent)
     document.body.classList.add('gps-loaded');
     const n = RACES.gps.fleetCount || (data.boats ? data.boats.length : 0);
     const p2 = x => String(x).padStart(2, '0');
@@ -5673,12 +5807,14 @@ const Globe = (() => {
 
   // On startup, auto-load the fleet dataset if present (the app's main view).
   (async () => {
+    const showWelcome = () => document.body.classList.add('gps-failed');  // reveal the GPX-import overlay ONLY on a genuine failure
     try {
       const res = await fetch('va-fleet.json', { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) { showWelcome(); return; }
       const data = await res.json();
       if (data && data.boats && data.boats.length) loadFleetData(data);
-    } catch (e) { /* no fleet file → fall back to the welcome / GPX import */ }
+      else showWelcome();   // fetched but empty/invalid fleet
+    } catch (e) { showWelcome(); /* no fleet file → welcome / GPX import */ }
   })();
 
   // GPS import is now a manual fallback only (the palette button was removed);
