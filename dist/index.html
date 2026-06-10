@@ -5043,8 +5043,9 @@ const Globe = (() => {
       }
       const fb = { b, line, marker, labelEl, pos, posTrue: pos.slice(), n, _lp: new THREE.Vector3(), _headIdx: -1 };
       fleetBoats.push(fb);
-      // Every fleet boat is the primary's GLB recoloured to its livery (hull) with
-      // white sails, at 75% of Initiatives-Cœur.
+      // Every fleet boat is the primary's GLB recoloured to its livery, at 75% of
+      // Initiatives-Cœur. Sails take the SAME colour as the hull (white/grey sails
+      // made every boat look alike — the livery colour makes each one distinct).
       const hullHex = parseInt(String(b.color || 'cccccc').replace(/[^0-9a-fA-F]/g, '').slice(0, 6) || 'cccccc', 16);
       // Heel is driven by the primary's LIVE heel each frame (in animate), so the
       // fleet rolls WITH Initiatives-Cœur. A mild stable per-boat factor (0.85–1.15)
@@ -5055,7 +5056,7 @@ const Globe = (() => {
       fb.heelFactor = (0.85 + (_hsum % 7) * 0.05) * 0.5;
       fb.headingQ = new THREE.Quaternion();
       marker.visible = false;
-      build3DFleetBoat(fb, hullHex, 0xf1eee7);
+      build3DFleetBoat(fb, hullHex, hullHex);
     });
   }
   function updateFleet(progress) {
@@ -5149,10 +5150,11 @@ const Globe = (() => {
     // around the boats to cover at high resolution).
     const MARGIN = 1.1;
     let d = Math.cos(maxA) + Math.sin(maxA) * MARGIN / tanHF;
-    // Floor 1.018 ≈ a ~40 nm view: at the start (boats bunched on the line) it
-    // still shows Les Sables-d'Olonne for context rather than featureless open
-    // water, and the boats separate out as the pack spreads.
-    fleetFrame = { center: c.clone(), distance: Math.max(1.018, Math.min(6.2, d)) };
+    // Floor 1.010 ≈ a ~22 nm view (was 1.018/~40 nm): with the bigger 3D boats,
+    // a bunched pack overlapped at the old floor. Zooming in closer when the boats
+    // cluster pulls them apart on screen so they can be told apart; once the pack
+    // spreads, `d` rises above the floor and the floor stops mattering.
+    fleetFrame = { center: c.clone(), distance: Math.max(1.010, Math.min(6.2, d)) };
   }
   function projectFleetLabels() {
     if (ACTIVE_KEY !== 'gps' || !fleetBoats.length) {
