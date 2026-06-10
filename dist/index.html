@@ -2412,14 +2412,17 @@ const Globe = (() => {
   let _tileSig = '';
   let _lastFleetUpdate = 0;   // last time the fleet positions advanced (play/scrub)
   let _lastRetileCheck = 0;
-  function retileToView(force) {
+  function retileToView(force, moving) {
     if (ACTIVE_KEY !== 'gps') return;
     const b = currentViewBbox();
     if (!isFinite(b._r) || b._r <= 0) return;
     const sig = b._cx.toFixed(1) + ',' + b._cy.toFixed(1) + ',' + b._r.toExponential(1);
     if (!force && sig === _tileSig) return;
     _tileSig = sig;
-    buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, 0.6);
+    // While the pack is moving, pad wider (1.1) so the freshly requested tiles
+    // still cover the view by the time they finish loading and the camera has
+    // drifted on; when idle, hug the view (0.6) for maximum sharpness.
+    buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, moving ? 1.1 : 0.6);
   }
 
   // Two-phase texture loading so the user sees continents within ~1 s
@@ -4635,13 +4638,18 @@ const Globe = (() => {
       // the marker world-size IS this scalar — keep it tiny. The old *3.2 dot
       // formula made the sprite fill the whole screen ("giant boat icon").
       for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
-      // Re-tile the HD overlay to the current view once things are still (not
-      // playing, not being dragged) so the imagery matches the zoom. Never
-      // during playback/interaction → no stutter; double-buffered → no flash.
+      // Re-tile the HD overlay to the current view so the imagery matches the
+      // zoom. Skipped only while the user is actively dragging/zooming (it would
+      // fight them). DURING playback we now DO re-tile — on a gentler cadence and
+      // with extra pad so the async-loading tiles still cover the advancing pack —
+      // because a single wide low-res cover left the moving view blurry.
+      // Double-buffered → no flash.
       const tnow = performance.now();
-      if (tnow - lastInteract > 320 && tnow - _lastFleetUpdate > 280 && tnow - _lastRetileCheck > 450) {
+      const fleetMoving = (tnow - _lastFleetUpdate) < 280;            // playing/scrubbing
+      const retileDue = (tnow - _lastRetileCheck) > (fleetMoving ? 600 : 450);
+      if (tnow - lastInteract > 320 && retileDue) {
         _lastRetileCheck = tnow;
-        retileToView();
+        retileToView(false, fleetMoving);
       }
     }
 
@@ -4840,10 +4848,12 @@ const Globe = (() => {
       const n = fb.n;
       const idxF = Math.max(0, Math.min(n - 1, progress * (n - 1)));
       const i0 = Math.floor(idxF), i1 = Math.min(n - 1, i0 + 1), t = idxF - i0;
-      const p = fb.pos;
-      const x = p[i0*3]   + (p[i1*3]   - p[i0*3])   * t;
-      const y = p[i0*3+1] + (p[i1*3+1] - p[i0*3+1]) * t;
-      const z = p[i0*3+2] + (p[i1*3+2] - p[i0*3+2]) * t;
+      const p = fb.pos;          // render buffer (carries the moving head vertex)
+      const pT = fb.posTrue;     // pristine source — interpolate from THIS so the
+                                 // spliced-in head never feeds back into the next frame
+      const x = pT[i0*3]   + (pT[i1*3]   - pT[i0*3])   * t;
+      const y = pT[i0*3+1] + (pT[i1*3+1] - pT[i0*3+1]) * t;
+      const z = pT[i0*3+2] + (pT[i1*3+2] - pT[i0*3+2]) * t;
       fb.marker.position.set(x, y, z);
       fb._lp.set(x, y, z);
       // Constant-ish on-screen size: scale with camera altitude. Tunable.
@@ -4855,9 +4865,13 @@ const Globe = (() => {
       // the way the boat is going — verified bow·travel = +1 — and (b) it stays
       // stable at the start where the boats barely move and a single segment is
       // pure noise (that jitter looked like "doubled" boats).
-      const iE = Math.min(n - 1, i0 + 4);
+      // Stable heading window: ~4 samples ahead, but near the very end the window
+      // slides BACK rather than collapsing to a zero vector (which used to snap
+      // the bow to a fallback "north" on the final frame → the "few degrees left").
+      let iB = Math.min(n - 1, i0 + 4), iA = i0;
+      if (iB - iA < 4) iA = Math.max(0, iB - 4);
       _mkN.set(x, y, z).normalize();
-      _mkH.set(p[iE*3] - p[i0*3], p[iE*3+1] - p[i0*3+1], p[iE*3+2] - p[i0*3+2]);
+      _mkH.set(pT[iB*3] - pT[iA*3], pT[iB*3+1] - pT[iA*3+1], pT[iB*3+2] - pT[iA*3+2]);
       _mkH.addScaledVector(_mkN, -_mkH.dot(_mkN));           // tangential component
       if (_mkH.lengthSq() < 1e-12) _mkH.set(0, 1, 0).addScaledVector(_mkN, -_mkN.y);
       _mkH.normalize();
@@ -4872,7 +4886,7 @@ const Globe = (() => {
       const headIdx = Math.min(n - 1, i0 + 1);
       if (fb._headIdx >= 0 && fb._headIdx !== headIdx) {
         const j = fb._headIdx;
-        p[j*3] = fb.posTrue[j*3]; p[j*3+1] = fb.posTrue[j*3+1]; p[j*3+2] = fb.posTrue[j*3+2];
+        p[j*3] = pT[j*3]; p[j*3+1] = pT[j*3+1]; p[j*3+2] = pT[j*3+2];
       }
       p[headIdx*3] = x; p[headIdx*3+1] = y; p[headIdx*3+2] = z;
       fb._headIdx = headIdx;
