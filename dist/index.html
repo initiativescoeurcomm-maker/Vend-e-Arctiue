@@ -5366,7 +5366,7 @@ const Globe = (() => {
   let progress = 0; // 0..1
   let playing = false;
   let speed = 1; // race-days per real-second (base)
-  const SPEED_BASE = 0.8; // race-days per second at ×1
+  const SPEED_BASE = 0.4; // race-days per second at ×1 (vitesses divisées par 2)
 
   // ----- populate cape list / scrubber markers / POI labels (rebuildable) -----
   const capeList = $('#cape-list');
@@ -5686,8 +5686,9 @@ const Globe = (() => {
       if (ACTIVE_KEY === 'gps') {
         // GPS replay: drive playback off a fixed wall-clock duration so a
         // track plays at a readable pace whatever its real length (6 h or
-        // 10 days). 20 s for the whole trace at ×1; the speed buttons scale.
-        const GPS_PLAY_SECONDS = 20;
+        // 10 days). 40 s for the whole trace at ×1; the speed buttons scale.
+        // (Vitesses divisées par 2 à la demande : 40 s plutôt que 20 s.)
+        const GPS_PLAY_SECONDS = 40;
         inc = (speed * showcaseFactor * dt) / GPS_PLAY_SECONDS;
       } else {
         // Regional races (under ~30 race-days — Route du Rhum, Vendée Arctique,
@@ -6332,7 +6333,7 @@ const Globe = (() => {
 })();
 
 </script>
-<script src="record.js"></script>
+<script src="record.js?v=2"></script>
 
 </body>
 </html>

@@ -288,6 +288,9 @@
     // Ignore typing in inputs/selects
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    // Ne pas capturer les combinaisons avec modificateur : Cmd+R / Ctrl+R doivent
+    // recharger la page normalement (et non ouvrir la capture).
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'r' || e.key === 'R') {
       e.preventDefault();
       togglePalette();
