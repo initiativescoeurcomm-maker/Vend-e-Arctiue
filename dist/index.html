@@ -4240,6 +4240,7 @@ const Globe = (() => {
       const bob = Math.sin(ts * 1.7) * 0.0035 * stormFactor;  // vertical surf
       boat.position.addScaledVector(boat.position.clone().normalize(), bob);
     }
+    if (!showcaseActive) _primaryHeel = heelRad;   // feed the fleet's heel (they roll WITH the flagship)
     const heelQ = new THREE.Quaternion().setFromAxisAngle(
       new THREE.Vector3(0, 1, 0), heelRad);
     boat.quaternion.multiply(heelQ);
@@ -4750,7 +4751,7 @@ const Globe = (() => {
       // balloon when the dynamic frame zooms in at the start (before playback).
       if (boat) {
         const dfb = camera.position.distanceTo(boat.position);
-        boat.scale.setScalar(Math.max(0.0006, Math.min(3.0, dfb / 1.45)));
+        boat.scale.setScalar(1.2 * Math.max(0.0006, Math.min(3.0, dfb / 1.45)));   // primary boat 20% larger
       }
       const mAlt = Math.max(0.004, camera.position.length() - 1.0);
       // Boat SPRITES are base-1-unit billboards (NOT the old 0.001 sphere), so
@@ -4758,9 +4759,12 @@ const Globe = (() => {
       // formula made the sprite fill the whole screen ("giant boat icon").
       for (const fb of fleetBoats) {
         fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
-        if (fb.model3d) {           // 3D hull: 48% of the primary's base scale (camera-distance based)
+        if (fb.model3d) {           // 3D boat: 48% of the primary's base scale (camera-distance based)
           const dcj = camera.position.distanceTo(fb.model3d.position);
           fb.model3d.scale.setScalar(0.48 * Math.max(0.0006, Math.min(3.0, dcj / 1.45)));
+          // Heel WITH the flagship: re-apply the stored heading, then the primary's
+          // LIVE heel (mild per-boat factor) so the fleet rolls off Initiatives-Cœur.
+          if (fb.headingQ) fb.model3d.quaternion.copy(fb.headingQ).multiply(_heelQ.setFromAxisAngle(_heelAxis, _primaryHeel * fb.heelFactor));
         }
       }
       // Sharpen the overlay to the live view, but only when IDLE (not playing,
@@ -4885,6 +4889,7 @@ const Globe = (() => {
   let _boatIconTex = null;   // shared stylised-boat texture (lazy)
   const _mkN = new THREE.Vector3(), _mkH = new THREE.Vector3(), _mkX = new THREE.Vector3(), _mkM = new THREE.Matrix4();
   const _heelQ = new THREE.Quaternion(), _heelAxis = new THREE.Vector3(0, 1, 0);   // fleet 3D heel (around local +Y / bow)
+  let _primaryHeel = 26 * Math.PI / 180;   // the primary boat's live heel angle, fed to the fleet each frame
   // A stylised IMOCA seen FROM ABOVE, bow pointing +Y (= the heading once the
   // plane is laid flat on the sea). Drawn white → each competitor's material
   // colour tints it; the foils + cockpit are drawn darker so they read as
@@ -4946,15 +4951,21 @@ const Globe = (() => {
     // builder, in the container's boat-local frame (+Z up, +Y bow). No logo.
     const rigMat  = new THREE.MeshPhongMaterial({ color: 0xdcdcdc, shininess: 80 });
     const sailMat = new THREE.MeshPhongMaterial({ color: new THREE.Color(sailHex), side: THREE.DoubleSide, shininess: 20, specular: new THREE.Color(0x4a4035) });
-    const _m  = new THREE.Mesh(mastGeo.clone(), rigMat);  _m.position.set(0, MAST_Y, DECK_Z + MAST_H / 2);            _m.renderOrder = 6;  container.add(_m);
-    const _bm = new THREE.Mesh(boomGeo.clone(), rigMat);  _bm.position.set(0, MAST_Y - BOOM_LEN / 2, DECK_Z + 0.008); _bm.renderOrder = 6; container.add(_bm);
+    // Match the sail/hull PROPORTION of the primary (initiatives-coeur.glb): its
+    // mast-above-deck / hull-length ≈ 1.47 (measured), vs the bare procedural rig's
+    // 1.085 — so scale the whole fleet rig up by ~1.355 (sails were too small).
+    const RIG_K    = (1.47 * BOAT_LEN_WORLD) / MAST_H;   // ≈ 1.355
+    const fMastH   = MAST_H  * RIG_K;
+    const fBoomLen = BOOM_LEN * RIG_K;
+    const _m  = new THREE.Mesh(mastGeo.clone(), rigMat);  _m.scale.z = RIG_K;  _m.position.set(0, MAST_Y, DECK_Z + fMastH / 2);            _m.renderOrder = 6;  container.add(_m);
+    const _bm = new THREE.Mesh(boomGeo.clone(), rigMat);  _bm.scale.y = RIG_K; _bm.position.set(0, MAST_Y - fBoomLen / 2, DECK_Z + 0.008); _bm.renderOrder = 6; container.add(_bm);
     const _ms = new THREE.Mesh(makeTriSail(
-      new THREE.Vector3(0, MAST_Y,                   DECK_Z + 0.008),
-      new THREE.Vector3(0, MAST_Y,                   DECK_Z + MAST_H * 0.98),
-      new THREE.Vector3(0, MAST_Y - BOOM_LEN * 0.95, DECK_Z + 0.008), 0.008, 14), sailMat); _ms.renderOrder = 6; container.add(_ms);
+      new THREE.Vector3(0, MAST_Y,                    DECK_Z + 0.008),
+      new THREE.Vector3(0, MAST_Y,                    DECK_Z + fMastH * 0.98),
+      new THREE.Vector3(0, MAST_Y - fBoomLen * 0.95,  DECK_Z + 0.008), 0.008, 14), sailMat); _ms.renderOrder = 6; container.add(_ms);
     const _jb = new THREE.Mesh(makeTriSail(
-      new THREE.Vector3(0, MAST_Y + BOOM_LEN * 0.85,    DECK_Z + 0.005),
-      new THREE.Vector3(0, MAST_Y,                      DECK_Z + MAST_H * 0.80),
+      new THREE.Vector3(0, MAST_Y + fBoomLen * 0.85,    DECK_Z + 0.005),
+      new THREE.Vector3(0, MAST_Y,                      DECK_Z + fMastH * 0.80),
       new THREE.Vector3(0, MAST_Y + BOAT_LEN_WORLD * 0.01, DECK_Z + 0.008), 0.006, 10), sailMat); _jb.renderOrder = 6; container.add(_jb);
     // Build the hull (+ foils) by CLONING a single shared load of imoca.glb —
     // geometry is shared across boats; only per-boat materials/visibility differ.
@@ -5043,10 +5054,13 @@ const Globe = (() => {
       // livery colour + white sails). All boats have foils EXCEPT Café Joyeux.
       const hullHex = parseInt(String(b.color || 'cccccc').replace(/[^0-9a-fA-F]/g, '').slice(0, 6) || 'cccccc', 16);
       const hasFoils = !/caf[eé]\s*joyeux/i.test(b.name || '');
-      // Heel like the primary so the sails read (not edge-on): a stable per-boat
-      // angle (~22–30°), all leaning the SAME way (same tack = a credible fleet).
+      // Heel is driven by the primary's LIVE heel each frame (in animate), so the
+      // fleet rolls WITH Initiatives-Cœur. A mild stable per-boat factor (0.85–1.15)
+      // keeps them from rolling in robotic lockstep. headingQ holds the per-frame
+      // heading so animate can re-compose heading × heel without compounding.
       const _hsum = String(b.name || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
-      fb.heelRad = (22 + (_hsum % 9)) * Math.PI / 180;
+      fb.heelFactor = 0.85 + (_hsum % 7) * 0.05;
+      fb.headingQ = new THREE.Quaternion();
       marker.visible = false;
       build3DFleetBoat(fb, hullHex, 0xf1eee7, hasFoils);
     });
@@ -5091,10 +5105,11 @@ const Globe = (() => {
       fb.marker.quaternion.setFromRotationMatrix(_mkM);
       if (fb.model3d) {
         fb.model3d.position.set(x, y, z);
-        fb.model3d.quaternion.setFromRotationMatrix(_mkM);
-        // Heel like the primary (around local +Y / bow) so the sails are seen
-        // edge-ON no more — a stable per-boat angle, all on the same tack.
-        if (fb.heelRad) fb.model3d.quaternion.multiply(_heelQ.setFromAxisAngle(_heelAxis, fb.heelRad));
+        // Store the heading; animate composes heading × (primary's live heel) each
+        // frame so the fleet heels off Initiatives-Cœur. Baseline-set here too in
+        // case animate hasn't run yet.
+        fb.headingQ.setFromRotationMatrix(_mkM);
+        fb.model3d.quaternion.copy(fb.headingQ);
       }
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
