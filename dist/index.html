@@ -4274,7 +4274,7 @@ const Globe = (() => {
     // the camera comes right in at the start (a higher floor made it balloon).
     const scaleFloor = (ACTIVE_KEY === 'gps') ? 0.0006 : 0.20;
     const scale = Math.max(scaleFloor, Math.min(3.0, distFromBoat / 1.45));
-    boat.scale.setScalar(scale);
+    boat.scale.setScalar(scale * 1.2);   // primary boat 20% larger (user-tuned)
 
     // The trail must end exactly under the boat. sampleRoute returns the
     // day-aligned index of the last route point already passed, which is
@@ -4758,9 +4758,9 @@ const Globe = (() => {
       // formula made the sprite fill the whole screen ("giant boat icon").
       for (const fb of fleetBoats) {
         fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
-        if (fb.model3d) {           // 3D hull: 60% of the primary boat (camera-distance based)
+        if (fb.model3d) {           // 3D hull: 48% of the primary's base scale (camera-distance based)
           const dcj = camera.position.distanceTo(fb.model3d.position);
-          fb.model3d.scale.setScalar(0.6 * Math.max(0.0006, Math.min(3.0, dcj / 1.45)));
+          fb.model3d.scale.setScalar(0.48 * Math.max(0.0006, Math.min(3.0, dcj / 1.45)));
         }
       }
       // Sharpen the overlay to the live view, but only when IDLE (not playing,
@@ -4884,6 +4884,7 @@ const Globe = (() => {
   let fleetFrame = null;     // dynamic {center, distance} fitting the live pack
   let _boatIconTex = null;   // shared stylised-boat texture (lazy)
   const _mkN = new THREE.Vector3(), _mkH = new THREE.Vector3(), _mkX = new THREE.Vector3(), _mkM = new THREE.Matrix4();
+  const _heelQ = new THREE.Quaternion(), _heelAxis = new THREE.Vector3(0, 1, 0);   // fleet 3D heel (around local +Y / bow)
   // A stylised IMOCA seen FROM ABOVE, bow pointing +Y (= the heading once the
   // plane is laid flat on the sea). Drawn white → each competitor's material
   // colour tints it; the foils + cockpit are drawn darker so they read as
@@ -5042,6 +5043,10 @@ const Globe = (() => {
       // livery colour + white sails). All boats have foils EXCEPT Café Joyeux.
       const hullHex = parseInt(String(b.color || 'cccccc').replace(/[^0-9a-fA-F]/g, '').slice(0, 6) || 'cccccc', 16);
       const hasFoils = !/caf[eé]\s*joyeux/i.test(b.name || '');
+      // Heel like the primary so the sails read (not edge-on): a stable per-boat
+      // angle (~22–30°), all leaning the SAME way (same tack = a credible fleet).
+      const _hsum = String(b.name || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
+      fb.heelRad = (22 + (_hsum % 9)) * Math.PI / 180;
       marker.visible = false;
       build3DFleetBoat(fb, hullHex, 0xf1eee7, hasFoils);
     });
@@ -5084,7 +5089,13 @@ const Globe = (() => {
       _mkX.crossVectors(_mkH, _mkN).normalize();
       _mkM.makeBasis(_mkX, _mkH, _mkN);                      // X→right, Y→bow, Z→normal(out)
       fb.marker.quaternion.setFromRotationMatrix(_mkM);
-      if (fb.model3d) { fb.model3d.position.set(x, y, z); fb.model3d.quaternion.setFromRotationMatrix(_mkM); }
+      if (fb.model3d) {
+        fb.model3d.position.set(x, y, z);
+        fb.model3d.quaternion.setFromRotationMatrix(_mkM);
+        // Heel like the primary (around local +Y / bow) so the sails are seen
+        // edge-ON no more — a stable per-boat angle, all on the same tack.
+        if (fb.heelRad) fb.model3d.quaternion.multiply(_heelQ.setFromAxisAngle(_heelAxis, fb.heelRad));
+      }
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
       // Draw the passed samples 0..i0 (true positions) then place the head
