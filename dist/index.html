@@ -4759,9 +4759,9 @@ const Globe = (() => {
       // formula made the sprite fill the whole screen ("giant boat icon").
       for (const fb of fleetBoats) {
         fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
-        if (fb.model3d) {           // 3D boat: 48% of the primary's base scale (camera-distance based)
+        if (fb.model3d) {           // 3D boat: 75% of the primary (whose own factor is 1.2) → 0.9 × base
           const dcj = camera.position.distanceTo(fb.model3d.position);
-          fb.model3d.scale.setScalar(0.48 * Math.max(0.0006, Math.min(3.0, dcj / 1.45)));
+          fb.model3d.scale.setScalar(0.9 * Math.max(0.0006, Math.min(3.0, dcj / 1.45)));
           // Heel WITH the flagship: re-apply the stored heading, then the primary's
           // LIVE heel (mild per-boat factor) so the fleet rolls off Initiatives-Cœur.
           if (fb.headingQ) fb.model3d.quaternion.copy(fb.headingQ).multiply(_heelQ.setFromAxisAngle(_heelAxis, _primaryHeel * fb.heelFactor));
@@ -4929,80 +4929,73 @@ const Globe = (() => {
     fleetBoats = [];
     fleetUnit = []; fleetFrameN = 0; fleetFrame = null;
   }
-  // Approach A — render EVERY fleet boat as a small 3D boat instead of the flat
-  // 2D icon: the shared donor hull (`imoca.glb`) tinted to the boat's livery
-  // colour + white procedural sails + carbon foils. Every boat has foils EXCEPT
-  // Café Joyeux. Sized to 60 % of the primary (= 40 % smaller); positioned/
-  // oriented in updateFleet, scaled per frame in animate (camera-distance based).
+  // Render EVERY fleet boat from the SAME nice GLB as the primary
+  // (`initiatives-coeur.glb`), recoloured per boat: hull/deck → the boat's livery
+  // colour, sails → white (the GLB bakes the IC red livery + heart + sponsors into
+  // 4096px TEXTURES, so we DROP those maps and set flat colours — otherwise other
+  // boats would wear the Initiatives-Cœur branding). Mast/rigging/foils/keel keep
+  // their structural look. Sized to 75 % of the primary (scale factor in animate);
+  // positioned in updateFleet; heels off the primary's live heel.
   //
-  // imoca.glb mesh roles (inspected): "Cube" (26906 v, main hull) = HULL;
-  // "Cube003"/"Cube004" (the only meshes offset >3 laterally, mid-hull) = the
-  // FOIL pair; "Cube001" (tall, Y≈22) = mast and "Cube007" (long fore-aft) = boom
-  // — those plus the rest (keel, deck clutter) are HIDDEN, we add our own rig.
-  const _IMOCA_FOILS = ['Cube003', 'Cube004'];
-  let _imocaProto = null;     // single shared gltf.scene (loaded once)
-  let _imocaQueue = [];       // attach() callbacks waiting on the load
-  function build3DFleetBoat(fb, hullHex, sailHex, hasFoils) {
+  // initiatives-coeur.glb material roles (inspected): SAILS = casquette.001 /
+  // sail_MS.001 / J0.001 (the textured red+heart sails) → white. KEEP AS-IS =
+  // blanc.001 (mast+boom+foils+rigging), hublot, manivelle-winch, cabin_masks,
+  // jaune-acide.00x (lime foils/keel), panneau_solaire. HULL/livery = everything
+  // else (casquette deck/hull, cabin_main/details, carbone, imoca_bridge,
+  // imoca_nav_stuff, rouge-mcc). NB: the GLB's foils aren't separable from the rig
+  // mesh, so Café Joyeux also shows foils with this model.
+  const _IC_SAIL_MATS = ['casquette.001', 'sail_MS.001', 'J0.001'];
+  const _IC_KEEP_MATS = ['blanc.001', 'blanc', 'hublot', 'manivelle-winch', 'cabin_masks', 'jaune-acide.001', 'jaune-acide.002', 'panneau_solaire'];
+  let _icProto = null;     // single shared gltf.scene (loaded once, cloned per boat)
+  let _icQueue = [];       // attach() callbacks waiting on the load
+  function build3DFleetBoat(fb, hullHex, sailHex) {
     if (!THREE.GLTFLoader) return;
     const container = new THREE.Group();
     fleetGroup.add(container);
     fb.model3d = container;
-    // Clean rig (mast + boom + main + jib), reusing the primary's procedural sail
-    // builder, in the container's boat-local frame (+Z up, +Y bow). No logo.
-    const rigMat  = new THREE.MeshPhongMaterial({ color: 0xdcdcdc, shininess: 80 });
-    const sailMat = new THREE.MeshPhongMaterial({ color: new THREE.Color(sailHex), side: THREE.DoubleSide, shininess: 20, specular: new THREE.Color(0x4a4035) });
-    // Match the sail/hull PROPORTION of the primary (initiatives-coeur.glb): its
-    // mast-above-deck / hull-length ≈ 1.47 (measured), vs the bare procedural rig's
-    // 1.085 — so scale the whole fleet rig up by ~1.355 (sails were too small).
-    const RIG_K    = (1.47 * BOAT_LEN_WORLD) / MAST_H;   // ≈ 1.355
-    const fMastH   = MAST_H  * RIG_K;
-    const fBoomLen = BOOM_LEN * RIG_K;
-    const _m  = new THREE.Mesh(mastGeo.clone(), rigMat);  _m.scale.z = RIG_K;  _m.position.set(0, MAST_Y, DECK_Z + fMastH / 2);            _m.renderOrder = 6;  container.add(_m);
-    const _bm = new THREE.Mesh(boomGeo.clone(), rigMat);  _bm.scale.y = RIG_K; _bm.position.set(0, MAST_Y - fBoomLen / 2, DECK_Z + 0.008); _bm.renderOrder = 6; container.add(_bm);
-    const _ms = new THREE.Mesh(makeTriSail(
-      new THREE.Vector3(0, MAST_Y,                    DECK_Z + 0.008),
-      new THREE.Vector3(0, MAST_Y,                    DECK_Z + fMastH * 0.98),
-      new THREE.Vector3(0, MAST_Y - fBoomLen * 0.95,  DECK_Z + 0.008), 0.008, 14), sailMat); _ms.renderOrder = 6; container.add(_ms);
-    const _jb = new THREE.Mesh(makeTriSail(
-      new THREE.Vector3(0, MAST_Y + fBoomLen * 0.85,    DECK_Z + 0.005),
-      new THREE.Vector3(0, MAST_Y,                      DECK_Z + fMastH * 0.80),
-      new THREE.Vector3(0, MAST_Y + BOAT_LEN_WORLD * 0.01, DECK_Z + 0.008), 0.006, 10), sailMat); _jb.renderOrder = 6; container.add(_jb);
-    // Build the hull (+ foils) by CLONING a single shared load of imoca.glb —
-    // geometry is shared across boats; only per-boat materials/visibility differ.
     const attach = () => {
-      const model = _imocaProto.clone(true);
-      let hull = null, maxV = -1;
-      model.traverse((nn) => { if (nn.isMesh && nn.geometry.attributes.position.count > maxV) { maxV = nn.geometry.attributes.position.count; hull = nn; } });
+      const model = _icProto.clone(true);
       model.traverse((nn) => {
-        if (!nn.isMesh) return;
-        if (nn === hull) {
-          nn.material = new THREE.MeshPhongMaterial({ color: new THREE.Color(hullHex), shininess: 55, specular: new THREE.Color(0x2a2a2a), side: THREE.DoubleSide });
-          nn.renderOrder = 6; nn.frustumCulled = false;
-        } else if (hasFoils && _IMOCA_FOILS.indexOf(nn.name) !== -1) {
-          nn.material = new THREE.MeshPhongMaterial({ color: 0x10141a, shininess: 90, specular: new THREE.Color(0x55606e), side: THREE.DoubleSide });  // carbon foils
-          nn.renderOrder = 6; nn.frustumCulled = false; nn.visible = true;
-        } else { nn.visible = false; }   // mast / boom / keel / deck clutter → hidden
+        if (!nn.isMesh || !nn.material) return;
+        const mn = nn.material.name || '';
+        // Clone (never touch the shared proto), drop the texture, and force a LOW
+        // metalness + an emissive floor: the GLB's metalness=1 carbon/sail
+        // materials render near-black WITHOUT an environment map (the primary only
+        // looks right because its livery textures carry the colour), so flat
+        // recolouring needs matte, non-metallic materials to show true colour.
+        const m = nn.material.clone();
+        m.map = null; m.envMap = null; m.metalness = 0.1; m.roughness = 0.6;
+        if (_IC_SAIL_MATS.indexOf(mn) !== -1) {            // sails → white, two-sided
+          m.color = new THREE.Color(sailHex); m.side = THREE.DoubleSide;
+        } else if (_IC_KEEP_MATS.indexOf(mn) === -1) {     // hull / deck → livery colour
+          m.color = new THREE.Color(hullHex);
+        }                                                   // else KEEP: own colour, now matte
+        m.emissive = new THREE.Color(0x000000);
+        m.needsUpdate = true; nn.material = m;
+        nn.renderOrder = 6; nn.frustumCulled = false;
       });
-      // imoca.glb hull bow lands on +Y after the X-rotation alone (NO 180° flip,
-      // unlike initiatives-coeur.glb). Fit the HULL length to BOAT_LEN_WORLD so
-      // the procedural rig above is correctly proportioned.
+      // Orient like the primary: glTF +Y up / −Z fwd → boat-local +Z up, bow on +Y
+      // (Euler X then a 180° yaw flip about local Z, as initiatives-coeur.glb needs).
       model.quaternion.setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+      model.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI));
       model.scale.set(1, 1, 1); model.updateMatrixWorld();
-      const hs = new THREE.Vector3(); new THREE.Box3().setFromObject(hull).getSize(hs);
-      model.scale.setScalar(BOAT_LEN_WORLD / (Math.max(hs.x, hs.y, hs.z) || 1));
+      // Fit the largest dimension to BOAT_LEN_WORLD — exactly like the primary, so
+      // the 0.75× render scale lands the fleet at 75 % of Initiatives-Cœur.
+      const ps = new THREE.Vector3(); new THREE.Box3().setFromObject(model).getSize(ps);
+      model.scale.setScalar(BOAT_LEN_WORLD / (Math.max(ps.x, ps.y, ps.z) || 1));
       model.updateMatrixWorld();
-      const bb = new THREE.Box3().setFromObject(hull);
+      const bb = new THREE.Box3().setFromObject(model);
       model.position.set(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, HULL_BOTTOM_Z - bb.min.z);
       container.add(model);
     };
-    if (_imocaProto) { attach(); return; }
-    _imocaQueue.push(attach);
-    if (_imocaQueue.length === 1) {   // first requester triggers the single load
-      new THREE.GLTFLoader().load('imoca.glb', (gltf) => {
-        _imocaProto = gltf.scene;
-        const q = _imocaQueue; _imocaQueue = [];
+    if (_icProto) { attach(); return; }
+    _icQueue.push(attach);
+    if (_icQueue.length === 1) {   // first requester triggers the single load
+      new THREE.GLTFLoader().load('initiatives-coeur.glb', (gltf) => {
+        _icProto = gltf.scene;
+        const q = _icQueue; _icQueue = [];
         q.forEach((fn) => fn());
-      }, undefined, (e) => console.warn('[fleet 3D] imoca.glb failed', e));
+      }, undefined, (e) => console.warn('[fleet 3D] initiatives-coeur.glb failed', e));
     }
   }
   function buildFleet(fleet, labelLayer) {
@@ -5050,10 +5043,9 @@ const Globe = (() => {
       }
       const fb = { b, line, marker, labelEl, pos, posTrue: pos.slice(), n, _lp: new THREE.Vector3(), _headIdx: -1 };
       fleetBoats.push(fb);
-      // Approach A: every fleet boat becomes a small 3D boat (hull tinted to its
-      // livery colour + white sails). All boats have foils EXCEPT Café Joyeux.
+      // Every fleet boat is the primary's GLB recoloured to its livery (hull) with
+      // white sails, at 75% of Initiatives-Cœur.
       const hullHex = parseInt(String(b.color || 'cccccc').replace(/[^0-9a-fA-F]/g, '').slice(0, 6) || 'cccccc', 16);
-      const hasFoils = !/caf[eé]\s*joyeux/i.test(b.name || '');
       // Heel is driven by the primary's LIVE heel each frame (in animate), so the
       // fleet rolls WITH Initiatives-Cœur. A mild stable per-boat factor (0.85–1.15)
       // keeps them from rolling in robotic lockstep. headingQ holds the per-frame
@@ -5063,7 +5055,7 @@ const Globe = (() => {
       fb.heelFactor = (0.85 + (_hsum % 7) * 0.05) * 0.5;
       fb.headingQ = new THREE.Quaternion();
       marker.visible = false;
-      build3DFleetBoat(fb, hullHex, 0xf1eee7, hasFoils);
+      build3DFleetBoat(fb, hullHex, 0xf1eee7);
     });
   }
   function updateFleet(progress) {
