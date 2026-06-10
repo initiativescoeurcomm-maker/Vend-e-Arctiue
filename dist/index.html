@@ -4797,10 +4797,12 @@ const Globe = (() => {
     { name: "Ouessant",             lat: 48.46, lon: -5.10 },
     { name: "Brest",                lat: 48.39, lon: -4.49 },
     { name: "Cap Finisterre",       lat: 42.88, lon: -9.27 },
-    { name: "Irlande",              lat: 53.3,  lon: -8.0 },
+    // NB: "Irlande"/"Islande" are intentionally NOT here — they're drawn as
+    // coastal-COUNTRY labels (COASTAL_COUNTRIES) so they share the same font as
+    // the other countries (France, Royaume-Uni…). Listing them here too would
+    // duplicate them in the geo-landmark font.
     { name: "Écosse",               lat: 56.8,  lon: -4.2 },
     { name: "Açores",               lat: 38.5,  lon: -28.2 },
-    { name: "Islande",              lat: 64.9,  lon: -19.0 },
     { name: "Groenland",            lat: 64.0,  lon: -43.0 }
   ];
   // Names also drawn as GPS landmarks → used to suppress the duplicate coastal-
@@ -5012,8 +5014,22 @@ const Globe = (() => {
     c.multiplyScalar(1 / fleetUnit.length);
     if (c.lengthSq() < 1e-9) { fleetFrame = null; return; }
     c.normalize();
-    let maxA = 0; const v = new THREE.Vector3();
-    for (let i = 0; i < px.length; i += 3) { v.set(px[i], px[i+1], px[i+2]); const a = v.angleTo(c); if (a > maxA) maxA = a; }
+    const v = new THREE.Vector3();
+    // Angular distance of each boat from the all-boats centroid, then REJECT far
+    // outliers (e.g. an abandoned boat sailing back south while the leaders push
+    // north). Otherwise a lone straggler blows the frame wide open, zooming the
+    // camera out past the HD overlay's edge and exposing the low-res base earth
+    // (the "texture defect"). Recompute centre + size on the inlier pack only.
+    const angs = [];
+    for (let i = 0; i < px.length; i += 3) { v.set(px[i], px[i+1], px[i+2]); angs.push(v.angleTo(c)); }
+    const sorted = angs.slice().sort((a, b) => a - b);
+    const med = sorted[sorted.length >> 1] || 0;
+    const cutoff = Math.max(med * 2.5, 0.012);   // ~0.7° floor when the pack is bunched
+    const cc = new THREE.Vector3(); let nin = 0;
+    for (let i = 0, k = 0; i < px.length; i += 3, k++) { if (angs[k] <= cutoff) { cc.x += px[i]; cc.y += px[i+1]; cc.z += px[i+2]; nin++; } }
+    if (nin > 0 && cc.lengthSq() > 1e-9) cc.normalize(); else cc.copy(c);
+    let maxA = 0;
+    for (let i = 0, k = 0; i < px.length; i += 3, k++) { if (angs[k] <= cutoff) { v.set(px[i], px[i+1], px[i+2]); const a = v.angleTo(cc); if (a > maxA) maxA = a; } }
     const tanHF = Math.tan(camera.fov * Math.PI / 360);
     // Tighter margin (was 1.5): the pack fills more of the frame, so the camera
     // sits closer and the HD overlay's detail reads sharper (less empty ocean
@@ -5023,7 +5039,7 @@ const Globe = (() => {
     // Floor 1.018 ≈ a ~40 nm view: at the start (boats bunched on the line) it
     // still shows Les Sables-d'Olonne for context rather than featureless open
     // water, and the boats separate out as the pack spreads.
-    fleetFrame = { center: c.clone(), distance: Math.max(1.018, Math.min(6.2, d)) };
+    fleetFrame = { center: cc.clone(), distance: Math.max(1.018, Math.min(6.2, d)) };
   }
   function projectFleetLabels() {
     if (ACTIVE_KEY !== 'gps' || !fleetBoats.length) {
