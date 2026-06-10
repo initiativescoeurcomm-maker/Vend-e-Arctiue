@@ -4933,28 +4933,45 @@ const Globe = (() => {
     const container = new THREE.Group();
     fleetGroup.add(container);
     fb.model3d = container;
+    // Clean white rig (mast + boom + main + jib), reusing the primary's
+    // procedural sail builder, in the container's boat-local frame (+Z up, +Y
+    // bow). No logo/heart on the sails. Café Joyeux has no foils, so we keep ONLY
+    // the donor HULL and add this rig — never the donor's own foils/masts.
+    const cjRig  = new THREE.MeshPhongMaterial({ color: 0xdcdcdc, shininess: 80 });
+    const cjSail = new THREE.MeshPhongMaterial({ color: 0xf1eee7, side: THREE.DoubleSide, shininess: 20, specular: new THREE.Color(0x4a4035) });
+    const _m  = new THREE.Mesh(mastGeo.clone(), cjRig);  _m.position.set(0, MAST_Y, DECK_Z + MAST_H / 2);            _m.renderOrder = 6;  container.add(_m);
+    const _bm = new THREE.Mesh(boomGeo.clone(), cjRig);  _bm.position.set(0, MAST_Y - BOOM_LEN / 2, DECK_Z + 0.008); _bm.renderOrder = 6; container.add(_bm);
+    const _ms = new THREE.Mesh(makeTriSail(
+      new THREE.Vector3(0, MAST_Y,                   DECK_Z + 0.008),
+      new THREE.Vector3(0, MAST_Y,                   DECK_Z + MAST_H * 0.98),
+      new THREE.Vector3(0, MAST_Y - BOOM_LEN * 0.95, DECK_Z + 0.008), 0.008, 14), cjSail); _ms.renderOrder = 6; container.add(_ms);
+    const _jb = new THREE.Mesh(makeTriSail(
+      new THREE.Vector3(0, MAST_Y + BOOM_LEN * 0.85,    DECK_Z + 0.005),
+      new THREE.Vector3(0, MAST_Y,                      DECK_Z + MAST_H * 0.80),
+      new THREE.Vector3(0, MAST_Y + BOAT_LEN_WORLD * 0.01, DECK_Z + 0.008), 0.006, 10), cjSail); _jb.renderOrder = 6; container.add(_jb);
     new THREE.GLTFLoader().load('imoca.glb', (gltf) => {
       const model = gltf.scene;
-      const hull = new THREE.Color(hullHex);
+      // Keep ONLY the hull (the mesh with the most vertices); hide everything
+      // else — that's where the donor's foils + extra masts/rigging live.
+      let hull = null, maxV = -1;
+      model.traverse((nn) => { if (nn.isMesh && nn.geometry.attributes.position.count > maxV) { maxV = nn.geometry.attributes.position.count; hull = nn; } });
       model.traverse((nn) => {
-        if (!nn.isMesh || !nn.material) return;
-        nn.material = new THREE.MeshPhongMaterial({
-          color: hull, shininess: 60, specular: new THREE.Color(0xffffff), side: THREE.DoubleSide
-        });
-        nn.renderOrder = 6;            // above trails (3) / markers (5)
-        nn.frustumCulled = false;
+        if (!nn.isMesh) return;
+        if (nn === hull) {
+          nn.material = new THREE.MeshPhongMaterial({ color: new THREE.Color(hullHex), shininess: 55, specular: new THREE.Color(0x2a2a2a), side: THREE.DoubleSide });
+          nn.renderOrder = 6; nn.frustumCulled = false;
+        } else { nn.visible = false; }   // foils / extra masts / clutter → hidden
       });
-      // Align glTF axes → boat-local +Z up, +Y bow. NOTE: imoca.glb (the donor
-      // hull) uses the OPPOSITE bow convention to initiatives-coeur.glb, so unlike
-      // the primary it needs NO 180° flip — the X-rotation alone lands its bow on
-      // +Y. (Adding the flip pointed it stern-first.)
+      // imoca.glb hull bow lands on +Y after the X-rotation alone (NO 180° flip,
+      // unlike initiatives-coeur.glb). Fit the HULL length to BOAT_LEN_WORLD so
+      // the procedural rig above is correctly proportioned.
       model.quaternion.setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
       model.scale.set(1, 1, 1); model.updateMatrixWorld();
-      const ps = new THREE.Vector3(); new THREE.Box3().setFromObject(model).getSize(ps);
-      model.scale.setScalar((BOAT_SIZE * 3.0) / (Math.max(ps.x, ps.y, ps.z) || 1));
+      const hs = new THREE.Vector3(); new THREE.Box3().setFromObject(hull).getSize(hs);
+      model.scale.setScalar(BOAT_LEN_WORLD / (Math.max(hs.x, hs.y, hs.z) || 1));
       model.updateMatrixWorld();
-      const bb = new THREE.Box3().setFromObject(model);
-      model.position.set(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -bb.min.z);
+      const bb = new THREE.Box3().setFromObject(hull);
+      model.position.set(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, HULL_BOTTOM_Z - bb.min.z);
       container.add(model);
     }, undefined, (e) => console.warn('[fleet 3D] imoca.glb failed', e));
   }
