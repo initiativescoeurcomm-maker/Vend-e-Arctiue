@@ -2343,6 +2343,26 @@ const Globe = (() => {
   // shown in low resolution.
   let gpsBaseTiles = [];
   let gpsBaseToken = 0;
+  // Edge-fade for overlay tiles: fades the EOX imagery's alpha to 0 over the outer
+  // ~14% of the overlay's lat/lon bbox, so its rectangular boundary blends softly
+  // into the (tinted) base earth instead of showing a hard "two-colour" seam — at
+  // ANY zoom, independent of the camera frame.
+  function makeEdgeFade(cLon, cLat, hLon, hLat) {
+    return (shader) => {
+      shader.uniforms.uFadeC = { value: new THREE.Vector2(cLon, cLat) };
+      shader.uniforms.uFadeH = { value: new THREE.Vector2(Math.max(0.01, hLon), Math.max(0.01, hLat)) };
+      shader.vertexShader = 'varying vec3 vLP;\n' + shader.vertexShader.replace(
+        '#include <begin_vertex>', '#include <begin_vertex>\n  vLP = position;');
+      shader.fragmentShader = 'uniform vec2 uFadeC;\nuniform vec2 uFadeH;\nvarying vec3 vLP;\n' +
+        shader.fragmentShader.replace('#include <dithering_fragment>',
+          'float _r = length(vLP);\n' +
+          'float _lat = degrees(asin(clamp(vLP.y / _r, -1.0, 1.0)));\n' +
+          'float _lon = degrees(atan(vLP.z, -vLP.x)) - 180.0;\n' +
+          'float _dd = max(abs(_lon - uFadeC.x) / uFadeH.x, abs(_lat - uFadeC.y) / uFadeH.y);\n' +
+          'gl_FragColor.a *= 1.0 - smoothstep(0.86, 1.0, _dd);\n' +
+          '#include <dithering_fragment>');
+    };
+  }
   function buildGpsBaseOverlay(bbox, onReady) {
     if (!bbox) { if (onReady) onReady(); return; }
     const token = ++gpsBaseToken;
@@ -2354,6 +2374,7 @@ const Globe = (() => {
     const lonW = Math.max(-180, bbox.lonW - lonSpan * pf), lonE = Math.min(180, bbox.lonE + lonSpan * pf);
     const dLat = latN - latS, dLon = lonE - lonW;
     const deg = Math.PI / 180;
+    const edgeFade = makeEdgeFade((lonW + lonE) / 2, (latS + latN) / 2, dLon / 2, dLat / 2);
     // 5×5 HD grid concentrated on the course (~91 m/px), paired with the tighter
     // camera frame so the pack reads sharp the whole way. ~25 tiles @ 2048px ≈
     // 0.42 GB. Genuine native HD over this wide area is bound by total pixels →
@@ -2389,6 +2410,7 @@ const Globe = (() => {
         const geo = new THREE.SphereGeometry(1.0008, 48, 48,
           (tLonW + 180) * deg, tDLon * deg, (90 - tLatN) * deg, tDLat * deg);
         const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+        mat.onBeforeCompile = edgeFade;
         const mesh = new THREE.Mesh(geo, mat);
         mesh.renderOrder = 1; mesh.frustumCulled = false;
         earthGroup.add(mesh);
@@ -2423,6 +2445,7 @@ const Globe = (() => {
     const lonW = Math.max(-180, bbox.lonW - padLon), lonE = Math.min(180, bbox.lonE + padLon);
     const dLat = latN - latS, dLon = lonE - lonW;
     const deg = Math.PI / 180;
+    const edgeFade = makeEdgeFade((lonW + lonE) / 2, (latS + latN) / 2, dLon / 2, dLat / 2);
     // Tile grid: ~1° per tile, capped 4×4. Fewer tiles (zoomed-in view) get
     // more pixels each so the imagery stays near Sentinel-2's native ~10 m/px.
     const cols = Math.min(4, Math.max(1, Math.ceil(dLon / 1.0)));
@@ -2453,6 +2476,7 @@ const Globe = (() => {
           (90 - tLatN) * deg, tDLat * deg
         );
         const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+        mat.onBeforeCompile = edgeFade;
         const mesh = new THREE.Mesh(geo, mat);
         mesh.renderOrder = 2;          // above Earth (0), below clouds (999)
         mesh.frustumCulled = false;
@@ -5014,22 +5038,8 @@ const Globe = (() => {
     c.multiplyScalar(1 / fleetUnit.length);
     if (c.lengthSq() < 1e-9) { fleetFrame = null; return; }
     c.normalize();
-    const v = new THREE.Vector3();
-    // Angular distance of each boat from the all-boats centroid, then REJECT far
-    // outliers (e.g. an abandoned boat sailing back south while the leaders push
-    // north). Otherwise a lone straggler blows the frame wide open, zooming the
-    // camera out past the HD overlay's edge and exposing the low-res base earth
-    // (the "texture defect"). Recompute centre + size on the inlier pack only.
-    const angs = [];
-    for (let i = 0; i < px.length; i += 3) { v.set(px[i], px[i+1], px[i+2]); angs.push(v.angleTo(c)); }
-    const sorted = angs.slice().sort((a, b) => a - b);
-    const med = sorted[sorted.length >> 1] || 0;
-    const cutoff = Math.max(med * 2.5, 0.012);   // ~0.7° floor when the pack is bunched
-    const cc = new THREE.Vector3(); let nin = 0;
-    for (let i = 0, k = 0; i < px.length; i += 3, k++) { if (angs[k] <= cutoff) { cc.x += px[i]; cc.y += px[i+1]; cc.z += px[i+2]; nin++; } }
-    if (nin > 0 && cc.lengthSq() > 1e-9) cc.normalize(); else cc.copy(c);
-    let maxA = 0;
-    for (let i = 0, k = 0; i < px.length; i += 3, k++) { if (angs[k] <= cutoff) { v.set(px[i], px[i+1], px[i+2]); const a = v.angleTo(cc); if (a > maxA) maxA = a; } }
+    let maxA = 0; const v = new THREE.Vector3();
+    for (let i = 0; i < px.length; i += 3) { v.set(px[i], px[i+1], px[i+2]); const a = v.angleTo(c); if (a > maxA) maxA = a; }
     const tanHF = Math.tan(camera.fov * Math.PI / 360);
     // Tighter margin (was 1.5): the pack fills more of the frame, so the camera
     // sits closer and the HD overlay's detail reads sharper (less empty ocean
@@ -5039,7 +5049,7 @@ const Globe = (() => {
     // Floor 1.018 ≈ a ~40 nm view: at the start (boats bunched on the line) it
     // still shows Les Sables-d'Olonne for context rather than featureless open
     // water, and the boats separate out as the pack spreads.
-    fleetFrame = { center: cc.clone(), distance: Math.max(1.018, Math.min(6.2, d)) };
+    fleetFrame = { center: c.clone(), distance: Math.max(1.018, Math.min(6.2, d)) };
   }
   function projectFleetLabels() {
     if (ACTIVE_KEY !== 'gps' || !fleetBoats.length) {
