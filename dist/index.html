@@ -4514,7 +4514,11 @@ const Globe = (() => {
     clouds.visible = state.clouds;
     atmo.visible = state.atmosphere;
     aezGroup.visible = state.showAEZ;
-    climGroup.visible = state.showClim;
+    // Climatology (stylised world-scale ocean currents + anticyclone spirals) is
+    // meaningless at the tight GPS race zoom and just adds a stray animated red
+    // dashed line across the view — auto-hide it in GPS mode (like clouds/atmo),
+    // toggle preserved for the wide-globe races.
+    climGroup.visible = state.showClim && ACTIVE_KEY !== 'gps';
     issGroup.visible = state.showISS;
     gridGroup.visible = state.showGrid;
     capitals.visible = isNight;   // satellite-like city lights, night theme only
@@ -5140,7 +5144,10 @@ const Globe = (() => {
         // Continent labels ignore the climatology toggle — they're
         // geographical context, not a climate overlay. The ISS label
         // follows its own OPTIONS toggle (state.showISS → issGroup).
-        const layerOn = L.kind === 'continent' ? true
+        // Capital/country/continent labels are geography (own legend toggles via
+        // CSS), NOT climate — they must NOT vanish when climGroup is forced off in
+        // GPS mode. Only the warm/cold/high climatology labels ride climGroup.
+        const layerOn = (L.kind === 'continent' || L.kind === 'capital' || L.kind === 'country') ? true
           : L.kind === 'iss' ? issGroup.visible
           : climGroup.visible;
         // The ISS flies on the near side of Earth for ~half its orbit
