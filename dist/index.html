@@ -4756,7 +4756,13 @@ const Globe = (() => {
       // Boat SPRITES are base-1-unit billboards (NOT the old 0.001 sphere), so
       // the marker world-size IS this scalar — keep it tiny. The old *3.2 dot
       // formula made the sprite fill the whole screen ("giant boat icon").
-      for (const fb of fleetBoats) fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
+      for (const fb of fleetBoats) {
+        fb.marker.scale.setScalar(Math.max(0.00026, mAlt * 0.018));
+        if (fb.model3d) {           // 3D hull: 60% of the primary boat (camera-distance based)
+          const dcj = camera.position.distanceTo(fb.model3d.position);
+          fb.model3d.scale.setScalar(0.6 * Math.max(0.0006, Math.min(3.0, dcj / 1.45)));
+        }
+      }
       // Sharpen the overlay to the live view, but only when IDLE (not playing,
       // not dragging). During playback the tight whole-course PRELOAD from
       // coverFleetWide() already covers the moving pack at good resolution; the
@@ -4917,6 +4923,41 @@ const Globe = (() => {
     fleetBoats = [];
     fleetUnit = []; fleetFrameN = 0; fleetFrame = null;
   }
+  // Experimental: render a fleet boat as a small 3D hull instead of the flat 2D
+  // icon (to compare). `imoca.glb` is the plain, logo-less donor hull; we tint it
+  // (yellow), strip baked textures, and size it via fb.model3d to 60 % of the
+  // primary boat (= 40 % smaller). Positioned/oriented in updateFleet, scaled per
+  // frame in animate (camera-distance based, like the primary).
+  function build3DFleetBoat(fb, hullHex) {
+    if (!THREE.GLTFLoader) return;
+    const container = new THREE.Group();
+    fleetGroup.add(container);
+    fb.model3d = container;
+    new THREE.GLTFLoader().load('imoca.glb', (gltf) => {
+      const model = gltf.scene;
+      const hull = new THREE.Color(hullHex);
+      model.traverse((nn) => {
+        if (!nn.isMesh || !nn.material) return;
+        nn.material = new THREE.MeshPhongMaterial({
+          color: hull, shininess: 60, specular: new THREE.Color(0xffffff), side: THREE.DoubleSide
+        });
+        nn.renderOrder = 6;            // above trails (3) / markers (5)
+        nn.frustumCulled = false;
+      });
+      // Align glTF axes → boat-local +Z up, +Y bow. NOTE: imoca.glb (the donor
+      // hull) uses the OPPOSITE bow convention to initiatives-coeur.glb, so unlike
+      // the primary it needs NO 180° flip — the X-rotation alone lands its bow on
+      // +Y. (Adding the flip pointed it stern-first.)
+      model.quaternion.setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+      model.scale.set(1, 1, 1); model.updateMatrixWorld();
+      const ps = new THREE.Vector3(); new THREE.Box3().setFromObject(model).getSize(ps);
+      model.scale.setScalar((BOAT_SIZE * 3.0) / (Math.max(ps.x, ps.y, ps.z) || 1));
+      model.updateMatrixWorld();
+      const bb = new THREE.Box3().setFromObject(model);
+      model.position.set(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -bb.min.z);
+      container.add(model);
+    }, undefined, (e) => console.warn('[fleet 3D] imoca.glb failed', e));
+  }
   function buildFleet(fleet, labelLayer) {
     clearFleet();
     if (!fleet || !fleet.boats) return;
@@ -4960,7 +5001,13 @@ const Globe = (() => {
         labelEl.style.display = 'none';
         fleetLabelLayer.appendChild(labelEl);
       }
-      fleetBoats.push({ b, line, marker, labelEl, pos, posTrue: pos.slice(), n, _lp: new THREE.Vector3(), _headIdx: -1 });
+      const fb = { b, line, marker, labelEl, pos, posTrue: pos.slice(), n, _lp: new THREE.Vector3(), _headIdx: -1 };
+      fleetBoats.push(fb);
+      // Café Joyeux: 3D hull experiment (replaces its 2D icon).
+      if (/caf[eé]\s*joyeux/i.test(b.name || '')) {
+        marker.visible = false;
+        build3DFleetBoat(fb, 0xffe123);   // Café Joyeux yellow
+      }
     });
   }
   function updateFleet(progress) {
@@ -5001,6 +5048,7 @@ const Globe = (() => {
       _mkX.crossVectors(_mkH, _mkN).normalize();
       _mkM.makeBasis(_mkX, _mkH, _mkN);                      // X→right, Y→bow, Z→normal(out)
       fb.marker.quaternion.setFromRotationMatrix(_mkM);
+      if (fb.model3d) { fb.model3d.position.set(x, y, z); fb.model3d.quaternion.setFromRotationMatrix(_mkM); }
       // The trail must end EXACTLY under the marker, not at the next sample
       // (i1) — otherwise the line overshoots past the boat between samples.
       // Draw the passed samples 0..i0 (true positions) then place the head
