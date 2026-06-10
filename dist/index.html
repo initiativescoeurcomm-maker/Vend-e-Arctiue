@@ -2446,12 +2446,14 @@ const Globe = (() => {
     const dLat = latN - latS, dLon = lonE - lonW;
     const deg = Math.PI / 180;
     const edgeFade = makeEdgeFade((lonW + lonE) / 2, (latS + latN) / 2, dLon / 2, dLat / 2);
-    // Tile grid: ~1° per tile, capped 4×4. Fewer tiles (zoomed-in view) get
-    // more pixels each so the imagery stays near Sentinel-2's native ~10 m/px.
-    const cols = Math.min(4, Math.max(1, Math.ceil(dLon / 1.0)));
-    const rows = Math.min(4, Math.max(1, Math.ceil(dLat / 1.0)));
+    // Tile grid: ~1° per tile, capped 6×6 (was 4×4) so WIDE spread-fleet views
+    // still get HD coverage of the far land. Fewer tiles (zoomed-in) get more
+    // pixels each (near Sentinel-2's native ~10 m/px); big grids (wide views) drop
+    // to 1024 px/tile so the worst case (6×6) stays ~150 MB, within budget.
+    const cols = Math.min(6, Math.max(1, Math.ceil(dLon / 1.0)));
+    const rows = Math.min(6, Math.max(1, Math.ceil(dLat / 1.0)));
     const nTiles = cols * rows;
-    const tilePx = nTiles <= 2 ? 4096 : (nTiles <= 6 ? 2048 : 1536);
+    const tilePx = nTiles <= 2 ? 4096 : (nTiles <= 6 ? 2048 : (nTiles <= 16 ? 1536 : 1024));
     const fresh = [];
     let pending = 0;
     const settle = () => {
@@ -2521,11 +2523,13 @@ const Globe = (() => {
     if (ACTIVE_KEY !== 'gps') return;
     const b = currentViewBbox();
     if (!isFinite(b._r) || b._r <= 0) return;
-    // Only build a DETAIL layer when the user has zoomed IN past the persistent
-    // course base's resolution. At wider views the base already looks sharp, so a
-    // detail layer would just duplicate it — and stacking two full tile sets risks
-    // the Safari per-tab texture-memory limit. So drop the detail when zoomed out.
-    if (b._r > 2.2) { clearDetailOverlay(); _tileSig = ''; return; }
+    // Build a DETAIL layer down to fairly WIDE views (was 2.2): when the fleet is
+    // spread over many degrees the follow camera zooms out, and the far land
+    // (Greenland/Norway, outside the course corridor) otherwise falls back to the
+    // soft global base map. Tiling the live view with EOX keeps it sharp. Only
+    // drop the detail near a whole-globe view, where tiling is pointless and the
+    // combined tile memory would risk Safari's per-tab limit.
+    if (b._r > 4.5) { clearDetailOverlay(); _tileSig = ''; return; }
     const sig = b._cx.toFixed(1) + ',' + b._cy.toFixed(1) + ',' + b._r.toExponential(1);
     if (!force && sig === _tileSig) return;
     _tileSig = sig;
