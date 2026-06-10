@@ -20,16 +20,16 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Récupérer le dépôt
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Installer Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
 
       - name: Installer Chrome (pour piloter la carto Geovoile)
         id: chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v2
 
       - name: Installer les dépendances de l'outil
         working-directory: tools
