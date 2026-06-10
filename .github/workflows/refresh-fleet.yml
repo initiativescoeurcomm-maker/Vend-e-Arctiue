@@ -25,7 +25,9 @@ jobs:
       - name: Installer Node
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          # Node 24 (LTS) : wrangler 4.99+ exige Node >= 22 et c'est la version
+          # vers laquelle GitHub bascule les runners — on s'aligne dessus.
+          node-version: "24"
           # Réutilise le cache npm entre les runs (la flotte tourne toutes les
           # 15 min) : npm ci ne re-télécharge plus les paquets de l'outil.
           cache: npm
