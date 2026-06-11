@@ -1393,6 +1393,7 @@
       <div class="tweak-toggle on" id="tk-clim"><span>Courants &amp; hautes pressions</span><div class="switch"></div></div>
       <div class="tweak-toggle on" id="tk-grid"><span>Méridiens &amp; parallèles</span><div class="switch"></div></div>
       <div class="tweak-toggle on" id="tk-iss"><span>Station spatiale (ISS)</span><div class="switch"></div></div>
+      <div class="tweak-toggle on" id="tk-fauna"><span>Baleines &amp; dauphins</span><div class="switch"></div></div>
       <div class="tweak-toggle on" id="tk-autorotate"><span>Rotation auto</span><div class="switch"></div></div>
     </div>
   </div>
@@ -4491,6 +4492,7 @@ const Globe = (() => {
   const state = {
     theme: 'day', trailColor: 'red',
     clouds: true, atmosphere: true, showAEZ: true, showClim: true, showGrid: true, showISS: true,
+    fauna: true,   // whales & dolphins breaching near the fleet (GPS only)
     // All Légendes toggles start ON.
     legendPoi: true, legendCurrents: true, legendHighs: true,
     legendContinents: true, legendCapitals: true, legendCountries: true,
@@ -4771,6 +4773,7 @@ const Globe = (() => {
           if (fb.headingQ) fb.model3d.quaternion.copy(fb.headingQ).multiply(_heelQ.setFromAxisAngle(_heelAxis, _primaryHeel * fb.heelFactor));
         }
       }
+      updateSeaLife(performance.now());   // whales & dolphins breaching near the fleet
       // Sharpen the overlay to the live view, but only when IDLE (not playing,
       // not dragging). During playback the tight whole-course PRELOAD from
       // coverFleetWide() already covers the moving pack at good resolution; the
@@ -4885,6 +4888,133 @@ const Globe = (() => {
   // and red ribbon, so it's skipped here.
   const fleetGroup = new THREE.Group();
   earthGroup.add(fleetGroup);
+
+  // ----------------------------------------------------------
+  // Sea life — whales & dolphins occasionally breach near the
+  // fleet (Age-of-Empires style fun). GPS mode only, toggled by
+  // state.fauna ("Baleines & dauphins"). Hidden between events;
+  // each rig is scaled per-frame like the boats so the creatures
+  // stay boat-scaled on screen. Rig-local frame: +Z up (radial),
+  // +Y forward (heading), +X starboard.
+  // ----------------------------------------------------------
+  const seaLife = new THREE.Group();
+  earthGroup.add(seaLife);
+  function _flatTri(a, b, c, mat) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([a[0],a[1],a[2], b[0],b[1],b[2], c[0],c[1],c[2]], 3));
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, mat); m.renderOrder = 6; m.frustumCulled = false; return m;
+  }
+  function _latheBody(prof, L, segs, mat) {
+    const pts = prof.map(([r, y]) => new THREE.Vector2(Math.max(1e-4, r * L), y * L));
+    const m = new THREE.Mesh(new THREE.LatheGeometry(pts, segs), mat);
+    m.renderOrder = 6; m.frustumCulled = false; return m;
+  }
+  function _makeWhale() {   // sleek dark body + small horizontal fluke + small pale pectorals
+    const L = BOAT_LEN_WORLD * 1.2, g = new THREE.Group();
+    const skin = new THREE.MeshStandardMaterial({ color: 0x33424e, roughness: 0.62, metalness: 0.08, side: THREE.DoubleSide });
+    const fin  = new THREE.MeshStandardMaterial({ color: 0xbcc8d0, roughness: 0.55, metalness: 0.05, side: THREE.DoubleSide });
+    g.add(_latheBody([[0.004,0.50],[0.035,0.46],[0.072,0.39],[0.103,0.27],[0.118,0.11],[0.116,-0.06],[0.097,-0.22],[0.06,-0.37],[0.027,-0.46],[0.008,-0.50]], L, 20, skin));
+    // tail fluke (small, horizontal, two lobes) at the tail (-Y)
+    const sp = 0.17*L, ty = -0.50*L;
+    g.add(_flatTri([0,ty+0.02*L,0], [ sp,ty-0.05*L,0.01*L], [ 0.02*L,ty-0.04*L,0], skin));
+    g.add(_flatTri([0,ty+0.02*L,0], [-sp,ty-0.05*L,0.01*L], [-0.02*L,ty-0.04*L,0], skin));
+    // pectoral fins — small, swept back & down along the lower flank
+    for (const s of [1,-1]) g.add(_flatTri([s*0.09*L,0.14*L,-0.04*L], [s*0.20*L,0.00*L,-0.12*L], [s*0.08*L,0.02*L,-0.05*L], fin));
+    // small dorsal hump on the back third
+    g.add(_flatTri([0,-0.14*L,0.11*L], [0,-0.26*L,0.11*L], [0,-0.20*L,0.18*L], skin));
+    return g;
+  }
+  function _makeDolphin() {   // sleek light body + dorsal fin + small fluke
+    const L = BOAT_LEN_WORLD * 0.36, g = new THREE.Group();
+    const skin = new THREE.MeshStandardMaterial({ color: 0x7a8893, roughness: 0.42, metalness: 0.1, side: THREE.DoubleSide });
+    g.add(_latheBody([[0.002,0.52],[0.016,0.45],[0.05,0.33],[0.09,0.16],[0.105,-0.02],[0.092,-0.20],[0.055,-0.35],[0.026,-0.45],[0.008,-0.52]], L, 16, skin));
+    g.add(_flatTri([0,0.02*L,0.10*L], [0,-0.12*L,0.10*L], [0,-0.05*L,0.30*L], skin));   // dorsal fin (vertical)
+    const sp = 0.15*L, ty = -0.52*L;
+    g.add(_flatTri([0,ty+0.02*L,0], [ sp,ty-0.05*L,0.01*L], [ 0.02*L,ty-0.03*L,0], skin));
+    g.add(_flatTri([0,ty+0.02*L,0], [-sp,ty-0.05*L,0.01*L], [-0.02*L,ty-0.03*L,0], skin));
+    return g;
+  }
+  const _whale = _makeWhale();
+  const whaleRig = new THREE.Group(); whaleRig.add(_whale); whaleRig.visible = false; seaLife.add(whaleRig);
+  const FAUNA_POD = 3, _dolphins = [];
+  const dolphinRig = new THREE.Group(); dolphinRig.visible = false; seaLife.add(dolphinRig);
+  for (let i = 0; i < FAUNA_POD; i++) { const d = _makeDolphin(); dolphinRig.add(d); _dolphins.push(d); }
+  const _splashMat = new THREE.MeshBasicMaterial({ color: 0xeef6ff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide });
+  const _splash = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.62, 22), _splashMat);
+  _splash.renderOrder = 7; _splash.frustumCulled = false; _splash.visible = false; seaLife.add(_splash);
+  let _faunaNext = 0, _faunaEvent = null;
+  function _fleetCentroid(out) { out.set(0,0,0); let n = 0; for (const fb of fleetBoats) { if (fb.marker) { out.add(fb.marker.position); n++; } } if (n) out.multiplyScalar(1/n); return n; }
+  function _placeFaunaRig(rig) {
+    const c = new THREE.Vector3();
+    if (!_fleetCentroid(c) || c.lengthSq() < 1e-9) return false;
+    const up = c.clone().normalize();
+    const east = new THREE.Vector3().crossVectors(Math.abs(up.z) < 0.9 ? new THREE.Vector3(0,0,1) : new THREE.Vector3(1,0,0), up).normalize();
+    const north = new THREE.Vector3().crossVectors(up, east).normalize();
+    // Offset from the centroid by a fraction of the camera-to-fleet distance so the
+    // creature always lands NEAR the visible pack and in-frame, at any zoom (a fixed
+    // world offset flew it off-screen at the very close start view).
+    const camDist = Math.max(1e-4, camera.position.distanceTo(c));
+    const oa = Math.random() * Math.PI * 2, oamt = camDist * (0.10 + Math.random() * 0.16);
+    const posDir = up.clone().addScaledVector(east.clone().multiplyScalar(Math.cos(oa)).addScaledVector(north, Math.sin(oa)), oamt).normalize();
+    rig.position.copy(posDir).multiplyScalar(1.0009);
+    const ha = Math.random() * Math.PI * 2;
+    const heading = east.clone().multiplyScalar(Math.cos(ha)).addScaledVector(north, Math.sin(ha));
+    const X = new THREE.Vector3().crossVectors(heading, posDir).normalize();
+    const Y = new THREE.Vector3().crossVectors(posDir, X).normalize();
+    rig.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, posDir.clone()));
+    return true;
+  }
+  function _animWhale(t) {
+    const L = BOAT_LEN_WORLD;
+    _whale.position.set(0, (t - 0.5) * 0.7 * L, Math.sin(Math.PI * t) * 1.55 * L);
+    _whale.rotation.set(0.75 - 1.5 * t, Math.sin(Math.PI * t) * 0.35, 0);   // pitch about X, roll about Y
+    const near = Math.min(t, 1 - t);
+    if (near < 0.13) {
+      const k = near / 0.13;
+      _splash.visible = true;
+      _splash.position.copy(whaleRig.position);
+      _splash.quaternion.copy(whaleRig.quaternion);
+      _splash.scale.setScalar(whaleRig.scale.x * BOAT_LEN_WORLD * (0.8 + k * 2.4));
+      _splashMat.opacity = (1 - k) * 0.5;
+    } else if (_splash.visible) _splash.visible = false;
+  }
+  function _animDolphins(t) {
+    const L = BOAT_LEN_WORLD;
+    for (let i = 0; i < FAUNA_POD; i++) {
+      const d = _dolphins[i], lane = i - (FAUNA_POD - 1) / 2;
+      const phase = t * 3.4 - i * 0.16;
+      const cyc = ((phase % 1) + 1) % 1;
+      const up = phase > 0 ? Math.sin(cyc * Math.PI) : 0;
+      d.position.set(lane * 0.55 * L, (t - 0.5) * 2.4 * L, up * 0.5 * L);
+      d.rotation.set(Math.cos(cyc * Math.PI) * 0.7, 0, 0);
+      d.visible = phase > 0 && up > 0.02;
+    }
+  }
+  function updateSeaLife(now) {
+    if (ACTIVE_KEY !== 'gps' || !state.fauna || !fleetBoats.length) {
+      if (whaleRig.visible) whaleRig.visible = false;
+      if (dolphinRig.visible) dolphinRig.visible = false;
+      if (_splash.visible) _splash.visible = false;
+      _faunaEvent = null; _faunaNext = now + 6000; return;
+    }
+    if (!_faunaNext) _faunaNext = now + 4000;
+    if (_faunaEvent) {
+      const e = _faunaEvent, t = (now - e.start) / e.dur;
+      if (t >= 1) { e.rig.visible = false; _splash.visible = false; _faunaEvent = null; _faunaNext = now + 10000 + Math.random() * 16000; return; }
+      const dd = camera.position.distanceTo(e.rig.position);
+      e.rig.scale.setScalar(Math.max(0.0006, Math.min(3.0, dd / 1.45)));
+      if (e.kind === 'whale') _animWhale(t); else _animDolphins(t);
+      return;
+    }
+    if (now >= _faunaNext) {
+      const kind = Math.random() < 0.5 ? 'whale' : 'dolphins';
+      const rig = kind === 'whale' ? whaleRig : dolphinRig;
+      if (_placeFaunaRig(rig)) { rig.visible = true; _faunaEvent = { kind, rig, start: now, dur: kind === 'whale' ? 2600 : 4400 }; }
+      else _faunaNext = now + 4000;
+    }
+  }
+  try { window.__fauna = { seaLife, whaleRig, dolphinRig, _whale, _dolphins, _splash, place: _placeFaunaRig, whale: _animWhale, dolphins: _animDolphins, soon: () => { _faunaNext = performance.now(); _faunaEvent = null; } }; } catch (e) {}
   let fleetBoats = [];
   let fleetLabelLayer = null;
   let fleetUnit = [];        // unit-sphere positions of EVERY boat (for framing)
@@ -5960,6 +6090,7 @@ const Globe = (() => {
   bindToggle('tk-clim', 'showClim');
   bindToggle('tk-grid', 'showGrid');
   bindToggle('tk-iss',  'showISS');
+  bindToggle('tk-fauna', 'fauna');
   bindToggle('tk-autorotate', 'autoRotate');
   // Légendes palette — per-category text overlays
   bindToggle('lg-poi',        'legendPoi');
