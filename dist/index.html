@@ -2532,6 +2532,7 @@ const Globe = (() => {
   let _tileSig = '';
   let _lastFleetUpdate = 0;   // last time the fleet positions advanced (play/scrub)
   let _lastRetileCheck = 0;
+  let _lastProgress = 0;      // last progress passed to updateFleet (animate can't see outer `progress`)
   function retileToView(force, moving) {
     if (ACTIVE_KEY !== 'gps') return;
     const b = currentViewBbox();
@@ -2546,9 +2547,11 @@ const Globe = (() => {
     const sig = b._cx.toFixed(1) + ',' + b._cy.toFixed(1) + ',' + b._r.toExponential(1);
     if (!force && sig === _tileSig) return;
     _tileSig = sig;
-    // Hug the view tightly for sharpness. The persistent course base shows
-    // underneath while these load, so there is never a low-res gap.
-    buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, moving ? 0.45 : 0.3);
+    // Cover generously beyond the view (pad up): currentViewBbox assumes a near-nadir
+    // footprint, but the follow camera is a bit oblique, so the visible area (esp.
+    // toward the horizon — inland past the coast) is wider than the bbox. A bigger
+    // pad means the HD detail still reaches those edges instead of a hard seam.
+    buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, moving ? 0.6 : 0.6);
   }
 
   // ---- Carto HD prefetch (so the map stays SHARP while PLAYING) ----
@@ -2559,7 +2562,7 @@ const Globe = (() => {
   // retileToKeyframe builds the overlay from the SAME bbox+pad via _gpsTileSpecs →
   // byte-identical URLs → instant cache hits → sharp the whole way. Only the
   // current view is ever a GPU texture (bounded memory); the rest is HTTP cache.
-  const CARTO_KEYS = 18, CARTO_KEY_PAD = 0.4;
+  const CARTO_KEYS = 18, CARTO_KEY_PAD = 0.6;
   let _cartoKeys = null, _cartoPrefetching = false;
   // The follow-camera VIEW bbox at a given progress — the SAME geometry retileToView
   // (idle) would tile, so the keyframe overlay covers exactly what the camera shows
@@ -4888,17 +4891,20 @@ const Globe = (() => {
       }
       // updateSeaLife(performance.now());  // whales & dolphins — DISABLED (user: "enlève les
       // animaux, ça brouille la lecture"). Code kept dormant for a possible later revisit.
-      // Keep the HD detail layer following the live view. When IDLE we tile the
-      // exact live view (sharpest). When PLAYING we tile the QUANTIZED keyframe
-      // bbox (retileToKeyframe) — its tiles were prefetched into the browser cache
-      // at load, so they appear instantly and the map stays sharp the whole way
-      // (vs the old live re-tile that downloaded mid-play → low-def until paused).
+      // Default playback (camera FOLLOWING the fleet) → the PREFETCHED keyframe
+      // overlay: it matches the follow view and is already cached, so it's instant
+      // and sharp. Any OTHER state — paused, scrubbing, or the user grabbed the
+      // camera (manual zoom/pan → follow off) → tile the EXACT live view so the
+      // WHOLE frame is covered (no HD↔blur seam), loading those tiles as needed.
       const tnow = performance.now();
-      const _idle = (tnow - lastInteract > 320 && tnow - _lastFleetUpdate > 280);
-      if (tnow - _lastRetileCheck > (_idle ? 450 : 700)) {
+      // `playing`/`progress` live OUTSIDE this IIFE — use IIFE-local state only:
+      // fleet advanced recently (= playing/scrubbing) AND camera following → use the
+      // prefetched keyframe overlay; otherwise tile the exact live view.
+      const useKeyframe = (tnow - _lastFleetUpdate < 400) && follow;
+      if (tnow - _lastRetileCheck > (useKeyframe ? 700 : 500)) {
         _lastRetileCheck = tnow;
-        if (_idle) retileToView(false, false);
-        else retileToKeyframe(progress);
+        if (useKeyframe) retileToKeyframe(_lastProgress);
+        else retileToView(false, false);
       }
     }
 
@@ -5319,6 +5325,7 @@ const Globe = (() => {
   function updateFleet(progress) {
     if (!fleetBoats.length) return;
     _lastFleetUpdate = performance.now();   // mark active animation (gate re-tiling)
+    _lastProgress = progress;               // expose to animate (which can't see outer `progress`)
     const camLen = camera.position.length();
     for (const fb of fleetBoats) {
       const n = fb.n;
@@ -5447,12 +5454,16 @@ const Globe = (() => {
     buildGeoLabels: buildGeoLabelsImpl,
     projectGeoLabels: projectGeoLabelsImpl,
     buildFleet, updateFleet, clearFleet, projectFleetLabels,
-    // On play, drop the per-view DETAIL layer so only the persistent HD course
-    // base (always loaded, renderOrder 1) shows while the pack moves — no
-    // re-tiling, no tile-load lag, no pop-in. The idle re-tiler rebuilds a sharper
-    // detail layer once the user pauses on a sub-view.
+    // On play, immediately cover the current view with the (prefetched) keyframe
+    // detail. We used to CLEAR it here so only the west-heavy course base showed —
+    // but that left inland areas east of the corridor low-def (a hard HD↔blur seam).
+    // Now the detail stays up the whole time (prefetch → instant, no lag/pop-in).
     coverFleetWide() {
-      if (ACTIVE_KEY === 'gps') { clearDetailOverlay(); _tileSig = ''; }
+      // Just invalidate the tile signature so the animate gate rebuilds the detail
+      // next frame (it has `progress` in scope; this method does not). We no longer
+      // CLEAR the detail here — clearing left inland areas east of the course base
+      // low-def (a hard HD↔blur seam). The detail now stays up the whole time.
+      if (ACTIVE_KEY === 'gps') { _tileSig = ''; }
     },
     // Tile the START view by the boat's real start coordinates, independent of
     // where the camera/fleetFrame happens to be on the first frame. Without this
@@ -5463,8 +5474,9 @@ const Globe = (() => {
       const f = window.__FLEET; if (!f || !f.boats || !f.boats.length) return;
       const pb = f.boats.find(b => b.isPrimary) || f.boats[0];
       const la = pb.lat[0], lo = pb.lng[0];
-      const d = 0.6;   // ~0.6° half-span around the start line off Les Sables
-      buildGpsOverlay({ latS: la - d, latN: la + d, lonW: lo - d, lonE: lo + d }, 0.4);
+      const d = 1.4;   // generous half-span: cover Les Sables + the inland coast on BOTH
+                       // sides (a tight box left inland France east of the line low-def)
+      buildGpsOverlay({ latS: la - d, latN: la + d, lonW: lo - d, lonE: lo + d }, 0.5);
       _tileSig = '';   // let the idle gate re-sharpen once the camera settles
     },
     retileToView: (force) => retileToView(force),
