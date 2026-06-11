@@ -1,0 +1,7 @@
+name = "va-refresh-cron"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Cron FIABLE (Cloudflare) — toutes les 15 minutes.
+[triggers]
+crons = ["*/15 * * * *"]
