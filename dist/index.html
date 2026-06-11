@@ -2360,6 +2360,10 @@ const Globe = (() => {
           'float _lat = degrees(asin(clamp(vLP.y / _r, -1.0, 1.0)));\n' +
           'float _lon = degrees(atan(vLP.z, -vLP.x)) - 180.0;\n' +
           'float _dd = max(abs(_lon - uFadeC.x) / uFadeH.x, abs(_lat - uFadeC.y) / uFadeH.y);\n' +
+          // Brighten the EOX tiles ~1.27× so their dark Sentinel-2 ocean matches the
+          // lighter tinted base globe (measured base ≈ [23,44,80] vs EOX ≈ [19,34,60])
+          // — removes the darker rectangular patch where the overlay sits.
+          'gl_FragColor.rgb = min(gl_FragColor.rgb * 1.27, vec3(1.0));\n' +
           'gl_FragColor.a *= 1.0 - smoothstep(0.86, 1.0, _dd);\n' +
           '#include <dithering_fragment>');
     };
@@ -4133,7 +4137,13 @@ const Globe = (() => {
     // multi-week races, but on a 6-hour GPS track that's ~most of the whole
     // course → the bow would point at the finish instead of the local course.
     // Scale it to the race length so the bow tracks the actual direction of travel.
-    const dDay = Math.min(0.2, Math.max(1e-4, RACE_DAYS * 0.02));
+    // Heading look-ahead. For GPS keep it SHORT (~the fleet markers' ~4-sample /
+    // ~20-min window) so the bow tracks the LOCAL course: a long look-ahead made
+    // the primary ANTICIPATE turns and pivot on itself before reaching them, while
+    // the fleet (short window) turned correctly. Wider ocean races keep the long step.
+    const dDay = (ACTIVE_KEY === 'gps')
+      ? Math.max(1e-4, Math.min(0.02, RACE_DAYS * 0.004))
+      : Math.min(0.2, Math.max(1e-4, RACE_DAYS * 0.02));
     let forwardSrc;
     if (day + dDay <= RACE_DAYS) {
       const sNext = sampleRoute(day + dDay);
