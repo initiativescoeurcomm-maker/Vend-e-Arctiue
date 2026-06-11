@@ -2843,6 +2843,8 @@ const Globe = (() => {
   let trailPositions = null;
   let trail = null;
   let trailGlow = null;
+  let _rebuildRibbons = null;   // rebuilds the trail ribbons with the current half-width
+  let _lastTrailWS = -1;        // last applied ribbon width-scale (to rebuild only on zoom change)
   let trailMat = null;
   let trailGlowMat = null;
   // Fat-line overlay (Line2) siblings; they receive a fresh position
@@ -4384,6 +4386,12 @@ const Globe = (() => {
     trailGlow.__ribbonHalfWidth = 0.0018 * 1.7 * widthScale;
     buildRibbon(trail);
     buildRibbon(trailGlow);
+    // Expose a rebuild closure + remember the applied width-scale so animate can
+    // keep the ribbon thickness constant when the camera ZOOMS WHILE PAUSED (the
+    // width is otherwise only set here, on a progress change → a stale wide ribbon
+    // looked like a giant red band at close zoom).
+    _lastTrailWS = widthScale;
+    _rebuildRibbons = () => { buildRibbon(trail); buildRibbon(trailGlow); };
     return s;
   }
 
@@ -4768,6 +4776,19 @@ const Globe = (() => {
       if (boat) {
         const dfb = camera.position.distanceTo(boat.position);
         boat.scale.setScalar(1.2 * Math.max(0.0006, Math.min(3.0, dfb / 1.45)));   // primary boat 20% larger
+      }
+      // Keep the red trail ribbon's apparent thickness constant when the camera
+      // zooms WHILE PAUSED (its width is only recomputed on a progress change, so a
+      // stale wide ribbon ballooned into a giant red band at close zoom). Rebuild
+      // only when the zoom-driven width-scale actually changes.
+      if (_rebuildRibbons && trail && trailGlow) {
+        const ws = Math.min(1, Math.max(0.004, camera.position.length() - 1) / 4.2);
+        if (Math.abs(ws - _lastTrailWS) > 0.0004) {
+          _lastTrailWS = ws;
+          trail.__ribbonHalfWidth = 0.0018 * ws;
+          trailGlow.__ribbonHalfWidth = 0.0018 * 1.7 * ws;
+          _rebuildRibbons();
+        }
       }
       const mAlt = Math.max(0.004, camera.position.length() - 1.0);
       // Boat SPRITES are base-1-unit billboards (NOT the old 0.001 sphere), so
