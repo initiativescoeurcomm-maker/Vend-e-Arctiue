@@ -256,6 +256,21 @@
   .wind-sub b { color: var(--ivory); font-weight: 500; }
 
   /* ---- Bottom control bar ---- */
+  /* "Live Geovoile" button — opens the official real-time tracker (the source of
+     truth for positions; a direct in-app fetch is impossible — Geovoile's data is
+     proprietary + CORS-blocked). Accented + a pulsing live dot so it reads as LIVE. */
+  .geovoile-btn {
+    text-decoration: none;
+    border-color: rgba(227, 6, 19, 0.55) !important;
+    background: rgba(227, 6, 19, 0.12) !important;
+  }
+  .geovoile-btn:hover { background: rgba(227, 6, 19, 0.22) !important; }
+  .geovoile-btn .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #ff3b3b; box-shadow: 0 0 6px #ff3b3b;
+    animation: liveBlink 1.4s ease-in-out infinite;
+  }
+  @keyframes liveBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
   .controls {
     position: absolute; bottom: 24px; left: 50%;
     transform: translateX(-50%);
@@ -1344,6 +1359,11 @@
            fallback used by the welcome overlay if the fleet can't be fetched. -->
       <input type="file" id="gps-file-input" accept=".gpx,application/gpx+xml,text/xml,.xml" style="display:none" />
       <div class="spacer"></div>
+      <a class="btn geovoile-btn" id="btn-geovoile" href="https://vendeearctique.geovoile.com/2026/viewer/" target="_blank" rel="noopener"
+         title="Ouvrir le suivi LIVE officiel Geovoile (positions en temps réel)">
+        <span class="live-dot"></span>
+        <span>Live&nbsp;Geovoile</span>
+      </a>
       <button class="btn btn-help" id="btn-help" title="Mode d'emploi" aria-label="Aide">?</button>
       <button class="btn" id="btn-record" title="Capture trajet (raccourci R)" aria-label="Capture trajet">
         <svg viewBox="0 0 12 12">
@@ -3145,6 +3165,29 @@ const Globe = (() => {
   }
   gridGroup.visible = false;
 
+  // ---- Arctic Circle — the Vendée Arctique OBJECTIVE (the boats must cross it).
+  // Drawn very prominently and always on: a glowing cyan halo band + a crisp bright
+  // line at 66.5622°N, gently pulsing to catch the eye.
+  const ARCTIC_LAT = 66.5622;
+  const arcticGroup = new THREE.Group();
+  earthGroup.add(arcticGroup);
+  const _aDeg = Math.PI / 180, _aHalf = 0.42;   // ~0.84° glow band around the circle
+  const arcticBandMat = new THREE.MeshBasicMaterial({
+    color: 0x3fdcff, transparent: true, opacity: 0.28,
+    side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  const arcticBand = new THREE.Mesh(new THREE.SphereGeometry(
+    1.0017, 256, 2, 0, Math.PI * 2,
+    (90 - (ARCTIC_LAT + _aHalf)) * _aDeg, (2 * _aHalf) * _aDeg), arcticBandMat);
+  arcticBand.renderOrder = 8; arcticBand.frustumCulled = false;
+  arcticGroup.add(arcticBand);
+  const _arcticLinePts = [];
+  for (let lon = -180; lon <= 180; lon += 0.5) _arcticLinePts.push(llToV3(ARCTIC_LAT, lon, 1.0020));
+  const arcticLineMat = new THREE.LineBasicMaterial({ color: 0xeafdff, transparent: true, opacity: 0.95, depthWrite: false });
+  const arcticLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(_arcticLinePts), arcticLineMat);
+  arcticLine.renderOrder = 9; arcticLine.frustumCulled = false;
+  arcticGroup.add(arcticLine);
+
   // ============================================================
   // Ocean currents (warm/cold) and anticyclones — stylised overlay
   // Great-circle polylines for currents, tangent-plane rings with
@@ -4793,6 +4836,10 @@ const Globe = (() => {
     const p = 1 + Math.sin(pulseT) * 0.3;
     pulse.scale.setScalar(p);
     pulseMat.opacity = 0.7 - (p - 0.7) * 0.5;
+    // Arctic Circle glow pulse (the race objective) — gently breathe the halo + line.
+    const _ap = Math.sin(pulseT * 0.7);
+    arcticBandMat.opacity = 0.22 + _ap * 0.13;     // ~0.09–0.35
+    arcticLineMat.opacity = 0.82 + _ap * 0.16;     // ~0.66–0.98
     clouds.rotation.y += 0.00012 * (1 + stormFactor * 14);  // cloud cover blows past 15× faster in a storm
 
     // Climatology animation: flow dashes along currents, spin anticyclones
