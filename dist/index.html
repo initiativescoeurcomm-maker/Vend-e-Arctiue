@@ -1393,7 +1393,6 @@
       <div class="tweak-toggle on" id="tk-clim"><span>Courants &amp; hautes pressions</span><div class="switch"></div></div>
       <div class="tweak-toggle on" id="tk-grid"><span>Méridiens &amp; parallèles</span><div class="switch"></div></div>
       <div class="tweak-toggle on" id="tk-iss"><span>Station spatiale (ISS)</span><div class="switch"></div></div>
-      <div class="tweak-toggle on" id="tk-fauna"><span>Baleines &amp; dauphins</span><div class="switch"></div></div>
       <div class="tweak-toggle on" id="tk-autorotate"><span>Rotation auto</span><div class="switch"></div></div>
     </div>
   </div>
@@ -2435,13 +2434,12 @@ const Globe = (() => {
   // Tile the given bbox with EOX Sentinel-2 imagery. Double-buffered: the
   // previous tiles stay up until the new ones finish loading (no flash), so it
   // can be re-called as the view zooms/pans to keep the imagery sharp.
-  function buildGpsOverlay(bbox, padFactor) {
-    if (!bbox) { clearGpsOverlay(); return; }
-    const token = ++gpsOverlayToken;
-    // Collapse any still-pending previous transition, then demote current→prev.
-    disposeTiles(gpsTilesPrev);
-    gpsTilesPrev = gpsTilesCurrent;
-    gpsTilesCurrent = [];
+  // Tile spec for a (padded) bbox — the SINGLE source of truth for the detail
+  // grid + EOX URLs, shared by buildGpsOverlay (render) and the playback prefetch
+  // (cache warming), so the URLs are byte-identical → prefetched tiles cache-hit
+  // during playback and load instantly. Tile grid: ~1° per tile, capped 6×6; few
+  // tiles (zoomed-in) get more px each, big grids drop to 1024 px to bound memory.
+  function _gpsTileSpecs(bbox, padFactor) {
     const pf = (padFactor != null) ? padFactor : 2.0;
     const latSpan = Math.max(0.02, bbox.latN - bbox.latS);
     const lonSpan = Math.max(0.02, bbox.lonE - bbox.lonW);
@@ -2449,23 +2447,11 @@ const Globe = (() => {
     const latS = Math.max(-85, bbox.latS - padLat), latN = Math.min(85, bbox.latN + padLat);
     const lonW = Math.max(-180, bbox.lonW - padLon), lonE = Math.min(180, bbox.lonE + padLon);
     const dLat = latN - latS, dLon = lonE - lonW;
-    const deg = Math.PI / 180;
-    const edgeFade = makeEdgeFade((lonW + lonE) / 2, (latS + latN) / 2, dLon / 2, dLat / 2);
-    // Tile grid: ~1° per tile, capped 6×6 (was 4×4) so WIDE spread-fleet views
-    // still get HD coverage of the far land. Fewer tiles (zoomed-in) get more
-    // pixels each (near Sentinel-2's native ~10 m/px); big grids (wide views) drop
-    // to 1024 px/tile so the worst case (6×6) stays ~150 MB, within budget.
     const cols = Math.min(6, Math.max(1, Math.ceil(dLon / 1.0)));
     const rows = Math.min(6, Math.max(1, Math.ceil(dLat / 1.0)));
     const nTiles = cols * rows;
     const tilePx = nTiles <= 2 ? 4096 : (nTiles <= 6 ? 2048 : (nTiles <= 16 ? 1536 : 1024));
-    const fresh = [];
-    let pending = 0;
-    const settle = () => {
-      if (token !== gpsOverlayToken) return;
-      if (pending > 0) return;
-      disposeTiles(gpsTilesPrev); gpsTilesPrev = [];   // new set ready → drop old
-    };
+    const tiles = [];
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const tLonW = lonW + dLon * c / cols, tLonE = lonW + dLon * (c + 1) / cols;
@@ -2477,27 +2463,49 @@ const Globe = (() => {
         const url = 'https://tiles.maps.eox.at/wms?service=WMS&version=1.1.1&request=GetMap' +
           '&layers=s2cloudless-2024&styles=&format=image/jpeg&srs=EPSG:4326' +
           `&width=${W}&height=${H}&bbox=${tLonW},${tLatS},${tLonE},${tLatN}`;
-        const geo = new THREE.SphereGeometry(
-          1.0009, 48, 48,
-          (tLonW + 180) * deg, tDLon * deg,
-          (90 - tLatN) * deg, tDLat * deg
-        );
-        const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
-        mat.onBeforeCompile = edgeFade;
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.renderOrder = 2;          // above Earth (0), below clouds (999)
-        mesh.frustumCulled = false;
-        earthGroup.add(mesh);
-        fresh.push(mesh);
-        pending++;
-        gpsOverlayLoader.load(url, (tex) => {
-          if (token !== gpsOverlayToken) { tex.dispose(); return; }
-          tex.anisotropy = MAX_ANISO;
-          tex.encoding = THREE.sRGBEncoding;
-          mat.map = tex; mat.opacity = 1; mat.needsUpdate = true;
-          pending--; settle();
-        }, undefined, () => { pending--; settle(); });
+        tiles.push({ url, tLonW, tLonE, tLatS, tLatN, tDLon, tDLat });
       }
+    }
+    return { tiles, lonW, lonE, latS, latN, dLon, dLat };
+  }
+  function buildGpsOverlay(bbox, padFactor) {
+    if (!bbox) { clearGpsOverlay(); return; }
+    const token = ++gpsOverlayToken;
+    // Collapse any still-pending previous transition, then demote current→prev.
+    disposeTiles(gpsTilesPrev);
+    gpsTilesPrev = gpsTilesCurrent;
+    gpsTilesCurrent = [];
+    const deg = Math.PI / 180;
+    const spec = _gpsTileSpecs(bbox, padFactor);
+    const edgeFade = makeEdgeFade((spec.lonW + spec.lonE) / 2, (spec.latS + spec.latN) / 2, spec.dLon / 2, spec.dLat / 2);
+    const fresh = [];
+    let pending = 0;
+    const settle = () => {
+      if (token !== gpsOverlayToken) return;
+      if (pending > 0) return;
+      disposeTiles(gpsTilesPrev); gpsTilesPrev = [];   // new set ready → drop old
+    };
+    for (const t of spec.tiles) {
+      const geo = new THREE.SphereGeometry(
+        1.0009, 48, 48,
+        (t.tLonW + 180) * deg, t.tDLon * deg,
+        (90 - t.tLatN) * deg, t.tDLat * deg
+      );
+      const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+      mat.onBeforeCompile = edgeFade;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.renderOrder = 2;          // above Earth (0), below clouds (999)
+      mesh.frustumCulled = false;
+      earthGroup.add(mesh);
+      fresh.push(mesh);
+      pending++;
+      gpsOverlayLoader.load(t.url, (tex) => {
+        if (token !== gpsOverlayToken) { tex.dispose(); return; }
+        tex.anisotropy = MAX_ANISO;
+        tex.encoding = THREE.sRGBEncoding;
+        mat.map = tex; mat.opacity = 1; mat.needsUpdate = true;
+        pending--; settle();
+      }, undefined, () => { pending--; settle(); });
     }
     gpsTilesCurrent = fresh;
     // Safety net: if some tiles never resolve, drop the old set after 9 s.
@@ -2541,6 +2549,80 @@ const Globe = (() => {
     // Hug the view tightly for sharpness. The persistent course base shows
     // underneath while these load, so there is never a low-res gap.
     buildGpsOverlay({ latS: b.latS, latN: b.latN, lonW: b.lonW, lonE: b.lonE }, moving ? 0.45 : 0.3);
+  }
+
+  // ---- Carto HD prefetch (so the map stays SHARP while PLAYING) ----
+  // The detail layer used to re-tile to the live view during playback, but the
+  // tiles take ~1-2 s to download → low-def until you paused. Instead we precompute
+  // K deterministic keyframe bboxes (the fleet's bbox at K points along the track)
+  // and PREFETCH their tiles into the browser cache at load. During playback,
+  // retileToKeyframe builds the overlay from the SAME bbox+pad via _gpsTileSpecs →
+  // byte-identical URLs → instant cache hits → sharp the whole way. Only the
+  // current view is ever a GPU texture (bounded memory); the rest is HTTP cache.
+  const CARTO_KEYS = 18, CARTO_KEY_PAD = 0.4;
+  let _cartoKeys = null, _cartoPrefetching = false;
+  // The follow-camera VIEW bbox at a given progress — the SAME geometry retileToView
+  // (idle) would tile, so the keyframe overlay covers exactly what the camera shows
+  // during playback (not just the boats — also the surrounding coast/islands).
+  function followViewBboxAt(progress) {
+    if (!fleetUnit.length || !fleetFrameN) return null;
+    const idxF = Math.max(0, Math.min(fleetFrameN - 1, progress * (fleetFrameN - 1)));
+    const i0 = Math.floor(idxF), i1 = Math.min(fleetFrameN - 1, i0 + 1), tt = idxF - i0;
+    const px = []; const c = new THREE.Vector3();
+    for (const u of fleetUnit) {
+      const x = u[i0*3]   + (u[i1*3]   - u[i0*3])   * tt;
+      const y = u[i0*3+1] + (u[i1*3+1] - u[i0*3+1]) * tt;
+      const z = u[i0*3+2] + (u[i1*3+2] - u[i0*3+2]) * tt;
+      px.push(x, y, z); c.x += x; c.y += y; c.z += z;
+    }
+    c.multiplyScalar(1 / fleetUnit.length);
+    if (c.lengthSq() < 1e-9) return null;
+    c.normalize();
+    let maxA = 0; const v = new THREE.Vector3();
+    for (let i = 0; i < px.length; i += 3) { v.set(px[i], px[i+1], px[i+2]); const a = v.angleTo(c); if (a > maxA) maxA = a; }
+    const tanHF = Math.tan(camera.fov * Math.PI / 360);
+    let d = Math.cos(maxA) + Math.sin(maxA) * 1.1 / tanHF;
+    d = Math.max(1.010, Math.min(6.2, d));                // same follow distance as computeFleetFrame
+    const lat = 90 - Math.acos(Math.max(-1, Math.min(1, c.y))) * 180 / Math.PI;
+    const lon = Math.atan2(c.z, -c.x) * 180 / Math.PI - 180;
+    const halfV = camera.fov * Math.PI / 360;
+    const halfH = Math.atan(Math.tan(halfV) * (camera.aspect || 1.6));
+    const foot = hf => { const s = d * Math.sin(hf); return s >= 1 ? Math.PI / 2 : (Math.asin(s) - hf); };
+    const gV = foot(halfV) * 180 / Math.PI, gH = foot(halfH) * 180 / Math.PI;
+    const cl = Math.max(0.05, Math.cos(lat * Math.PI / 180));
+    return { latS: lat - gV, latN: lat + gV, lonW: lon - gH / cl, lonE: lon + gH / cl };
+  }
+  function prefetchCarto() {
+    if (ACTIVE_KEY !== 'gps' || _cartoPrefetching || !fleetFrameN) return;
+    _cartoPrefetching = true;
+    _cartoKeys = [];
+    const urls = new Set();
+    for (let k = 0; k < CARTO_KEYS; k++) {
+      const bb = followViewBboxAt(k / (CARTO_KEYS - 1));
+      if (!bb) continue;
+      _cartoKeys.push(bb);
+      _gpsTileSpecs(bb, CARTO_KEY_PAD).tiles.forEach(t => urls.add(t.url));
+    }
+    const list = Array.from(urls);
+    let i = 0, active = 0;
+    const pump = () => {
+      while (active < 5 && i < list.length) {
+        const url = list[i++]; active++;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';   // match THREE.TextureLoader's CORS mode → shared cache entry
+        img.onload = img.onerror = () => { active--; pump(); };
+        img.src = url;
+      }
+    };
+    pump();
+  }
+  function retileToKeyframe(progress) {
+    if (!_cartoKeys || !_cartoKeys.length) { retileToView(false, true); return; }
+    const k = Math.max(0, Math.min(_cartoKeys.length - 1, Math.round(progress * (_cartoKeys.length - 1))));
+    const sig = 'key' + k;
+    if (sig === _tileSig) return;
+    _tileSig = sig;
+    buildGpsOverlay(_cartoKeys[k], CARTO_KEY_PAD);
   }
 
   // Two-phase texture loading so the user sees continents within ~1 s
@@ -4804,18 +4886,19 @@ const Globe = (() => {
           if (fb.headingQ) fb.model3d.quaternion.copy(fb.headingQ).multiply(_heelQ.setFromAxisAngle(_heelAxis, _primaryHeel * fb.heelFactor));
         }
       }
-      updateSeaLife(performance.now());   // whales & dolphins breaching near the fleet
-      // Keep the HD detail layer following the live view — INCLUDING during playback.
-      // It used to re-tile only when idle, so the map was sharp at load (idle detail)
-      // then DROPPED to the coarser course base once you pressed play and the fleet
-      // moved away from the tiled spot. Now we also re-tile while moving, just on a
-      // slower throttle (double-buffered → the previous tiles hold until the new set
-      // loads, so no flash and no low-res gap). `moving` widens the pad to cover ahead.
+      // updateSeaLife(performance.now());  // whales & dolphins — DISABLED (user: "enlève les
+      // animaux, ça brouille la lecture"). Code kept dormant for a possible later revisit.
+      // Keep the HD detail layer following the live view. When IDLE we tile the
+      // exact live view (sharpest). When PLAYING we tile the QUANTIZED keyframe
+      // bbox (retileToKeyframe) — its tiles were prefetched into the browser cache
+      // at load, so they appear instantly and the map stays sharp the whole way
+      // (vs the old live re-tile that downloaded mid-play → low-def until paused).
       const tnow = performance.now();
       const _idle = (tnow - lastInteract > 320 && tnow - _lastFleetUpdate > 280);
-      if (tnow - _lastRetileCheck > (_idle ? 450 : 2400)) {
+      if (tnow - _lastRetileCheck > (_idle ? 450 : 700)) {
         _lastRetileCheck = tnow;
-        retileToView(false, !_idle);
+        if (_idle) retileToView(false, false);
+        else retileToKeyframe(progress);
       }
     }
 
@@ -6130,7 +6213,6 @@ const Globe = (() => {
   bindToggle('tk-clim', 'showClim');
   bindToggle('tk-grid', 'showGrid');
   bindToggle('tk-iss',  'showISS');
-  bindToggle('tk-fauna', 'fauna');
   bindToggle('tk-autorotate', 'autoRotate');
   // Légendes palette — per-category text overlays
   bindToggle('lg-poi',        'legendPoi');
@@ -6220,6 +6302,10 @@ const Globe = (() => {
     update();                                   // 2nd pass: fleetFrame now populated → snap lands on Les Sables, not mid-Atlantic
     if (Globe.snapFollowCamera) Globe.snapFollowCamera(true);  // jump straight to Les Sables (no Île d'Yeu intro)
     if (Globe.coverStartView) Globe.coverStartView();          // sharp EOX tiles ON the start view, by geo bbox (camera-independent)
+    // Warm the browser cache with the HD detail tiles the playback will need, so
+    // the map stays sharp WHILE PLAYING (deferred a bit so it doesn't slow the
+    // initial base-overlay reveal). Runs in the background, throttled.
+    setTimeout(() => { try { prefetchCarto(); } catch (e) {} }, 2500);
     document.body.classList.add('gps-loaded');
     const n = RACES.gps.fleetCount || (data.boats ? data.boats.length : 0);
     const p2 = x => String(x).padStart(2, '0');
