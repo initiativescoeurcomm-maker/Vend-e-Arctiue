@@ -84,7 +84,7 @@
     display: flex; align-items: center; justify-content: center;
   }
   .round:hover:not(:disabled) { border-color: var(--encre); }
-  .round:disabled { opacity: .3; cursor: default; }
+  .round:disabled { visibility: hidden; }
 
   .tools { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
   .pill {
@@ -185,6 +185,164 @@
 
   .intro { font-size: 1.05rem; line-height: 1.45; margin: 0 0 .9rem; }
 
+  /* ---- Menu « Imprimer » ---- */
+  .menu { position: relative; }
+  .menu summary { display: block; list-style: none; cursor: pointer; }
+  .menu summary::-webkit-details-marker { display: none; }
+  .menu-list {
+    position: absolute; right: 0; top: calc(100% + .4rem); z-index: 5;
+    display: grid; min-width: 15rem; padding: .4rem;
+    background: var(--blanc); border: 1px solid var(--trait); border-radius: .8rem;
+    box-shadow: 0 .6rem 2rem rgba(10,31,68,.18);
+  }
+  .menu-list button {
+    text-align: left; background: none; border: 0; border-radius: .5rem;
+    padding: .55rem .8rem; font-size: .9rem; font-weight: 500;
+  }
+  .menu-list button:hover { background: var(--papier); }
+
+  /* ---- Le rituel pas à pas ---- */
+  body.en-guide .round { visibility: hidden; }
+  .guide {
+    display: flex; flex-direction: column; gap: .65rem; min-height: 0; overflow: hidden;
+    background: var(--blanc);
+    border: 1px solid var(--trait); border-radius: 1.1rem;
+    padding: 1.1rem 1.5rem 1.2rem;
+  }
+  .g-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .g-count {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--doux);
+  }
+  /* Une pastille par étape : on peut y aller directement. */
+  .g-dots { display: flex; list-style: none; margin: 0; padding: 0; }
+  .g-dots button {
+    width: 1.5rem; height: 1.5rem; padding: 0; border: 0; background: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .g-dots button::before { content: ''; width: .62rem; height: .62rem; border-radius: 50%; background: rgba(10,31,68,.16); }
+  .g-dots button.fait::before { background: var(--encre); }
+  .g-dots button.ici::before { background: var(--rouge); box-shadow: 0 0 0 .2rem rgba(227,6,19,.18); }
+  .g-q {
+    margin: 0;
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 2.1rem; line-height: 1.1; letter-spacing: -.01em;
+  }
+  .g-hint { margin: 0; font-size: 1.15rem; line-height: 1.4; }
+  .g-hint b { font-weight: 700; }
+  .g-hint.vu { font-size: .92rem; color: var(--doux); }
+  /* La correction : ce qui était juste, et surtout comment on trouve. */
+  .g-verdict {
+    padding: .65rem .95rem; border-radius: .8rem;
+    background: #eef3f8; border-left: .3rem solid var(--encre);
+    font-size: 1.02rem; line-height: 1.45;
+  }
+  .v { font-weight: 700; }
+  .v.ok { color: #0b6b3a; }
+  .v.non { color: #b3261e; }
+  .calcul { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .g-stage {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column; justify-content: center; gap: .7rem;
+  }
+  .g-stage.haut { justify-content: flex-start; }
+  .g-stage > p { margin: 0; }
+  .etat { margin: 0; font-size: .92rem; color: var(--doux); }
+  .g-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .pill.big { font-size: 1.05rem; padding: .8rem 1.7rem; }
+
+  .answer { flex: none; animation: reponse .35s ease-out; }
+  /* Pas de fondu : même si l'animation se fige, la réponse reste lisible. */
+  @keyframes reponse { from { transform: translateY(.7rem) scale(.97); } to { transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .answer { animation: none; } }
+  .answer .value.texte { font-size: 2.2rem; white-space: normal; line-height: 1.15; }
+  .answer .delta { margin: .55rem 0 0; font-size: 1.05rem; font-weight: 700; color: #ffb9be; }
+  .hero .bar { background: rgba(255,255,255,.22); }
+  .hero .ends { color: rgba(246,241,231,.72); }
+
+  .aide { background: var(--papier); border-radius: .9rem; padding: .8rem 1rem; }
+  .aide-t { margin: 0 0 .35rem; font-weight: 700; }
+  .aide ul { margin: 0; padding-left: 1.15rem; display: grid; gap: .25rem; font-size: .98rem; line-height: 1.35; }
+  .retour { margin: .6rem 0 0; font-size: .95rem; line-height: 1.4; }
+  .exemple { margin: 0; padding: .6rem .9rem; border-radius: .8rem; background: var(--papier); font-size: 1rem; line-height: 1.4; }
+
+  .saisie { display: flex; align-items: baseline; flex-wrap: wrap; gap: .7rem; font-size: 1.1rem; font-weight: 600; }
+  .saisie input {
+    width: 9rem; padding: .4rem .7rem;
+    border: .14rem solid var(--encre); border-radius: .7rem; background: #fff; color: var(--encre);
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 2rem; text-align: right;
+  }
+  .saisie input:focus { outline: .18rem solid var(--rouge); outline-offset: .12rem; }
+  .saisie .u { font-family: 'Fraunces', serif; font-size: 1.4rem; }
+
+  .levels { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+  .levels > span {
+    margin-right: .3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--doux);
+  }
+  .levels .pill[aria-pressed="true"] { background: var(--encre); border-color: var(--encre); color: #fff; }
+  .menu-etapes { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+  .menu-etapes button {
+    width: 100%; display: grid; grid-template-columns: 1.8rem 1fr; align-items: center; gap: .7rem;
+    padding: .28rem .5rem; border: 0; border-radius: .6rem; background: none;
+    text-align: left; font-size: 1.05rem; font-weight: 500;
+  }
+  .menu-etapes button:hover { background: var(--papier); }
+  .menu-etapes b {
+    width: 1.8rem; height: 1.8rem; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--rouge); color: #fff;
+    font-family: 'Fraunces', serif; font-size: 1rem;
+  }
+
+  .ligne { width: 100%; border-collapse: collapse; }
+  .ligne th, .ligne td { padding: .26rem 0; border-bottom: 1px solid var(--trait); }
+  .ligne th { text-align: left; font-size: 1rem; font-weight: 500; color: var(--doux); }
+  .ligne td { text-align: right; font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.3rem; white-space: nowrap; }
+  .ligne tr:last-child th, .ligne tr:last-child td { border-bottom: 0; }
+
+  /* Outils : bande graduée, graphique, tableau de Beaufort. Leurs tailles
+     sont en unités de leur propre dessin (deux gabarits : large et téléphone). */
+  .bande, .graphe { display: block; width: 100%; height: auto; touch-action: manipulation; }
+  .bande.actif, .graphe.actif { cursor: crosshair; }
+  .bande .axe { stroke: var(--encre); stroke-width: 5; stroke-linecap: round; }
+  .bande .grand { stroke: var(--encre); stroke-width: 3.5; }
+  .bande .petit { stroke: var(--encre); stroke-width: 2; opacity: .5; }
+  .bande .num { font-family: 'JetBrains Mono', monospace; font-size: 25px; fill: var(--encre); }
+  .bande .bout { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 25px; fill: var(--encre); }
+  .bande .essai { fill: var(--encre); }
+  .bande .vrai { fill: var(--rouge); stroke: #fff; stroke-width: 1.5; }
+  .graphe .fond { fill: #fff; stroke: var(--encre); stroke-width: 2; }
+  .graphe .colonne { fill: rgba(227,6,19,.09); }
+  .graphe .grand { stroke: rgba(10,31,68,.45); stroke-width: 2; }
+  .graphe .petit { stroke: rgba(10,31,68,.14); stroke-width: 1.2; }
+  .graphe .num { font-family: 'JetBrains Mono', monospace; font-size: 25px; fill: var(--encre); }
+  .graphe .num.auj { fill: var(--rouge); font-weight: 700; }
+  .graphe .titre { font-family: 'Inter', sans-serif; font-size: 23px; font-weight: 600; fill: var(--doux); }
+  .graphe .courbe { fill: none; stroke: var(--encre); stroke-width: 4; stroke-linejoin: round; }
+  .graphe .pt { fill: var(--encre); }
+  .graphe .essai { fill: rgba(255,255,255,.6); stroke: var(--encre); stroke-width: 4; }
+  .graphe .vrai { fill: var(--rouge); stroke: #fff; stroke-width: 3; }
+
+  .beaufort { display: grid; gap: .1rem; font-size: .86rem; }
+  .beaufort .tete, .beaufort button {
+    display: grid; grid-template-columns: 4rem 1fr 9.6rem; align-items: center; gap: .6rem;
+    padding: .12rem .7rem; text-align: left;
+  }
+  .beaufort .tete {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--doux);
+  }
+  .beaufort button { border: 1px solid var(--trait); border-radius: .45rem; background: #fff; font-weight: 500; }
+  .beaufort .bf { font-family: 'Fraunces', serif; font-weight: 700; }
+  .beaufort button:hover:not(:disabled) { border-color: var(--encre); }
+  .beaufort button.choisi { background: var(--encre); border-color: var(--encre); color: #fff; }
+  .beaufort button.juste { background: #0b6b3a; border-color: #0b6b3a; color: #fff; }
+  .beaufort button.faux { border-color: #b3261e; color: #b3261e; text-decoration: line-through; }
+  .beaufort button:disabled { cursor: default; }
+
   /* Écran large (classe) : tout tient dans la hauteur, sans défilement. */
   @media (min-width: 900px) and (min-height: 540px) {
     .page { height: 100vh; }
@@ -192,13 +350,66 @@
     .map-wrap { aspect-ratio: auto; }
     .cards { grid-template-rows: 1.15fr 1fr 1fr; }
   }
+  /* Téléphone et tablette en hauteur : une seule colonne qui défile, des
+     textes à taille fixe et des boutons assez grands pour le doigt. */
   @media (max-width: 899px) {
-    .top { grid-template-columns: 1fr; justify-items: start; }
-    .tools { justify-content: flex-start; }
+    html { font-size: 16px; }
+    .page { gap: .8rem; padding: .8rem .9rem 1rem; }
+    /* En-tête ramassé : le titre et la date sur une ligne, les boutons dessous. */
+    .top { grid-template-columns: 1fr auto; justify-items: start; gap: .5rem .6rem; }
+    .brand { gap: .55rem; }
+    .brand-logo { width: 2.2rem; height: 2.2rem; }
+    .brand-logo svg { width: 1.3rem; height: 1.3rem; }
+    .eyebrow { display: none; }
+    h1 { margin: 0; font-size: 1.2rem; }
+    .day { justify-self: end; gap: .5rem; text-align: right; }
+    .day-date { font-size: .95rem; }
+    .day-num { margin-top: .1rem; font-size: .62rem; letter-spacing: .06em; }
+    body:not(.en-guide) .day { grid-column: 1 / -1; justify-self: stretch; justify-content: space-between; text-align: center; }
+    body:not(.en-guide) .day-date { font-size: 1.15rem; }
+    .tools { grid-column: 1 / -1; justify-content: flex-start; }
+    .pill { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: center; }
+    .menu summary.pill { display: flex; }
+    #btn-full { display: none; }
+    .round { width: 2.75rem; height: 2.75rem; }
+    .value { font-size: 2.6rem; }
+    .hero .value { font-size: 3.3rem; }
+    .where-line { font-size: 1.2rem; }
+
+    /* Pas à pas : la consigne, puis l'outil, puis la correction ; le bouton
+       principal reste collé en bas de l'écran. La carte ne s'affiche que
+       lorsqu'elle sert à l'étape. */
+    body.en-guide .round, body.en-guide .day-num { display: none; }
+    .banner { font-size: .85rem; padding: .5rem .8rem; }
+    body.en-guide .board { display: flex; flex-direction: column; gap: .7rem; }
+    body.en-guide .guide { display: contents; }
+    body.en-guide .g-top { order: 1; }
+    body.en-guide .g-q { order: 2; font-size: 1.6rem; }
+    body.en-guide .g-hint { order: 3; font-size: 1.08rem; }
+    body.en-guide .map-card { order: 4; }
+    body.en-guide .g-verdict { order: 5; }
+    body.en-guide .g-stage { order: 6; flex: none; justify-content: flex-start; }
+    body.en-guide .g-nav {
+      order: 9; position: sticky; bottom: 0; z-index: 4;
+      margin: 0 -.9rem; padding: .7rem .9rem calc(.7rem + env(safe-area-inset-bottom));
+      background: linear-gradient(rgba(246,241,231,0), var(--papier) 28%);
+    }
+    body.en-guide:not([data-outil="carte"]):not([data-outil="accueil"]) .map-card { display: none; }
+    body.en-guide[data-outil="accueil"] .map-card { order: 7; }
+    body.en-guide .where { padding: .55rem .9rem .65rem; }
+    body.en-guide .where-line { font-size: 1.05rem; }
+    .g-dots button { width: 1.7rem; height: 2.75rem; }
+    .pill.big { flex: 1; max-width: 22rem; margin-left: auto; }
+    .menu-etapes button { min-height: 2.75rem; font-size: 1rem; }
+    .saisie input { width: 8rem; }
+    .answer .value.texte { font-size: 1.7rem; }
+    .beaufort { font-size: .92rem; }
+    .beaufort .tete, .beaufort button { grid-template-columns: 3.4rem 1fr 7.8rem; gap: .4rem; padding: .1rem .55rem; }
+    .beaufort button { min-height: 2.5rem; }
+    .menu-list button { min-height: 2.75rem; }
   }
   @media (max-width: 520px) {
     .cards { grid-template-columns: minmax(0, 1fr); }
-    .hero .value { font-size: 3.6rem; }
   }
 
   /* ---- Carte (écran et feuille à imprimer) ---- */
@@ -225,6 +436,35 @@
   @keyframes pouls { from { transform: scale(.5); opacity: .9; } to { transform: scale(2.6); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .bateau .pouls { animation: none; opacity: .35; } }
 
+  /* Carte à l'écran : tout se mesure en --u (unités de carte pour 1 rem à
+     l'écran, recalculé à chaque zoom), avec un plafond pour la vue d'ensemble. */
+  #map { --u: 18px; touch-action: manipulation; }
+  #map.actif { cursor: crosshair; }
+  #map .terres { stroke-width: calc(var(--u) * .04); }
+  #map .grille line { stroke: rgba(10,31,68,.45); stroke-width: calc(var(--u) * .085); }
+  #map .grille line.moyen { stroke: rgba(10,31,68,.3); stroke-width: calc(var(--u) * .06); }
+  #map .grille line.fin { stroke: rgba(10,31,68,.17); stroke-width: calc(var(--u) * .04); }
+  #map .grille text {
+    font-size: min(calc(var(--u) * .8), 22px); font-weight: 700; fill: var(--encre);
+    paint-order: stroke; stroke: rgba(255,255,255,.88); stroke-width: calc(var(--u) * .22); stroke-linejoin: round;
+  }
+  #map .lieux text { font-size: min(calc(var(--u) * .78), 22px); stroke-width: calc(var(--u) * .2); }
+  #map .lieux text.pays { font-size: min(calc(var(--u) * .66), 18px); }
+  #map .lieux text.ocean { font-size: min(calc(var(--u) * 1.05), 28px); }
+  #map .lieux text.ile { font-size: min(calc(var(--u) * .64), 17px); }
+  #map:not(.zoom) .grille line { stroke: rgba(10,31,68,.17); stroke-width: calc(var(--u) * .04); }
+  #map.lointain .lieux text.pays, #map.lointain .lieux text.ile, #map.lointain .grille text { display: none; }
+  #map .lieux circle { r: calc(var(--u) * .25); stroke-width: calc(var(--u) * .08); }
+  #map .reste { stroke-width: calc(var(--u) * .12); stroke-dasharray: calc(var(--u) * .006) calc(var(--u) * .39); }
+  #map .trace { stroke-width: calc(var(--u) * .17); }
+  #map .points circle { stroke-width: calc(var(--u) * .11); }
+  #map .aides line { stroke: var(--rouge); stroke-width: calc(var(--u) * .1); stroke-dasharray: calc(var(--u) * .34) calc(var(--u) * .24); }
+  #map .aides .fleche { fill: none; stroke: var(--encre); stroke-width: calc(var(--u) * .17); stroke-linecap: round; }
+  #map .essai circle { fill: #fff; stroke: var(--encre); stroke-width: 3; }
+  #map .essai .centre { fill: var(--encre); stroke: none; }
+  #map .prevu circle { fill: rgba(255,255,255,.55); stroke: var(--encre); stroke-width: 2.6; stroke-dasharray: 4 3; }
+  #map .ancien circle { fill: rgba(255,255,255,.4); stroke: #77829a; stroke-width: 2.6; stroke-dasharray: 4 3; }
+
   /* ---- Feuilles à imprimer ---- */
   .sheet { display: none; }
   @media print {
@@ -232,6 +472,8 @@
     body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { display: none !important; }
     body[data-print="carnet"] #sheet-carnet,
+    body[data-print="fiche"] #sheet-fiche,
+    body[data-print="graphique"] #sheet-graphique,
     body[data-print="carte"] #sheet-carte { display: block; }
 
     .sheet-head { display: flex; align-items: center; gap: 4mm; margin-bottom: 4mm; }
@@ -258,6 +500,27 @@
     #sheet-carte .grille line.fin { stroke: #aab1c0; stroke-width: .35; }
     #sheet-carte .grille text { font-size: 12px; fill: #0A1F44; font-weight: 600; }
     #sheet-carte .cadre { fill: none; stroke: #0A1F44; stroke-width: 1.2; }
+
+    #graph-print { display: block; width: 100%; height: 205mm; }
+    #graph-print .petit { stroke: #aab1c0; stroke-width: 1; }
+    #graph-print .grand { stroke: #0A1F44; stroke-width: 2.2; }
+    #graph-print .cadre { fill: none; stroke: #0A1F44; stroke-width: 2.6; }
+    #graph-print .num { font-family: 'JetBrains Mono', monospace; font-size: 20px; fill: #556; }
+    #graph-print .num.fort { font-size: 24px; font-weight: 700; fill: #0A1F44; }
+    #graph-print .titre { font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 600; fill: #445; }
+
+    #sheet-fiche .chapo { margin: 0 0 1mm; font-size: 11pt; line-height: 1.4; }
+    #sheet-fiche .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 9mm; }
+    #sheet-fiche h3 { margin: 4mm 0 1.4mm; font-family: 'Fraunces', serif; font-weight: 700; font-size: 12.5pt; color: #E30613; }
+    #sheet-fiche p, #sheet-fiche li { margin: 0 0 1.1mm; font-size: 9.5pt; line-height: 1.4; }
+    #sheet-fiche ul, #sheet-fiche ol { margin: 0; padding-left: 5mm; }
+    #sheet-fiche .etapes { width: 100%; border-collapse: collapse; }
+    #sheet-fiche .etapes th, #sheet-fiche .etapes td {
+      border: .25mm solid #9aa3b5; padding: 1mm 1.8mm;
+      font-size: 9pt; line-height: 1.3; text-align: left; vertical-align: top;
+    }
+    #sheet-fiche .etapes th { background: #eef1f6; font-size: 8.5pt; }
+    #sheet-fiche .etapes td:first-child { font-weight: 700; white-space: nowrap; }
   }
 </style>
 </head>
@@ -266,7 +529,9 @@
 <!-- Tracé des côtes, partagé par la carte à l'écran et la carte à imprimer.
      Généré par tools/make-rituel-map.py (10 unités par degré, voir CARTE). -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <defs><path id="terres" d="M0,0L58.9,0L58.9,0.9L59.8,0.9L59.8,0L62.4,0L62.4,0.9L64.2,0.9L64.2,4.4L63.3,4.4L63.3,6.2L64.2,6.2L64.2,7L65,7L65,6.2L65.9,6.2L65.9,7L67.7,7L67.7,7.9L65,7.9L65,8.8L65.9,8.8L65,12.3L65.9,12.3L65.9,11.4L75.6,11.4L77.3,14.9L80.9,14.9L80.9,16.7L82.6,15.8L82.6,16.7L83.5,16.7L83.5,18.5L84.4,18.5L84.4,17.6L87,17.6L87,16.7L89.6,16.7L90.5,14.9L91.4,14.9L91.4,15.8L92.3,15.8L92.3,14.9L94,14.9L94,13.2L94.9,13.2L95.8,11.4L99.3,13.2L99.3,11.4L101.1,11.4L101.1,9.7L102.8,9.7L102.8,7L104.6,7.9L104.6,6.2L106.3,5.3L106.3,4.4L104.6,3.5L105.5,1.8L107.2,1.8L107.2,0.9L109,0.9L109,0L118.7,0L118.7,1.8L120.4,1.8L120.4,3.5L121.3,3.5L121.3,4.4L123,4.4L123,5.3L122.2,5.3L123,7L124.8,6.2L124.8,7L126.6,7.9L126.6,9.7L128.3,9.7L128.3,11.4L131,11.4L131,14.1L130.1,14.1L129.2,15.8L131,15.8L131,14.9L134.5,14.9L134.5,15.8L133.6,15.8L133.6,18.5L136.2,18.5L136.2,20.2L137.1,20.2L137.1,21.1L138,21.1L138,20.2L138.9,20.2L138.9,21.1L141.5,21.1L141.5,22L140.6,22L140.6,23.7L141.5,23.7L141.5,24.6L143.3,24.6L143.3,27.2L141.5,26.4L141.5,28.1L145.9,28.1L145.9,29L146.8,29L146.8,30.8L145.9,30.8L145.9,32.5L146.8,32.5L146.8,33.4L145.9,33.4L145.9,35.2L147.7,35.2L147.7,36L145.9,36L145.9,37.8L146.8,37.8L146.8,38.7L147.7,38.7L147.7,37.8L149.4,37.8L149.4,38.7L150.3,38.7L150.3,40.4L152.9,40.4L152.9,42.2L153.8,42.2L153.8,43.1L154.7,43.1L154.7,42.2L157.3,42.2L157.3,43.1L156.4,43.1L156.4,44.8L158.2,44.8L158.2,45.7L157.3,45.7L156.4,47.5L158.2,47.5L158.2,46.6L161.7,47.5L161.7,46.6L162.6,46.6L162.6,48.3L165.2,48.3L165.2,49.2L167,49.2L167,48.3L168.8,47.5L168.8,49.2L170.5,48.3L170.5,51L171.4,51L171.4,51.9L174.9,51.9L174.9,52.7L175.8,52.7L175.8,51.9L178.4,51.9L178.4,51L180.2,51L180.2,51.9L181.1,51.9L181.1,52.7L182.8,52.7L182.8,53.6L186.3,53.6L186.3,54.5L189,54.5L189,55.4L184.6,55.4L184.6,56.2L178.4,56.2L178.4,58L186.3,58L186.3,59.8L187.2,59.8L187.2,60.6L189,61.5L189,63.3L186.3,63.3L187.2,65L189,65L189,63.3L189.8,63.3L190.7,61.5L191.6,61.5L191.6,62.4L195.1,62.4L195.1,64.2L200.4,64.2L200.4,65L202.1,65L202.1,65.9L201.3,65.9L201.3,66.8L203,67.7L203,68.6L202.1,68.6L202.1,73.8L203,73.8L203,75.6L203.9,75.6L203.9,76.5L202.1,76.5L202.1,77.3L203.9,77.3L203.9,78.2L203,78.2L203,79.1L202.1,79.1L201.3,80.9L199.5,80.9L199.5,81.7L197.8,81.7L197.8,82.6L195.1,82.6L195.1,83.5L193.4,83.5L192.5,85.3L189.8,85.3L189.8,86.1L188.1,86.1L188.1,85.3L184.6,85.3L184.6,86.1L180.2,86.1L180.2,87L177.5,87L177.5,87.9L175.8,87.9L175.8,88.8L173.1,88.8L173.1,89.6L171.4,89.6L171.4,90.5L170.5,90.5L170.5,92.3L167.9,92.3L167.9,94L165.2,94L165.2,94.9L161.7,95.8L160.8,97.6L149.4,97.6L149.4,98.4L143.3,98.4L143.3,99.3L142.4,99.3L141.5,97.6L123,97.6L123,96.7L119.5,96.7L119.5,97.6L116.9,97.6L116.9,96.7L114.3,96.7L114.3,97.6L108.1,97.6L108.1,96.7L105.5,96.7L105.5,97.6L99.3,97.6L99.3,98.4L98.4,98.4L98.4,97.6L97.6,97.6L97.6,98.4L96.7,98.4L96.7,97.6L94.9,97.6L94.9,98.4L91.4,99.3L91.4,100.2L90.5,100.2L90.5,101.1L89.6,101.1L89.6,102L87.9,102.8L87.9,105.5L87,105.5L87,106.3L84.4,106.3L84.4,107.2L79.1,107.2L78.2,109L74.7,109L73.8,110.7L70.3,111.6L70.3,112.5L69.4,112.5L69.4,114.3L67.7,114.3L67.7,115.1L66.8,115.1L66.8,116L65.9,116L65.9,116.9L65,116.9L64.2,118.7L62.4,118.7L62.4,121.3L61.5,121.3L60.6,123L58.9,123L58.9,123.9L58,123.9L57.1,125.7L55.4,125.7L55.4,126.6L54.5,126.6L54.5,127.4L53.6,127.4L53.6,128.3L51.9,129.2L51.9,131L55.4,130.1L55.4,129.2L56.2,129.2L57.1,127.4L58.9,127.4L58.9,126.6L59.8,126.6L59.8,124.8L61.5,124.8L62.4,123L64.2,123L64.2,121.3L65,121.3L65.9,119.5L69.4,118.7L69.4,117.8L70.3,117.8L70.3,116.9L72.1,116.9L72.1,116L74.7,116L74.7,115.1L76.5,115.1L76.5,114.3L78.2,114.3L78.2,113.4L80.9,113.4L80.9,112.5L83.5,112.5L83.5,111.6L86.1,111.6L86.1,110.7L89.6,110.7L89.6,109.9L92.3,109.9L92.3,109L107.2,107.2L107.2,108.1L112.5,108.1L112.5,109L115.1,109L115.1,109.9L116.9,109.9L117.8,111.6L116,111.6L116,112.5L117.8,113.4L117.8,115.1L116.9,115.1L116.9,116L113.4,116L112.5,117.8L110.7,117.8L110.7,118.7L109,118.7L109,119.5L103.7,119.5L103.7,118.7L101.1,118.7L101.1,117.8L100.2,117.8L100.2,118.7L97.6,118.7L96.7,120.4L99.3,120.4L99.3,121.3L102.8,121.3L102.8,123L103.7,123L103.7,123.9L104.6,123.9L104.6,123L106.3,123L106.3,122.2L113.4,122.2L113.4,123L111.6,123.9L110.7,127.4L109,127.4L109,128.3L107.2,128.3L107.2,129.2L111.6,129.2L110.7,132.7L112.5,132.7L112.5,133.6L113.4,133.6L113.4,136.2L114.3,136.2L115.1,138L121.3,138L121.3,139.7L120.4,139.7L120.4,140.6L122.2,140.6L122.2,141.5L126.6,141.5L126.6,142.4L133.6,142.4L133.6,143.3L138,143.3L138,142.4L139.7,142.4L139.7,141.5L140.6,141.5L140.6,142.4L141.5,142.4L141.5,143.3L143.3,144.1L143.3,143.3L145.9,143.3L145.9,142.4L145,142.4L145,138.9L145.9,138.9L145.9,138L146.8,138L146.8,137.1L147.7,137.1L147.7,136.2L149.4,135.4L149.4,133.6L150.3,133.6L151.2,131.8L152.9,131.8L153.8,130.1L155.6,130.1L155.6,131L156.4,131L157.3,132.7L156.4,132.7L156.4,134.5L155.6,134.5L155.6,136.2L154.7,136.2L154.7,137.1L161.7,138L161.7,138.9L160.8,138.9L161.7,140.6L160,140.6L159.1,142.4L157.3,142.4L157.3,143.3L154.7,143.3L154.7,144.1L151.2,144.1L151.2,145L148.5,145L148.5,144.1L147.7,144.1L147.7,145L146.8,145L145.9,146.8L150.3,146.8L150.3,147.7L143.3,148.5L143.3,149.4L140.6,149.4L140.6,150.3L137.1,150.3L137.1,151.2L134.5,151.2L134.5,152.1L131.8,152.1L131.8,152.9L127.4,152.9L127.4,153.8L124.8,153.8L124.8,155.6L122.2,155.6L121.3,153.8L119.5,153.8L119.5,154.7L116.9,154.7L116.9,156.4L117.8,156.4L117.8,157.3L116.9,157.3L116.9,158.2L115.1,158.2L115.1,159.1L113.4,159.1L113.4,160L112.5,160L112.5,160.8L111.6,160.8L110.7,162.6L108.1,162.6L108.1,163.5L107.2,163.5L106.3,165.2L102.8,165.2L102.8,164.4L102,164.4L102,162.6L98.4,162.6L98.4,157.3L99.3,157.3L99.3,156.4L101.1,155.6L101.1,153.8L102,153.8L102,152.9L103.7,153.8L103.7,152.1L105.5,152.1L105.5,151.2L107.2,151.2L107.2,150.3L109,150.3L109,149.4L110.7,149.4L110.7,148.5L114.3,148.5L114.3,147.7L116,147.7L116,146.8L116.9,146.8L116.9,148.5L118.7,148.5L118.7,147.7L122.2,147.7L122.2,146.8L124.8,146.8L124.8,145.9L113.4,145.9L113.4,146.8L110.7,146.8L111.6,145L115.1,144.1L115.1,141.5L114.3,141.5L114.3,142.4L113.4,142.4L112.5,144.1L107.2,145L107.2,145.9L105.5,145.9L105.5,146.8L102.8,146.8L102.8,147.7L98.4,147.7L98.4,148.5L94,148.5L94,149.4L91.4,149.4L91.4,148.5L89.6,148.5L90.5,152.1L89.6,152.1L88.8,153.8L87,153.8L87,152.9L86.1,152.9L86.1,153.8L84.4,153.8L84.4,154.7L81.7,154.7L81.7,155.6L80,155.6L80,156.4L79.1,156.4L79.1,155.6L77.3,154.7L77.3,156.4L78.2,156.4L78.2,157.3L75.6,157.3L75.6,156.4L76.5,156.4L76.5,155.6L75.6,155.6L75.6,156.4L74.7,156.4L74.7,158.2L72.9,158.2L72.9,156.4L72.1,156.4L72.1,155.6L70.3,155.6L71.2,157.3L69.4,157.3L69.4,160L68.6,160L68.6,160.8L66.8,160.8L66.8,160L65.9,160L65,161.7L63.3,161.7L63.3,160.8L62.4,160.8L62.4,162.6L58.9,161.7L58.9,162.6L58,162.6L58,164.4L56.2,164.4L56.2,166.1L54.5,167L54.5,168.8L53.6,168.8L53.6,169.6L51.9,170.5L51.9,173.1L53.6,173.1L53.6,174L51.9,174L51.9,174.9L50.1,175.8L50.1,177.5L52.7,177.5L52.7,178.4L53.6,178.4L53.6,181.1L54.5,181.1L55.4,182.8L58.9,182.8L58.9,181.9L59.8,181.9L59.8,180.2L60.6,180.2L60.6,183.7L55.4,183.7L55.4,184.6L53.6,184.6L53.6,182.8L52.7,182.8L52.7,183.7L51,183.7L51,184.6L49.2,184.6L49.2,185.4L45.7,185.4L45.7,186.3L42.2,186.3L42.2,187.2L41.3,187.2L41.3,186.3L40.4,186.3L40.4,187.2L29.9,187.2L29.9,188.1L28.1,188.1L28.1,189L25.5,189L25.5,189.8L22,190.7L22,191.6L23.7,191.6L23.7,190.7L33.4,190.7L33.4,189.8L35.2,189.8L35.2,191.6L32.5,191.6L32.5,192.5L28.1,192.5L28.1,193.4L25.5,193.4L25.5,194.2L18.5,194.2L18.5,196L20.2,196L20.2,198.6L19.3,198.6L18.5,203.9L17.6,203.9L17.6,204.8L16.7,204.8L16.7,205.7L15.8,205.7L15.8,206.5L14.9,206.5L14.9,207.4L14.1,207.4L14.1,208.3L13.2,208.3L13.2,209.2L12.3,209.2L11.4,210.9L10.5,210.9L10.5,209.2L11.4,209.2L11.4,208.3L8.8,208.3L8.8,207.4L7,207.4L7,206.5L6.2,206.5L6.2,205.7L4.4,204.8L4.4,206.5L6.2,207.4L6.2,210.1L7,210.1L7,210.9L7.9,210.9L7.9,211.8L9.7,212.7L9.7,216.2L8.8,216.2L8.8,218L7,218L7,219.7L6.2,219.7L7,221.5L5.3,221.5L5.3,222.4L4.4,222.4L4.4,224.1L3.5,224.1L3.5,225L1.8,225L1.8,228.5L0,228.5L0,225.9L0.9,225.9L0.9,224.1L1.8,224.1L1.8,222.4L2.6,222.4L3.5,220.6L1.8,220.6L1.8,218.8L0.9,218.8L0.9,217.1L0,217.1L0,205.7L0.9,205.7L0.9,204.8L0,204.8L0,168.8L2.6,168.8L2.6,167.9L0,167.9L0,65.9L2.6,65.9L2.6,65L3.5,65L3.5,63.3L7,63.3L7,62.4L8.8,62.4L8.8,63.3L10.5,63.3L10.5,64.2L11.4,64.2L11.4,63.3L12.3,63.3L12.3,61.5L9.7,61.5L9.7,60.6L3.5,60.6L3.5,61.5L0,62.4L0,38.7L0.9,38.7L0.9,37.8L0,37.8ZM315.5,0L324.3,0L324.3,0.9L323.4,0.9L323.4,1.8L319,1.8L319,0.9L317.3,1.8L317.3,0.9L315.5,0.9ZM813,0L816.5,0L815.6,3.5L816.5,3.5L816.5,2.6L818.3,3.5L818.3,2.6L817.4,2.6L817.4,0.9L818.3,0.9L818.3,0L840.2,0L840.2,19.3L836.7,19.3L836.7,20.2L835,20.2L835,19.3L831.4,19.3L831.4,20.2L830.6,20.2L830.6,19.3L826.2,19.3L826.2,17.6L824.4,17.6L824.4,16.7L820.9,16.7L820.9,15.8L817.4,14.9L817.4,14.1L815.6,13.2L815.6,9.7L817.4,8.8L817.4,10.5L820,10.5L819.1,8.8L820,8.8L820,7L820.9,7L820.9,7.9L821.8,7.9L821.8,7L820.9,7L820,5.3L818.3,5.3L818.3,7L815.6,7L815.6,7.9L813,7.9L813,8.8L812.1,8.8L812.1,6.2L813,6.2L813,4.4L814.7,3.5L814.7,2.6L813,2.6L813,3.5L811.2,2.6L811.2,0.9L813,0.9ZM729.5,7.9L730.4,7.9L730.4,9.7L732.1,9.7L732.1,11.4L730.4,12.3L730.4,10.5L727.7,10.5L728.6,12.3L726.9,12.3L726.9,11.4L726,11.4L726,10.5L726.9,10.5L726.9,8.8L729.5,8.8ZM66.8,8.8L69.4,8.8L69.4,9.7L67.7,9.7L67.7,10.5L66.8,10.5ZM726,13.2L729.5,13.2L729.5,15.8L728.6,15.8L728.6,16.7L726.9,16.7L726.9,17.6L725.1,17.6L725.1,18.5L723.3,18.5L723.3,19.3L721.6,19.3L721.6,20.2L719.8,20.2L719.8,22L721.6,22L721.6,22.9L719.8,22.9L718.9,24.6L719.8,24.6L719.8,23.7L725.1,23.7L725.1,22.9L729.5,22.9L729.5,23.7L730.4,23.7L730.4,22.9L734.8,22.9L734.8,23.7L736.5,23.7L736.5,22.9L740.9,22.9L740.9,23.7L742.7,24.6L741.8,26.4L740,26.4L740,27.2L739.2,27.2L739.2,29.9L738.3,29.9L738.3,30.8L737.4,30.8L737.4,31.6L736.5,31.6L736.5,32.5L735.6,32.5L735.6,33.4L734.8,33.4L733.9,35.2L732.1,35.2L732.1,36.9L733.9,36.9L733.9,37.8L729.5,37.8L729.5,38.7L728.6,38.7L728.6,39.6L726.9,39.6L726.9,40.4L731.2,40.4L731.2,39.6L734.8,39.6L734.8,40.4L738.3,40.4L738.3,41.3L740,41.3L740,42.2L740.9,42.2L741.8,43.9L743.6,43.9L743.6,44.8L744.4,44.8L744.4,48.3L746.2,49.2L746.2,51L747.1,51L747.1,52.7L747.9,52.7L747.9,53.6L749.7,53.6L749.7,54.5L753.2,54.5L753.2,55.4L755,55.4L755,56.2L755.9,56.2L756.7,58L758.5,58L758.5,61.5L759.4,61.5L759.4,62.4L761.1,62.4L761.1,63.3L759.4,63.3L759.4,64.2L760.3,64.2L760.3,65L762,65L762,65.9L762.9,65.9L762.9,67.7L763.8,67.7L762.9,69.4L761.1,69.4L761.1,71.2L762,71.2L762,72.1L764.6,72.1L764.6,70.3L773.4,70.3L773.4,71.2L775.2,71.2L775.2,72.1L777,72.1L777,72.9L777.8,72.9L777.8,75.6L777,75.6L776.1,79.1L775.2,79.1L775.2,80L773.4,80L772.6,81.7L769.9,81.7L769.9,83.5L769,83.5L769,84.4L766.4,84.4L766.4,85.3L768.2,85.3L768.2,86.1L774.3,86.1L774.3,88.8L770.8,88.8L769.9,90.5L767.3,90.5L767.3,91.4L763.8,91.4L763.8,92.3L759.4,92.3L759.4,91.4L755,91.4L755,92.3L748.8,92.3L748.8,94L746.2,94L746.2,93.2L744.4,93.2L744.4,92.3L742.7,92.3L742.7,93.2L740.9,93.2L740.9,94L737.4,94L737.4,93.2L735.6,93.2L735.6,94L734.8,94L734.8,93.2L732.1,93.2L732.1,92.3L730.4,92.3L730.4,93.2L726.9,93.2L726.9,94L725.1,94L725.1,96.7L723.3,96.7L723.3,97.6L721.6,97.6L721.6,96.7L717.2,96.7L717.2,95.8L716.3,95.8L716.3,96.7L711.9,96.7L711,98.4L709.3,98.4L709.3,100.2L707.5,100.2L707.5,99.3L705.8,99.3L705.8,98.4L704.9,98.4L704.9,97.6L707.5,97.6L707.5,96.7L708.4,96.7L708.4,95.8L709.3,95.8L710.2,94L712.8,94L712.8,93.2L714.6,92.3L714.6,89.6L718.1,89.6L718.1,87.9L730.4,87.9L730.4,86.1L733.9,84.4L733.9,83.5L733,83.5L733,84.4L729.5,84.4L728.6,86.1L724.2,86.1L724.2,85.3L722.5,85.3L721.6,83.5L720.7,83.5L720.7,84.4L717.2,84.4L717.2,82.6L712.8,82.6L712.8,83.5L709.3,83.5L709.3,82.6L708.4,82.6L708.4,80L711.9,80L711.9,79.1L713.7,79.1L713.7,78.2L717.2,78.2L717.2,77.3L718.9,77.3L718.9,75.6L719.8,75.6L719.8,74.7L718.9,74.7L718.9,72.9L719.8,72.9L719.8,72.1L718.9,72.1L718.1,70.3L717.2,70.3L717.2,71.2L715.4,71.2L715.4,72.1L712.8,72.1L713.7,70.3L716.3,70.3L716.3,69.4L717.2,69.4L717.2,68.6L715.4,68.6L715.4,67.7L713.7,67.7L713.7,66.8L714.6,66.8L714.6,65.9L717.2,65.9L717.2,66.8L719.8,66.8L719.8,67.7L720.7,67.7L720.7,66.8L728.6,66.8L728.6,65.9L729.5,65.9L729.5,63.3L730.4,63.3L730.4,62.4L729.5,62.4L729.5,60.6L731.2,60.6L731.2,58.9L732.1,58.9L732.1,58L729.5,58L729.5,58.9L727.7,58.9L727.7,58L726.9,58L726.9,57.1L726,57.1L726,56.2L724.2,55.4L724.2,53.6L726,52.7L726,51L726.9,51L726.9,50.1L724.2,50.1L724.2,51L721.6,51L721.6,51.9L717.2,51.9L717.2,51L716.3,51L716.3,52.7L714.6,52.7L714.6,51.9L711.9,51.9L711.9,51L711,51L711,52.7L710.2,52.7L710.2,51.9L709.3,51.9L708.4,50.1L709.3,50.1L709.3,49.2L710.2,49.2L710.2,48.3L711,48.3L711,47.5L711.9,47.5L711.9,46.6L713.7,45.7L713.7,43.9L711.9,43.9L711.9,43.1L711,43.1L711,40.4L711.9,40.4L711.9,39.6L710.2,40.4L710.2,42.2L706.6,41.3L706.6,39.6L705.8,39.6L705.8,41.3L706.6,41.3L706.6,42.2L705.8,42.2L705.8,43.9L704.9,43.9L704.9,46.6L702.2,46.6L702.2,45.7L703.1,45.7L703.1,43.1L704,43.1L703.1,39.6L704.9,38.7L704,36.9L705.8,36L705.8,34.3L706.6,34.3L706.6,33.4L704.9,33.4L704.9,34.3L704,34.3L704,35.2L703.1,35.2L702.2,36.9L697.9,36.9L698.7,35.2L697,35.2L697,34.3L697.9,34.3L698.7,32.5L701.4,32.5L701.4,29.9L702.2,29.9L703.1,28.1L702.2,28.1L702.2,29L700.5,29L700.5,28.1L696.1,28.1L695.2,26.4L692.6,26.4L692.6,24.6L694.3,25.5L694.3,24.6L696.1,24.6L696.1,22.9L697.9,22.9L697.9,23.7L698.7,23.7L698.7,25.5L699.6,25.5L700.5,27.2L703.1,27.2L703.1,26.4L701.4,25.5L701.4,24.6L702.2,24.6L702.2,21.1L707.5,21.1L707.5,20.2L706.6,20.2L706.6,19.3L707.5,19.3L706.6,17.6L708.4,17.6L709.3,14.1L712.8,14.1L712.8,14.9L714.6,14.9L714.6,14.1L715.4,14.1L715.4,14.9L718.1,14.9L718.1,14.1L726,14.1ZM697,14.9L697.9,14.9L697.9,16.7L697,16.7L696.1,20.2L694.3,20.2L694.3,21.1L692.6,21.1L692.6,22L689.9,22L690.8,20.2L689.1,20.2L689.1,17.6L691.7,17.6L691.7,16.7L694.3,16.7L694.3,15.8L697,15.8ZM141.5,22L143.3,22L143.3,22.9L141.5,22.9ZM687.3,22.9L689.1,22.9L689.1,24.6L688.2,24.6L688.2,27.2L687.3,27.2L687.3,29L686.4,29L686.4,24.6L685.5,24.6L685.5,23.7L687.3,23.7ZM147.7,33.4L149.4,33.4L149.4,34.3L147.7,34.3ZM701.4,38.7L703.1,38.7L703.1,39.6L702.2,39.6L702.2,40.4L701.4,40.4L701.4,41.3L700.5,41.3L700.5,42.2L699.6,42.2L698.7,43.9L697,43.9L697,42.2L695.2,43.1L695.2,41.3L700.5,40.4ZM706.6,43.1L708.4,43.1L708.4,43.9L709.3,43.9L709.3,45.7L707.5,45.7L707.5,44.8L706.6,44.8ZM686.4,46.6L689.1,46.6L689.1,47.5L690.8,47.5L690.8,48.3L694.3,48.3L694.3,47.5L698.7,47.5L698.7,48.3L699.6,48.3L699.6,49.2L700.5,49.2L700.5,50.1L701.4,50.1L701.4,51L703.1,51.9L703.1,52.7L701.4,52.7L701.4,53.6L704.9,53.6L704.9,54.5L703.1,54.5L703.1,55.4L704,55.4L704.9,57.1L702.2,57.1L702.2,58L701.4,58L700.5,59.8L697,59.8L697,61.5L697.9,61.5L697.9,64.2L698.7,64.2L698.7,67.7L699.6,67.7L699.6,71.2L698.7,71.2L697.9,74.7L696.1,75.6L696.1,77.3L697,77.3L697,78.2L693.5,78.2L693.5,77.3L692.6,77.3L692.6,78.2L685.5,78.2L684.7,80L682,80L682,80.9L680.3,80.9L680.3,81.7L676.8,81.7L676.8,82.6L675,82.6L675,83.5L673.2,83.5L673.2,84.4L672.4,84.4L672.4,83.5L671.5,83.5L671.5,84.4L668,84.4L668,85.3L666.2,85.3L666.2,84.4L664.5,84.4L664.5,85.3L661.8,85.3L661.8,84.4L663.6,84.4L663.6,83.5L665.3,83.5L665.3,82.6L660.1,83.5L660.9,81.7L659.2,81.7L659.2,82.6L658.3,82.6L658.3,81.7L656.5,81.7L657.4,80L660.1,80L660.1,79.1L660.9,79.1L660.9,78.2L659.2,78.2L659.2,79.1L655.7,79.1L656.5,77.3L661.8,77.3L661.8,75.6L663.6,75.6L663.6,73.8L662.7,73.8L662.7,72.9L664.5,72.9L664.5,72.1L666.2,71.2L666.2,69.4L667.1,69.4L667.1,68.6L670.6,68.6L670.6,67.7L663.6,67.7L663.6,66.8L660.9,66.8L660.9,65.9L659.2,65.9L659.2,64.2L660.9,64.2L660.9,62.4L664.5,62.4L663.6,60.6L660.1,61.5L659.2,59.8L660.9,59.8L660.9,58L659.2,58L659.2,57.1L661.8,57.1L661.8,56.2L662.7,56.2L662.7,57.1L668,57.1L668,58L669.7,58L669.7,57.1L674.1,57.1L675,55.4L677.6,55.4L677.6,54.5L678.5,54.5L678.5,53.6L672.4,53.6L672.4,52.7L675.9,51.9L675.9,49.2L676.8,49.2L676.8,48.3L682,48.3L682,47.5L683.8,47.5L683.8,48.3L685.5,49.2L684.7,47.5L686.4,47.5ZM116.9,54.5L116,54.5L116,57.1L115.1,57.1L115.1,56.2L113.4,56.2L113.4,57.1L112.5,57.1L113.4,58.9L109,58.9L109,58L107.2,58L107.2,58.9L105.5,59.8L105.5,61.5L110.7,61.5L110.7,62.4L112.5,63.3L111.6,61.5L113.4,61.5L113.4,60.6L114.3,60.6L113.4,58.9L115.1,58.9L115.1,59.8L118.7,59.8L118.7,61.5L122.2,61.5L122.2,60.6L124.8,60.6L124.8,59.8L127.4,59.8L127.4,60.6L129.2,60.6L129.2,58.9L128.3,58.9L128.3,57.1L127.4,57.1L127.4,56.2L124.8,56.2L124.8,57.1L123.9,57.1L123.9,58L122.2,58.9L121.3,57.1L118.7,57.1L118.7,55.4L116.9,55.4ZM704.9,54.5L705.8,54.5L705.8,56.2L704.9,56.2ZM714.6,56.2L716.3,56.2L716.3,58L715.4,58L715.4,58.9L712.8,58.9L712.8,58L713.7,58ZM124.8,58L126.6,58L126.6,58.9L124.8,58.9ZM170.5,58.9L169.6,58.9L170.5,60.6L167,60.6L167,61.5L161.7,61.5L161.7,62.4L159.1,62.4L159.1,65L158.2,65L157.3,66.8L160,66.8L160.8,65L164.4,65L164.4,64.2L166.1,64.2L166.1,63.3L169.6,63.3L169.6,61.5L171.4,61.5L171.4,60.6L174,60.6L174,59.8L170.5,59.8ZM836.7,62.4L837.6,62.4L837.6,63.3L839.4,63.3L839.4,62.4L840.2,62.4L840.2,161.7L835,161.7L835,162.6L832.3,162.6L831.4,164.4L829.7,164.4L828.8,166.1L827.1,166.1L827.1,167.9L824.4,167.9L824.4,168.8L821.8,168.8L821.8,169.6L820.9,169.6L820.9,168.8L819.1,168.8L819.1,169.6L818.3,169.6L817.4,167.9L813.9,167.9L813.9,166.1L812.1,166.1L811.2,164.4L810.4,164.4L810.4,165.2L811.2,165.2L812.1,167L810.4,167L810.4,166.1L806,166.1L806,164.4L805.1,164.4L805.1,165.2L801.6,165.2L801.6,164.4L798.9,164.4L798,166.1L792.8,167L792.8,167.9L791,168.8L791,170.5L790.1,170.5L790.1,174L791,174L791,174.9L791.9,174.9L791.9,176.7L792.8,176.7L792.8,177.5L791,177.5L791,178.4L791.9,178.4L791.9,181.1L791,181.1L790.1,182.8L788.4,182.8L788.4,183.7L785.7,183.7L785.7,184.6L782.2,185.4L781.3,187.2L777.8,187.2L777.8,188.1L773.4,188.1L773.4,189L769.9,189L769.9,189.8L769,189.8L769,190.7L767.3,191.6L768.2,193.4L767.3,193.4L767.3,194.2L765.5,194.2L765.5,195.1L764.6,195.1L764.6,196L763.8,196L763.8,196.9L762.9,196.9L762.9,197.8L762,197.8L762,198.6L760.3,199.5L760.3,201.3L759.4,201.3L759.4,202.1L757.6,203L757.6,204.8L756.7,204.8L756.7,206.5L757.6,206.5L757.6,209.2L758.5,209.2L758.5,210.1L759.4,210.1L760.3,211.8L762,211.8L762,212.7L755,216.2L755,218L753.2,218.8L753.2,220.6L752.3,220.6L752.3,222.4L751.5,222.4L752.3,224.1L746.2,224.1L745.3,225.9L743.6,225.9L743.6,226.8L741.8,227.6L741.8,229.4L740.9,229.4L740.9,231.2L740,231.2L739.2,232.9L738.3,232.9L737.4,231.2L735.6,231.2L735.6,232L733.9,232L733.9,232.9L731.2,232.9L731.2,232L730.4,232L730.4,232.9L729.5,232.9L729.5,232L726.9,232L726.9,232.9L722.5,232.9L722.5,232L721.6,232L721.6,232.9L715.4,232.9L714.6,234.7L710.2,234.7L710.2,235.5L708.4,235.5L708.4,236.4L707.5,236.4L707.5,237.3L706.6,237.3L706.6,238.2L705.8,238.2L705.8,239.1L704,239.9L704,239.1L701.4,239.1L701.4,238.2L699.6,238.2L699.6,237.3L697.9,236.4L697.9,233.8L696.1,233.8L696.1,231.2L695.2,231.2L694.3,229.4L690.8,228.5L690.8,227.6L685.5,227.6L685.5,228.5L683.8,228.5L683.8,229.4L682,229.4L682,230.3L680.3,230.3L680.3,229.4L675.9,229.4L675.9,228.5L670.6,229.4L670.6,228.5L671.5,228.5L671.5,225.9L672.4,225.9L672.4,220.6L671.5,220.6L671.5,219.7L672.4,219.7L672.4,215.3L668,215.3L668,213.6L667.1,213.6L667.1,212.7L665.3,212.7L665.3,210.9L666.2,210.9L666.2,208.3L667.1,208.3L667.1,205.7L668,205.7L668,204.8L669.7,203.9L669.7,202.1L670.6,202.1L670.6,200.4L671.5,200.4L671.5,196L672.4,196L672.4,193.4L673.2,193.4L673.2,190.7L674.1,190.7L674.1,189L673.2,189L673.2,186.3L672.4,186.3L672.4,183.7L671.5,183.7L671.5,178.4L672.4,178.4L672.4,177.5L671.5,177.5L671.5,176.7L672.4,176.7L671.5,174.9L672.4,174.9L672.4,173.1L671.5,173.1L671.5,174L669.7,174.9L669.7,173.1L670.6,173.1L670.6,172.3L668.8,172.3L668.8,170.5L667.1,170.5L667.1,169.6L668,169.6L668.8,167.9L670.6,167.9L670.6,167L675,167L675,166.1L677.6,166.1L676.8,164.4L678.5,164.4L679.4,162.6L685.5,162.6L685.5,163.5L687.3,163.5L687.3,164.4L701.4,164.4L701.4,163.5L702.2,163.5L702.2,164.4L707.5,164.4L707.5,165.2L711.9,165.2L711.9,166.1L719.8,166.1L719.8,165.2L731.2,166.1L731.2,165.2L733,165.2L733,166.1L735.6,166.1L735.6,167L740.9,167L740.9,166.1L744.4,166.1L744.4,165.2L745.3,165.2L745.3,163.5L746.2,163.5L746.2,160L747.1,160L747.1,156.4L747.9,156.4L747.9,153.8L749.7,153.8L749.7,152.1L747.9,152.9L747.9,148.5L748.8,148.5L748.8,145L750.6,145L750.6,145.9L751.5,145.9L751.5,146.8L753.2,147.7L753.2,145.9L752.3,145.9L751.5,144.1L747.9,143.3L747.9,141.5L749.7,141.5L749.7,138.9L748.8,138.9L748.8,137.1L742.7,135.4L742.7,134.5L741.8,134.5L741.8,133.6L740.9,133.6L740.9,132.7L739.2,131.8L739.2,130.1L740,130.1L740,129.2L739.2,129.2L738.3,127.4L735.6,127.4L735.6,126.6L734.8,126.6L735.6,124.8L731.2,124.8L731.2,123.9L727.7,123.9L727.7,123L725.1,123L725.1,122.2L721.6,122.2L721.6,121.3L718.1,121.3L718.1,122.2L717.2,122.2L717.2,121.3L715.4,120.4L715.4,118.7L717.2,118.7L717.2,117.8L714.6,117.8L714.6,116.9L716.3,116.9L716.3,116L714.6,116L714.6,116.9L713.7,116.9L713.7,116L712.8,116L712.8,114.3L714.6,114.3L714.6,113.4L719.8,113.4L719.8,112.5L720.7,112.5L720.7,113.4L724.2,113.4L724.2,111.6L730.4,111.6L730.4,112.5L731.2,112.5L731.2,113.4L732.1,113.4L733,115.1L733.9,115.1L734.8,113.4L737.4,113.4L737.4,114.3L739.2,114.3L739.2,113.4L741.8,113.4L741.8,114.3L743.6,114.3L743.6,113.4L745.3,113.4L745.3,112.5L744.4,112.5L744.4,108.1L743.6,108.1L743.6,106.3L741.8,106.3L741.8,103.7L740.9,103.7L740.9,102.8L742.7,102.8L742.7,103.7L747.9,102.8L747.9,103.7L747.1,103.7L747.1,105.5L747.9,105.5L747.9,106.3L756.7,106.3L756.7,107.2L760.3,107.2L760.3,106.3L762,106.3L762,105.5L761.1,105.5L761.1,103.7L762,103.7L762,102.8L763.8,102.8L763.8,102L765.5,102L765.5,101.1L771.7,101.1L771.7,100.2L773.4,100.2L773.4,99.3L774.3,99.3L774.3,98.4L776.1,97.6L776.1,91.4L777,91.4L777,90.5L779.6,90.5L779.6,89.6L785.7,89.6L785.7,88.8L787.5,88.8L787.5,87.9L790.1,87.9L790.1,87L792.8,87L792.8,86.1L797.2,86.1L797.2,87L798.9,87L798,85.3L795.4,85.3L795.4,84.4L799.8,84.4L799.8,85.3L801.6,85.3L801.6,86.1L802.4,86.1L802.4,84.4L799.8,84.4L799.8,83.5L798.9,83.5L798.9,81.7L800.7,81.7L800.7,80L802.4,80L802.4,79.1L803.3,79.1L803.3,78.2L804.2,78.2L804.2,77.3L806,76.5L806,73.8L806.8,73.8L806.8,71.2L807.7,71.2L807.7,70.3L808.6,70.3L808.6,71.2L810.4,70.3L811.2,72.1L813,72.1L812.1,73.8L810.4,73.8L810.4,74.7L811.2,74.7L810.4,76.5L812.1,76.5L812.1,75.6L813.9,75.6L813.9,74.7L815.6,74.7L815.6,73.8L816.5,73.8L816.5,71.2L813.9,71.2L813.9,68.6L814.7,68.6L815.6,66.8L818.3,66.8L818.3,65.9L827.1,65.9L827.1,65L828.8,65L828.8,66.8L830.6,66.8L831.4,63.3L836.7,63.3ZM0,63.3L2.6,63.3L2.6,64.2L0.9,64.2L0.9,65L0,65ZM807.7,68.6L809.5,68.6L809.5,69.4L807.7,69.4ZM200.4,83.5L201.3,83.5L201.3,85.3L203,85.3L203,84.4L205.7,84.4L205.7,86.1L204.8,86.1L204.8,87L199.5,86.1L199.5,87.9L203,87.9L203,89.6L202.1,89.6L202.1,90.5L201.3,90.5L200.4,92.3L198.6,92.3L198.6,94L197.8,94L197.8,94.9L196.9,94.9L196.9,95.8L195.1,96.7L195.1,98.4L193.4,98.4L193.4,99.3L192.5,99.3L192.5,102L191.6,102L191.6,102.8L195.1,102L195.1,101.1L196,101.1L196,100.2L196.9,100.2L196.9,99.3L198.6,98.4L198.6,100.2L202.1,100.2L202.1,101.1L203,101.1L203,102L201.3,102L201.3,103.7L202.1,103.7L202.1,104.6L203,104.6L203,103.7L203.9,103.7L203.9,105.5L207.4,105.5L207.4,104.6L208.3,104.6L208.3,107.2L210.9,107.2L210.9,106.3L212.7,106.3L212.7,105.5L211.8,105.5L211.8,103.7L214.5,103.7L214.5,104.6L215.3,104.6L215.3,106.3L216.2,106.3L216.2,105.5L217.1,105.5L217.1,106.3L218,106.3L218,105.5L221.5,105.5L221.5,106.3L225,107.2L225,108.1L224.1,108.1L224.1,109.9L220.6,110.7L220.6,111.6L221.5,111.6L221.5,112.5L223.2,113.4L222.4,115.1L225,115.1L225,114.3L228.5,114.3L228.5,113.4L230.3,113.4L230.3,114.3L229.4,114.3L229.4,116L226.8,116L226.8,116.9L225.9,116.9L225.9,117.8L225,117.8L225,118.7L223.2,119.5L223.2,121.3L222.4,121.3L221.5,123L222.4,123L222.4,123.9L224.1,124.8L224.1,123.9L225,123.9L225,122.2L225.9,122.2L225.9,121.3L226.8,121.3L227.6,119.5L230.3,119.5L230.3,120.4L229.4,120.4L229.4,122.2L228.5,122.2L228.5,123.9L227.6,123.9L227.6,124.8L229.4,125.7L229.4,124.8L231.2,124.8L231.2,123.9L232,123.9L232,122.2L232.9,122.2L233.8,125.7L232,126.6L232,128.3L231.2,128.3L231.2,131.8L230.3,131.8L229.4,133.6L227.6,133.6L227.6,132.7L224.1,133.6L224.1,128.3L223.2,128.3L223.2,129.2L222.4,129.2L222.4,130.1L221.5,130.1L220.6,131.8L218,131.8L218,131L218.8,131L218.8,129.2L219.7,129.2L219.7,127.4L221.5,126.6L221.5,125.7L220.6,125.7L220.6,124.8L221.5,124.8L221.5,123.9L220.6,123.9L220.6,122.2L218,122.2L218,123L216.2,123.9L216.2,125.7L215.3,125.7L215.3,126.6L210.9,126.6L210.9,127.4L209.2,128.3L209.2,130.1L207.4,130.1L207.4,131L200.4,131L201.3,129.2L204.8,129.2L204.8,128.3L206.5,128.3L206.5,127.4L207.4,127.4L207.4,125.7L209.2,125.7L209.2,124.8L211.8,124.8L211.8,123.9L207.4,123.9L207.4,123L205.7,123L205.7,123.9L206.5,123.9L205.7,125.7L203.9,125.7L203.9,124.8L203,124.8L203,125.7L201.3,125.7L201.3,124.8L200.4,124.8L199.5,123L198.6,123L198.6,123.9L192.5,123.9L192.5,124.8L190.7,124.8L190.7,123.9L181.9,123.9L181.9,123L167,123.9L167,121.3L166.1,121.3L166.1,120.4L167.9,120.4L167.9,119.5L171.4,118.7L171.4,117.8L172.3,117.8L173.1,116L175.8,116L174.9,114.3L173.1,114.3L173.1,112.5L174.9,111.6L174.9,109.9L175.8,109.9L175.8,109L176.7,109L176.7,109.9L177.5,109.9L177.5,109L179.3,109L179.3,108.1L178.4,108.1L177.5,106.3L178.4,106.3L179.3,104.6L181.1,104.6L181.1,102L181.9,102L181.9,101.1L182.8,101.1L182.8,99.3L184.6,98.4L184.6,95.8L185.4,95.8L185.4,94.9L186.3,94.9L186.3,94L187.2,94L188.1,92.3L189.8,92.3L189.8,89.6L191.6,89.6L193.4,86.1L196.9,86.1L196.9,85.3L198.6,85.3L198.6,84.4L200.4,84.4ZM29.9,86.1L29,86.1L29,87L26.4,87L26.4,87.9L24.6,87.9L23.7,89.6L22,89.6L22,91.4L20.2,92.3L20.2,94L19.3,94L19.3,94.9L21.1,94.9L22,93.2L23.7,93.2L23.7,91.4L25.5,91.4L25.5,92.3L26.4,92.3L26.4,91.4L28.1,91.4L28.1,90.5L26.4,90.5L27.2,88.8L29,88.8L29,89.6L29.9,89.6L29.9,88.8L31.6,88.8L31.6,87ZM704.9,98.4L704.9,99.3L703.1,99.3L703.1,98.4ZM203,100.2L204.8,100.2L204.8,101.1L203,101.1ZM115.1,101.1L123,101.1L123,102L129.2,102L129.2,102.8L134.5,103.7L134.5,104.6L136.2,104.6L136.2,105.5L138,105.5L138,106.3L141.5,106.3L141.5,107.2L142.4,107.2L143.3,109L133.6,109L133.6,108.1L129.2,108.1L129.2,107.2L127.4,107.2L127.4,106.3L124.8,106.3L124.8,105.5L123.9,105.5L123,103.7L121.3,103.7L121.3,102.8L117.8,102.8L117.8,102L115.1,102ZM217.1,102.8L219.7,102.8L219.7,103.7L218,103.7L218,104.6L217.1,104.6ZM738.3,107.2L740,107.2L740,108.1L738.3,108.1ZM169.6,113.4L170.5,113.4L170.5,114.3L172.3,114.3L172.3,115.1L167.9,115.1L167.9,114.3L169.6,114.3ZM114.3,120.4L115.1,120.4L115.1,122.2L113.4,122.2ZM218,123.9L219.7,123.9L219.7,124.8L218,124.8ZM196,129.2L197.8,129.2L197.8,130.1L196,130.1ZM118.7,130.1L120.4,130.1L120.4,131.8L119.5,131.8L119.5,132.7L121.3,133.6L121.3,135.4L124.8,134.5L124.8,135.4L127.4,135.4L127.4,136.2L131,136.2L131,135.4L139.7,135.4L139.7,136.2L137.1,136.2L137.1,137.1L135.4,138L135.4,140.6L131.8,140.6L131.8,139.7L131,139.7L131,138L128.3,138L128.3,138.9L126.6,138.9L126.6,138L123,138L122.2,136.2L118.7,136.2L119.5,134.5L118.7,134.5L118.7,133.6L116,133.6L116,132.7L116.9,132.7L116.9,131.8L117.8,131.8ZM746.2,139.7L747.9,139.7L747.9,141.5L747.1,141.5ZM91.4,152.1L92.3,152.1L92.3,153.8L91.4,153.8ZM71.2,158.2L72.1,158.2L72.1,160L71.2,160ZM52.7,185.4L54.5,185.4L54.5,186.3L52.7,186.3ZM36,189L36.9,189L36.9,189.8L38.7,189.8L38.7,190.7L36.9,190.7L36.9,191.6L36,191.6ZM798,199.5L802.4,199.5L802.4,200.4L803.3,200.4L803.3,202.1L802.4,202.1L802.4,201.3L800.7,201.3L800.7,200.4L798,200.4ZM790.1,200.4L791.9,200.4L791.9,203L792.8,203L792.8,202.1L794.5,202.1L794.5,203.9L792.8,204.8L792.8,206.5L791,206.5L791,207.4L790.1,207.4L790.1,206.5L788.4,206.5L788.4,205.7L787.5,205.7L787.5,203.9L786.6,203.9L786.6,204.8L784,204.8L784.9,203L786.6,203L787.5,201.3L790.1,201.3ZM447.4,204.8L449.1,204.8L449.1,205.7L447.4,205.7ZM773.4,209.2L776.1,209.2L776.1,210.1L775.2,210.1L775.2,210.9L772.6,210.9ZM486.9,211.8L489.6,211.8L489.6,213.6L486.9,213.6ZM478.1,212.7L479.9,212.7L479.9,213.6L478.1,213.6ZM472,213.6L473.7,213.6L473.7,214.5L472,214.5ZM474.6,214.5L478.1,214.5L479,216.2L477.2,216.2L477.2,215.3L474.6,215.3ZM502.7,221.5L508.9,221.5L508.9,222.4L502.7,222.4ZM822.7,229.4L826.2,229.4L826.2,230.3L828.8,230.3L828.8,231.2L832.3,231.2L832.3,229.4L835.8,229.4L835.8,230.3L837.6,230.3L838.5,232L840.2,231.2L840.2,554.6L836.7,554.6L836.7,555.5L833.2,555.5L833.2,556.3L831.4,556.3L831.4,555.5L830.6,555.5L830.6,556.3L824.4,556.3L824.4,557.2L820,557.2L819.1,555.5L817.4,555.5L817.4,554.6L816.5,554.6L816.5,552.8L815.6,552.8L815.6,551.1L814.7,551.1L814.7,548.4L813.9,548.4L813.9,545.8L812.1,545.8L812.1,544L811.2,544L810.4,540.5L809.5,540.5L809.5,539.6L808.6,539.6L807.7,537.9L806,537.9L805.1,536.1L801.6,536.1L802.4,534.4L800.7,534.4L800.7,535.3L797.2,535.3L797.2,536.1L796.3,536.1L795.4,534.4L794.5,534.4L793.7,536.1L784.9,536.1L784.9,535.3L784,535.3L784,536.1L782.2,536.1L782.2,537L777,537L777,537.9L773.4,537.9L773.4,538.8L771.7,538.8L771.7,539.6L769,539.6L769,541.4L769.9,541.4L769.9,542.3L765.5,542.3L765.5,541.4L764.6,541.4L764.6,542.3L761.1,542.3L760.3,544L758.5,544L758.5,544.9L755.9,544.9L755.9,545.8L755,545.8L755,546.7L753.2,546.7L753.2,547.6L749.7,547.6L749.7,548.4L747.9,548.4L747.9,549.3L744.4,549.3L744.4,550.2L742.7,550.2L742.7,551.1L741.8,551.1L741.8,552L740,552L740,552.8L739.2,552.8L738.3,551.1L736.5,551.1L736.5,550.2L733,550.2L733,549.3L728.6,549.3L728.6,545.8L727.7,545.8L727.7,547.6L726.9,547.6L726.9,548.4L723.3,548.4L723.3,547.6L712.8,547.6L712.8,548.4L705.8,548.4L705.8,549.3L701.4,549.3L701.4,550.2L698.7,550.2L698.7,551.1L697,551.1L697,552L691.7,552.8L691.7,553.7L689.9,553.7L689.9,554.6L688.2,554.6L688.2,555.5L686.4,555.5L686.4,556.3L682,556.3L681.2,554.6L677.6,554.6L677.6,553.7L675.9,553.7L675.9,552.8L672.4,552L671.5,550.2L668,549.3L668,548.4L667.1,548.4L667.1,547.6L666.2,547.6L666.2,546.7L665.3,546.7L665.3,545.8L664.5,545.8L663.6,544L661.8,544L661.8,543.2L660.9,543.2L660.9,542.3L660.1,542.3L660.1,541.4L659.2,541.4L659.2,540.5L658.3,540.5L657.4,538.8L655.7,538.8L655.7,537.9L653,537.9L653,537L652.1,537L652.1,535.3L650.4,535.3L650.4,534.4L649.5,534.4L648.6,532.6L646.9,532.6L646.9,531.7L646,531.7L645.1,530L643.4,530L642.5,528.2L639.8,528.2L639.8,527.3L638.1,527.3L638.1,526.5L635.4,526.5L635.4,525.6L633.7,525.6L633.7,524.7L631.1,524.7L631.1,523.8L634.6,523.8L634.6,522.9L632.8,522.9L632.8,522.1L631.1,521.2L631.1,518.6L627.5,516.8L627.5,515L629.3,515.9L629.3,514.2L627.5,513.3L627.5,511.5L628.4,511.5L628.4,510.6L627.5,510.6L627.5,507.1L625.8,507.1L625.8,505.4L624,504.5L624,501.9L622.3,501.9L621.4,500.1L619.6,500.1L619.6,499.2L617.9,499.2L617,497.5L615.2,497.5L615.2,495.7L613.5,494.8L614.4,493.1L612.6,493.1L612.6,491.3L610.8,491.3L610.8,492.2L609.1,491.3L609.1,489.6L610,489.6L610,488.7L609.1,488.7L609.1,489.6L608.2,489.6L608.2,488.7L606.4,488.7L606.4,486.9L605.6,486.9L605.6,485.2L606.4,485.2L606.4,484.3L604.7,484.3L604.7,482.5L605.6,482.5L605.6,481.6L607.3,481.6L607.3,479.9L605.6,479.9L604.7,481.6L601.2,482.5L601.2,480.8L600.3,480.8L600.3,481.6L597.7,481.6L596.8,478.1L595,478.1L594.1,476.4L592.4,476.4L592.4,470.2L593.3,470.2L593.3,469.3L592.4,469.3L592.4,465.8L594.1,464.9L594.1,466.7L595,466.7L595,467.6L596.8,467.6L596.8,466.7L595,465.8L594.1,462.3L592.4,461.4L592.4,458.8L591.5,458.8L590.6,455.3L588.9,455.3L588.9,453.5L588,453.5L588,452.6L586.2,452.6L586.2,451.8L588,451.8L588,450.9L588.9,450.9L588.9,450L589.7,450L589.7,449.1L590.6,449.1L590.6,448.2L592.4,447.4L593.3,443.8L595,443L595,435.9L595.9,435.9L595.9,433.3L596.8,433.3L597.7,428L598.5,428L598.5,426.3L599.4,426.3L600.3,417.5L599.4,417.5L598.5,410.4L597.7,410.4L597.7,408.7L596.8,408.7L596.8,407.8L595,406.9L595,406.1L596.8,406.1L595,402.5L595.9,402.5L595.9,401.7L597.7,402.5L597.7,398.1L598.5,398.1L598.5,397.3L596.8,396.4L596.8,394.6L595.9,394.6L595.9,393.8L594.1,393.8L594.1,392.9L592.4,392L591.5,388.5L589.7,389.4L589.7,385L590.6,385L590.6,381.4L591.5,381.4L591.5,378.8L592.4,378.8L593.3,377.1L595,377.1L595,375.3L596.8,374.4L596.8,371.8L598.5,370.9L598.5,367.4L599.4,367.4L599.4,366.5L600.3,366.5L600.3,364.7L602.1,363.9L602.9,360.4L603.8,360.4L603.8,359.5L604.7,359.5L604.7,358.6L605.6,358.6L605.6,357.7L606.4,357.7L606.4,356.8L607.3,356.8L608.2,355.1L610,355.1L610,354.2L611.7,353.3L611.7,346.3L612.6,346.3L612.6,344.5L613.5,344.5L613.5,341.9L615.2,341L615.2,338.4L616.1,338.4L616.1,337.5L617,337.5L617.9,335.7L620.5,335.7L621.4,334L623.1,334L623.1,333.1L624.9,332.2L624.9,330.5L625.8,330.5L625.8,327.8L627.5,327L627.5,324.3L628.4,324.3L628.4,323.4L630.2,322.6L630.2,320.8L631.9,320.8L631.9,319.9L638.1,319.9L638.1,319L640.7,319L640.7,318.2L643.4,318.2L643.4,317.3L645.1,317.3L645.1,316.4L646,316.4L646,315.5L646.9,315.5L646.9,314.6L647.8,314.6L647.8,313.8L648.6,313.8L649.5,312L651.3,312L651.3,311.1L653.9,311.1L653.9,310.3L654.8,310.3L654.8,309.4L655.7,309.4L655.7,308.5L656.5,308.5L656.5,307.6L657.4,307.6L657.4,306.7L659.2,305.9L659.2,304.1L660.1,304.1L660.1,303.2L660.9,303.2L660.9,302.3L662.7,301.5L662.7,299.7L663.6,299.7L663.6,297.1L664.5,297.1L664.5,296.2L663.6,296.2L663.6,294.4L661.8,293.6L661.8,287.4L662.7,287.4L661.8,285.6L662.7,285.6L663.6,282.1L664.5,282.1L664.5,281.2L665.3,281.2L665.3,280.4L666.2,280.4L666.2,279.5L668,278.6L668,276.9L667.1,276.9L667.1,276L668,276L668,273.3L669.7,273.3L669.7,272.5L670.6,272.5L670.6,271.6L671.5,271.6L671.5,270.7L672.4,270.7L672.4,269.8L673.2,269.8L673.2,268.9L674.1,268.9L675,267.2L676.8,267.2L676.8,266.3L678.5,266.3L678.5,265.4L681.2,265.4L681.2,264.6L682.9,264.6L682.9,263.7L685.5,263.7L685.5,262.8L687.3,262.8L687.3,261.9L690.8,261L690.8,260.2L691.7,260.2L691.7,259.3L693.5,258.4L693.5,256.6L695.2,255.8L695.2,254L696.1,254L696.1,252.2L697,252.2L697,250.5L697.9,250.5L697.9,248.7L698.7,248.7L698.7,247L699.6,247L699.6,245.2L700.5,245.2L700.5,242.6L701.4,242.6L701.4,241.7L704.9,241.7L704.9,240.8L706.6,240.8L706.6,243.5L707.5,243.5L707.5,244.3L708.4,244.3L709.3,246.1L711,246.1L711.9,247.9L715.4,247.9L715.4,248.7L717.2,248.7L717.2,247.9L722.5,247.9L722.5,247L723.3,247L723.3,247.9L728.6,247.9L728.6,247L730.4,246.1L730.4,247L731.2,247L731.2,248.7L733.9,248.7L733.9,249.6L734.8,249.6L734.8,248.7L739.2,248.7L739.2,249.6L740.9,249.6L740.9,248.7L743.6,248.7L744.4,247L747.1,247L748.8,243.5L750.6,243.5L750.6,242.6L755,242.6L755.9,240.8L756.7,240.8L756.7,241.7L760.3,241.7L760.3,240.8L761.1,240.8L761.1,239.9L762,239.9L762.9,238.2L764.6,238.2L764.6,237.3L766.4,237.3L766.4,236.4L769,236.4L769,235.5L770.8,235.5L770.8,234.7L781.3,234.7L781.3,233.8L787.5,233.8L788.4,232L791,232L791,232.9L791.9,232.9L791.9,232L797.2,232L797.2,231.2L809.5,231.2L809.5,232L811.2,232L812.1,233.8L814.7,233.8L815.6,232L820,232L820,231.2L822.7,231.2ZM0,232L0.9,232L0.9,234.7L0,234.7ZM0,236.4L0.9,236.4L1.8,238.2L0,238.2ZM0.9,240.8L2.6,240.8L2.6,244.3L0.9,244.3L0.9,245.2L0,245.2L0,241.7L0.9,241.7ZM588,271.6L591.5,271.6L592.4,273.3L588.9,273.3ZM624.9,307.6L625.8,307.6L625.8,309.4L624.9,309.4L624,311.1L621.4,311.1L621.4,310.3L622.3,310.3L623.1,308.5L624.9,308.5ZM581,311.1L582.7,312L582.7,314.6L581,314.6L581,312.9L580.1,312.9ZM620.5,312.9L622.3,312.9L622.3,314.6L621.4,314.6L621.4,317.3L620.5,317.3L620.5,318.2L617.9,318.2ZM595.9,314.6L598.5,314.6L598.5,315.5L596.8,315.5L595.9,319L595,319L595,319.9L593.3,319.9L593.3,319L591.5,318.2L591.5,316.4L594.1,316.4L594.1,315.5L595.9,315.5ZM587.1,318.2L588.9,318.2L588.9,319L587.1,319.9ZM603.8,318.2L604.7,318.2L604.7,319L606.4,319L606.4,321.7L604.7,321.7L604.7,322.6L602.9,322.6L602.9,321.7L602.1,321.7L602.1,319.9L602.9,319.9ZM14.9,358.6L15.8,358.6L15.8,360.4L14.9,360.4ZM16.7,371.8L18.5,371.8L18.5,372.7L16.7,372.7ZM20.2,372.7L21.1,372.7L21.1,374.4L20.2,374.4ZM39.6,380.6L41.3,380.6L41.3,381.4L44.8,382.3L45.7,384.1L43.9,384.1L43.9,383.2L40.4,382.3ZM29,386.7L29.9,386.7L29.9,388.5L29,388.5ZM25.5,387.6L26.4,387.6L26.4,388.5L29,388.5L29,390.2L25.5,390.2L25.5,389.4L24.6,389.4ZM1.8,388.5L2.6,388.5L2.6,389.4L4.4,389.4L4.4,391.1L2.6,391.1L2.6,392.9L4.4,392.9L4.4,392L5.3,392L5.3,392.9L10.5,392.9L10.5,393.8L14.1,394.6L14.1,395.5L14.9,395.5L15.8,397.3L18.5,397.3L18.5,399L14.9,399L14.9,399.9L10.5,399.9L10.5,400.8L1.8,400.8L1.8,399.9L0,400.8L0,389.4L1.8,389.4ZM28.1,400.8L34.3,400.8L34.3,401.7L36,401.7L36,402.5L41.3,402.5L41.3,403.4L42.2,403.4L42.2,402.5L43.1,402.5L43.9,400.8L45.7,400.8L45.7,401.7L49.2,401.7L49.2,400.8L51.9,400.8L51.9,401.7L53.6,401.7L53.6,402.5L56.2,402.5L56.2,403.4L58,403.4L58,404.3L58.9,404.3L58.9,403.4L61.5,403.4L61.5,406.9L68.6,406.9L68.6,407.8L64.2,407.8L64.2,409.6L68.6,409.6L68.6,410.4L70.3,410.4L70.3,409.6L71.2,409.6L71.2,410.4L72.9,410.4L73.8,412.2L75.6,412.2L75.6,413.1L76.5,413.1L76.5,415.7L75.6,415.7L75.6,416.6L73.8,416.6L73.8,418.4L72.9,418.4L72.9,417.5L72.1,417.5L71.2,415.7L70.3,415.7L70.3,416.6L69.4,416.6L69.4,415.7L59.8,415.7L58.9,417.5L54.5,417.5L54.5,415.7L52.7,415.7L52.7,416.6L51,416.6L51,417.5L49.2,416.6L49.2,420.1L48.3,420.1L48.3,421L46.6,421.9L46.6,423.6L45.7,423.6L45.7,422.8L43.9,422.8L43.9,420.1L42.2,420.1L42.2,419.2L41.3,419.2L40.4,417.5L35.2,417.5L35.2,418.4L28.1,418.4L28.1,417.5L22.9,417.5L22.9,418.4L22,418.4L22,420.1L21.1,420.1L21.1,419.2L20.2,419.2L20.2,418.4L19.3,418.4L18.5,416.6L15.8,416.6L15.8,414L17.6,414L17.6,413.1L18.5,413.1L18.5,414L21.1,414L21.1,414.8L22,414.8L22,414L23.7,414L23.7,414.8L27.2,414.8L27.2,415.7L33.4,415.7L33.4,414.8L36.9,414.8L36.9,413.1L36,413.1L36,412.2L34.3,412.2L34.3,411.3L32.5,410.4L32.5,405.2L31.6,405.2L31.6,404.3L29.9,404.3L29.9,403.4L25.5,403.4L25.5,402.5L26.4,402.5L26.4,401.7L28.1,401.7ZM27.2,410.4L29,410.4L29,411.3L31.6,411.3L31.6,413.1L30.8,413.1L30.8,412.2L28.1,412.2ZM88.8,414.8L90.5,414.8L90.5,415.7L102.8,415.7L102.8,416.6L103.7,416.6L103.7,418.4L102,418.4L102,420.1L98.4,420.1L98.4,421L97.6,421L97.6,420.1L91.4,420.1L91.4,421L90.5,421L90.5,420.1L87.9,420.1L87.9,419.2L88.8,419.2L88.8,417.5L87.9,417.5L87.9,415.7L88.8,415.7ZM141.5,422.8L142.4,422.8L142.4,424.5L141.5,424.5ZM141.5,428L142.4,428L143.3,429.8L141.5,429.8ZM508,428L509.8,428L509.8,429.8L508.9,429.8L508.9,430.7L507.1,430.7L507.1,428.9L508,428.9ZM509.8,430.7L511.5,430.7L511.5,431.5L509.8,431.5ZM515.9,433.3L519.4,433.3L519.4,434.2L515.9,434.2ZM145,435.1L145.9,435.1L145.9,435.9L146.8,435.9L147.7,437.7L144.1,437.7L144.1,440.3L143.3,440.3L143.3,439.5L142.4,439.5L142.4,436.8L145,436.8ZM530.9,437.7L533.5,437.7L533.5,439.5L532.6,439.5L532.6,440.3L530.9,440.3ZM145.9,443.8L147.7,444.7L147.7,447.4L145.9,447.4ZM528.2,446.5L529.1,446.5L529.1,448.2L527.3,448.2ZM522.9,447.4L523.8,447.4L523.8,448.2L525.6,449.1L525.6,450.9L523.8,450.9L523.8,450L522.1,449.1ZM515.9,449.1L517.7,450L516.8,451.8L515,450.9ZM147.7,451.8L150.3,451.8L150.3,452.6L151.2,452.6L151.2,454.4L152.1,454.4L152.1,456.2L151.2,456.2L151.2,455.3L149.4,455.3L149.4,453.5L148.5,453.5ZM150.3,459.7L151.2,459.7L151.2,462.3L149.4,462.3L149.4,460.5L150.3,460.5ZM147.7,466.7L148.5,466.7L148.5,468.5L147.7,468.5ZM163.5,466.7L164.4,466.7L164.4,467.6L165.2,467.6L166.1,469.3L164.4,469.3L164.4,468.5L163.5,468.5ZM59.8,474.6L61.5,474.6L61.5,475.5L59.8,475.5ZM43.1,475.5L45.7,475.5L45.7,476.4L47.5,476.4L47.5,477.2L48.3,477.2L48.3,479L49.2,479L48.3,480.8L46.6,480.8L46.6,482.5L44.8,482.5L44.8,483.4L41.3,483.4L41.3,484.3L40.4,484.3L40.4,486.9L41.3,486.9L41.3,488.7L43.1,489.6L43.1,492.2L43.9,492.2L43.9,495.7L43.1,495.7L43.1,496.6L41.3,497.5L41.3,499.2L39.6,500.1L39.6,501.9L38.7,501.9L38.7,502.7L40.4,503.6L40.4,505.4L41.3,505.4L41.3,506.2L43.1,506.2L43.1,507.1L42.2,507.1L42.2,508.9L43.1,508.9L43.1,509.8L46.6,509.8L46.6,508.9L47.5,508.9L47.5,508L49.2,507.1L49.2,503.6L50.1,503.6L50.1,501.9L48.3,501L48.3,499.2L46.6,498.3L46.6,496.6L45.7,496.6L45.7,494.8L44.8,494.8L44.8,492.2L45.7,492.2L45.7,490.4L48.3,490.4L48.3,489.6L50.1,489.6L50.1,488.7L51.9,488.7L51.9,487.8L55.4,487.8L55.4,486.9L58,486.9L58.9,485.2L61.5,485.2L61.5,486L62.4,486L62.4,483.4L63.3,483.4L63.3,485.2L69.4,485.2L69.4,486L72.9,486L72.9,486.9L74.7,486.9L74.7,487.8L75.6,487.8L75.6,488.7L77.3,489.6L77.3,493.9L78.2,493.9L78.2,494.8L80.9,494.8L80.9,495.7L81.7,495.7L81.7,494.8L88.8,494.8L88.8,493.9L99.3,493.9L99.3,495.7L100.2,495.7L101.1,497.5L102.8,497.5L102.8,498.3L106.3,498.3L106.3,499.2L112.5,499.2L113.4,497.5L116,497.5L116.9,495.7L123,495.7L123,494.8L121.3,494.8L121.3,493.1L123,493.1L123,493.9L125.7,493.9L125.7,493.1L132.7,493.1L132.7,492.2L133.6,492.2L133.6,493.1L140.6,493.1L140.6,493.9L137.1,493.9L137.1,494.8L131.8,493.9L131.8,495.7L133.6,495.7L133.6,498.3L135.4,498.3L135.4,499.2L136.2,499.2L136.2,501L137.1,501L137.1,500.1L139.7,500.1L140.6,501.9L144.1,501.9L144.1,501L145,501L145,501.9L145.9,501.9L145.9,502.7L146.8,502.7L147.7,504.5L150.3,504.5L150.3,505.4L152.1,505.4L152.1,508L152.9,508L152.9,508.9L152.1,508.9L152.1,511.5L153.8,512.4L153.8,513.3L152.9,513.3L153.8,515L155.6,515L156.4,513.3L158.2,513.3L158.2,514.2L160,514.2L160.8,515.9L163.5,515.9L164.4,517.7L167.9,518.6L167.9,519.4L168.8,519.4L168.8,520.3L169.6,520.3L169.6,521.2L170.5,521.2L170.5,522.1L171.4,522.1L171.4,522.9L172.3,522.9L172.3,523.8L173.1,523.8L173.1,524.7L174.9,525.6L174.9,529.1L175.8,529.1L175.8,530.9L177.5,530.9L177.5,531.7L180.2,531.7L180.2,532.6L181.1,532.6L181.1,533.5L181.9,533.5L181.9,534.4L182.8,534.4L182.8,535.3L183.7,535.3L184.6,537L187.2,537L189,540.5L196.9,540.5L196.9,541.4L200.4,541.4L200.4,542.3L201.3,542.3L201.3,540.5L209.2,540.5L209.2,539.6L211.8,539.6L211.8,540.5L217.1,540.5L217.1,541.4L222.4,542.3L222.4,543.2L224.1,543.2L224.1,544L225.9,544L225.9,544.9L227.6,544.9L227.6,545.8L230.3,545.8L230.3,546.7L233.8,547.6L233.8,548.4L234.7,548.4L234.7,549.3L235.5,549.3L236.4,551.1L238.2,551.1L238.2,552.8L239.1,552.8L239.9,554.6L242.6,554.6L243.5,558.1L244.3,558.1L244.3,556.3L246.1,556.3L246.1,557.2L247.9,558.1L247.9,559.9L186.3,559.9L186.3,559L187.2,559L186.3,557.2L187.2,557.2L188.1,555.5L187.2,555.5L186.3,557.2L184.6,557.2L184.6,558.1L183.7,558.1L183.7,559.9L0,559.9L0,506.2L0.9,506.2L0.9,505.4L1.8,505.4L1.8,506.2L3.5,506.2L3.5,505.4L4.4,505.4L4.4,502.7L3.5,502.7L3.5,501.9L4.4,501.9L4.4,495.7L5.3,495.7L5.3,493.9L6.2,493.9L6.2,493.1L7.9,493.1L7.9,492.2L8.8,492.2L8.8,491.3L9.7,491.3L10.5,489.6L14.1,489.6L14.1,490.4L14.9,490.4L14.1,492.2L16.7,492.2L16.7,491.3L17.6,491.3L17.6,489.6L18.5,489.6L18.5,488.7L17.6,488.7L18.5,486.9L22,486.9L22,487.8L26.4,487.8L26.4,486.9L29.9,486L29.9,485.2L30.8,485.2L31.6,483.4L37.8,481.6L38.7,478.1L41.3,478.1L41.3,476.4L43.1,476.4ZM70.3,478.1L72.1,478.1L72.1,479L70.3,479ZM58.9,478.1L60.6,478.1L60.6,479L61.5,479L61.5,480.8L62.4,480.8L62.4,483.4L58.9,483.4L58.9,484.3L58,484.3L58,481.6L57.1,481.6L57.1,480.8L58,480.8L58,479L58.9,479ZM142.4,478.1L144.1,478.1L144.1,479.9L142.4,479.9ZM152.9,486.9L154.7,486.9L154.7,487.8L152.9,487.8ZM598.5,487.8L601.2,487.8L601.2,489.6L597.7,489.6ZM120.4,488.7L122.2,488.7L122.2,490.4L121.3,490.4L121.3,491.3L119.5,491.3L119.5,489.6L120.4,489.6ZM116,489.6L118.7,489.6L118.7,490.4L116,490.4ZM106.3,490.4L108.1,490.4L108.1,491.3L106.3,491.3ZM149.4,491.3L150.3,491.3L150.3,493.1L149.4,493.1L149.4,493.9L150.3,493.9L150.3,494.8L149.4,494.8L149.4,495.7L150.3,495.7L150.3,498.3L149.4,498.3L149.4,499.2L142.4,499.2L142.4,498.3L145.9,497.5L145.9,496.6L145,496.6L145,494.8L145.9,494.8L145.9,493.9L145,493.9L144.1,492.2L149.4,492.2ZM758.5,519.4L757.6,519.4L757.6,520.3L758.5,520.3L758.5,522.9L757.6,522.9L757.6,523.8L759.4,522.9L759.4,523.8L760.3,523.8L760.3,525.6L761.1,525.6L762,527.3L761.1,527.3L761.1,530.9L759.4,531.7L759.4,533.5L758.5,533.5L758.5,532.6L756.7,532.6L756.7,531.7L755.9,531.7L755.9,533.5L757.6,533.5L757.6,534.4L758.5,534.4L759.4,536.1L761.1,536.1L761.1,534.4L762.9,533.5L762.9,525.6L762,525.6L762,524.7L762.9,524.7L762.9,522.1L762,522.1L761.1,520.3L760.3,520.3L761.1,522.1L759.4,522.1L759.4,519.4Z"/></defs>
+  <defs><path id="terres" d="M0,0L58.9,0L58.9,0.9L59.8,0.9L59.8,0L62.4,0L62.4,0.9L64.2,0.9L64.2,4.4L63.3,4.4L63.3,6.2L64.2,6.2L64.2,7L65,7L65,6.2L65.9,6.2L65.9,7L67.7,7L67.7,7.9L65,7.9L65,8.8L65.9,8.8L65,12.3L65.9,12.3L65.9,11.4L75.6,11.4L77.3,14.9L80.9,14.9L80.9,16.7L82.6,15.8L82.6,16.7L83.5,16.7L83.5,18.5L84.4,18.5L84.4,17.6L87,17.6L87,16.7L89.6,16.7L90.5,14.9L91.4,14.9L91.4,15.8L92.3,15.8L92.3,14.9L94,14.9L94,13.2L94.9,13.2L95.8,11.4L99.3,13.2L99.3,11.4L101.1,11.4L101.1,9.7L102.8,9.7L102.8,7L104.6,7.9L104.6,6.2L106.3,5.3L106.3,4.4L104.6,3.5L105.5,1.8L107.2,1.8L107.2,0.9L109,0.9L109,0L118.7,0L118.7,1.8L120.4,1.8L120.4,3.5L121.3,3.5L121.3,4.4L123,4.4L123,5.3L122.2,5.3L123,7L124.8,6.2L124.8,7L126.6,7.9L126.6,9.7L128.3,9.7L128.3,11.4L131,11.4L131,14.1L130.1,14.1L129.2,15.8L131,15.8L131,14.9L134.5,14.9L134.5,15.8L133.6,15.8L133.6,18.5L136.2,18.5L136.2,20.2L137.1,20.2L137.1,21.1L138,21.1L138,20.2L138.9,20.2L138.9,21.1L141.5,21.1L141.5,22L140.6,22L140.6,23.7L141.5,23.7L141.5,24.6L143.3,24.6L143.3,27.2L141.5,26.4L141.5,28.1L145.9,28.1L145.9,29L146.8,29L146.8,30.8L145.9,30.8L145.9,32.5L146.8,32.5L146.8,33.4L145.9,33.4L145.9,35.2L147.7,35.2L147.7,36L145.9,36L145.9,37.8L146.8,37.8L146.8,38.7L147.7,38.7L147.7,37.8L149.4,37.8L149.4,38.7L150.3,38.7L150.3,40.4L152.9,40.4L152.9,42.2L153.8,42.2L153.8,43.1L154.7,43.1L154.7,42.2L157.3,42.2L157.3,43.1L156.4,43.1L156.4,44.8L158.2,44.8L158.2,45.7L157.3,45.7L156.4,47.5L158.2,47.5L158.2,46.6L161.7,47.5L161.7,46.6L162.6,46.6L162.6,48.3L165.2,48.3L165.2,49.2L167,49.2L167,48.3L168.8,47.5L168.8,49.2L170.5,48.3L170.5,51L171.4,51L171.4,51.9L174.9,51.9L174.9,52.7L175.8,52.7L175.8,51.9L178.4,51.9L178.4,51L180.2,51L180.2,51.9L181.1,51.9L181.1,52.7L182.8,52.7L182.8,53.6L186.3,53.6L186.3,54.5L189,54.5L189,55.4L184.6,55.4L184.6,56.2L178.4,56.2L178.4,58L186.3,58L186.3,59.8L187.2,59.8L187.2,60.6L189,61.5L189,63.3L186.3,63.3L187.2,65L189,65L189,63.3L189.8,63.3L190.7,61.5L191.6,61.5L191.6,62.4L195.1,62.4L195.1,64.2L200.4,64.2L200.4,65L202.1,65L202.1,65.9L201.3,65.9L201.3,66.8L203,67.7L203,68.6L202.1,68.6L202.1,73.8L203,73.8L203,75.6L203.9,75.6L203.9,76.5L202.1,76.5L202.1,77.3L203.9,77.3L203.9,78.2L203,78.2L203,79.1L202.1,79.1L201.3,80.9L199.5,80.9L199.5,81.7L197.8,81.7L197.8,82.6L195.1,82.6L195.1,83.5L193.4,83.5L192.5,85.3L189.8,85.3L189.8,86.1L188.1,86.1L188.1,85.3L184.6,85.3L184.6,86.1L180.2,86.1L180.2,87L177.5,87L177.5,87.9L175.8,87.9L175.8,88.8L173.1,88.8L173.1,89.6L171.4,89.6L171.4,90.5L170.5,90.5L170.5,92.3L167.9,92.3L167.9,94L165.2,94L165.2,94.9L161.7,95.8L160.8,97.6L149.4,97.6L149.4,98.4L143.3,98.4L143.3,99.3L142.4,99.3L141.5,97.6L123,97.6L123,96.7L119.5,96.7L119.5,97.6L116.9,97.6L116.9,96.7L114.3,96.7L114.3,97.6L108.1,97.6L108.1,96.7L105.5,96.7L105.5,97.6L99.3,97.6L99.3,98.4L98.4,98.4L98.4,97.6L97.6,97.6L97.6,98.4L96.7,98.4L96.7,97.6L94.9,97.6L94.9,98.4L91.4,99.3L91.4,100.2L90.5,100.2L90.5,101.1L89.6,101.1L89.6,102L87.9,102.8L87.9,105.5L87,105.5L87,106.3L84.4,106.3L84.4,107.2L79.1,107.2L78.2,109L74.7,109L73.8,110.7L70.3,111.6L70.3,112.5L69.4,112.5L69.4,114.3L67.7,114.3L67.7,115.1L66.8,115.1L66.8,116L65.9,116L65.9,116.9L65,116.9L64.2,118.7L62.4,118.7L62.4,121.3L61.5,121.3L60.6,123L58.9,123L58.9,123.9L58,123.9L57.1,125.7L55.4,125.7L55.4,126.6L54.5,126.6L54.5,127.4L53.6,127.4L53.6,128.3L51.9,129.2L51.9,131L55.4,130.1L55.4,129.2L56.2,129.2L57.1,127.4L58.9,127.4L58.9,126.6L59.8,126.6L59.8,124.8L61.5,124.8L62.4,123L64.2,123L64.2,121.3L65,121.3L65.9,119.5L69.4,118.7L69.4,117.8L70.3,117.8L70.3,116.9L72.1,116.9L72.1,116L74.7,116L74.7,115.1L76.5,115.1L76.5,114.3L78.2,114.3L78.2,113.4L80.9,113.4L80.9,112.5L83.5,112.5L83.5,111.6L86.1,111.6L86.1,110.7L89.6,110.7L89.6,109.9L92.3,109.9L92.3,109L107.2,107.2L107.2,108.1L112.5,108.1L112.5,109L115.1,109L115.1,109.9L116.9,109.9L117.8,111.6L116,111.6L116,112.5L117.8,113.4L117.8,115.1L116.9,115.1L116.9,116L113.4,116L112.5,117.8L110.7,117.8L110.7,118.7L109,118.7L109,119.5L103.7,119.5L103.7,118.7L101.1,118.7L101.1,117.8L100.2,117.8L100.2,118.7L97.6,118.7L96.7,120.4L99.3,120.4L99.3,121.3L102.8,121.3L102.8,123L103.7,123L103.7,123.9L104.6,123.9L104.6,123L106.3,123L106.3,122.2L113.4,122.2L113.4,123L111.6,123.9L110.7,127.4L109,127.4L109,128.3L107.2,128.3L107.2,129.2L111.6,129.2L110.7,132.7L112.5,132.7L112.5,133.6L113.4,133.6L113.4,136.2L114.3,136.2L115.1,138L121.3,138L121.3,139.7L120.4,139.7L120.4,140.6L122.2,140.6L122.2,141.5L126.6,141.5L126.6,142.4L133.6,142.4L133.6,143.3L138,143.3L138,142.4L139.7,142.4L139.7,141.5L140.6,141.5L140.6,142.4L141.5,142.4L141.5,143.3L143.3,144.1L143.3,143.3L145.9,143.3L145.9,142.4L145,142.4L145,138.9L145.9,138.9L145.9,138L146.8,138L146.8,137.1L147.7,137.1L147.7,136.2L149.4,135.4L149.4,133.6L150.3,133.6L151.2,131.8L152.9,131.8L153.8,130.1L155.6,130.1L155.6,131L156.4,131L157.3,132.7L156.4,132.7L156.4,134.5L155.6,134.5L155.6,136.2L154.7,136.2L154.7,137.1L161.7,138L161.7,138.9L160.8,138.9L161.7,140.6L160,140.6L159.1,142.4L157.3,142.4L157.3,143.3L154.7,143.3L154.7,144.1L151.2,144.1L151.2,145L148.5,145L148.5,144.1L147.7,144.1L147.7,145L146.8,145L145.9,146.8L150.3,146.8L150.3,147.7L143.3,148.5L143.3,149.4L140.6,149.4L140.6,150.3L137.1,150.3L137.1,151.2L134.5,151.2L134.5,152.1L131.8,152.1L131.8,152.9L127.4,152.9L127.4,153.8L124.8,153.8L124.8,155.6L122.2,155.6L121.3,153.8L119.5,153.8L119.5,154.7L116.9,154.7L116.9,156.4L117.8,156.4L117.8,157.3L116.9,157.3L116.9,158.2L115.1,158.2L115.1,159.1L113.4,159.1L113.4,160L112.5,160L112.5,160.8L111.6,160.8L110.7,162.6L108.1,162.6L108.1,163.5L107.2,163.5L106.3,165.2L102.8,165.2L102.8,164.4L102,164.4L102,162.6L98.4,162.6L98.4,157.3L99.3,157.3L99.3,156.4L101.1,155.6L101.1,153.8L102,153.8L102,152.9L103.7,153.8L103.7,152.1L105.5,152.1L105.5,151.2L107.2,151.2L107.2,150.3L109,150.3L109,149.4L110.7,149.4L110.7,148.5L114.3,148.5L114.3,147.7L116,147.7L116,146.8L116.9,146.8L116.9,148.5L118.7,148.5L118.7,147.7L122.2,147.7L122.2,146.8L124.8,146.8L124.8,145.9L113.4,145.9L113.4,146.8L110.7,146.8L111.6,145L115.1,144.1L115.1,141.5L114.3,141.5L114.3,142.4L113.4,142.4L112.5,144.1L107.2,145L107.2,145.9L105.5,145.9L105.5,146.8L102.8,146.8L102.8,147.7L98.4,147.7L98.4,148.5L94,148.5L94,149.4L91.4,149.4L91.4,148.5L89.6,148.5L90.5,152.1L89.6,152.1L88.8,153.8L87,153.8L87,152.9L86.1,152.9L86.1,153.8L84.4,153.8L84.4,154.7L81.7,154.7L81.7,155.6L80,155.6L80,156.4L79.1,156.4L79.1,155.6L77.3,154.7L77.3,156.4L78.2,156.4L78.2,157.3L75.6,157.3L75.6,156.4L76.5,156.4L76.5,155.6L75.6,155.6L75.6,156.4L74.7,156.4L74.7,158.2L72.9,158.2L72.9,156.4L72.1,156.4L72.1,155.6L70.3,155.6L71.2,157.3L69.4,157.3L69.4,160L68.6,160L68.6,160.8L66.8,160.8L66.8,160L65.9,160L65,161.7L63.3,161.7L63.3,160.8L62.4,160.8L62.4,162.6L58.9,161.7L58.9,162.6L58,162.6L58,164.4L56.2,164.4L56.2,166.1L54.5,167L54.5,168.8L53.6,168.8L53.6,169.6L51.9,170.5L51.9,173.1L53.6,173.1L53.6,174L51.9,174L51.9,174.9L50.1,175.8L50.1,177.5L52.7,177.5L52.7,178.4L53.6,178.4L53.6,181.1L54.5,181.1L55.4,182.8L58.9,182.8L58.9,181.9L59.8,181.9L59.8,180.2L60.6,180.2L60.6,183.7L55.4,183.7L55.4,184.6L53.6,184.6L53.6,182.8L52.7,182.8L52.7,183.7L51,183.7L51,184.6L49.2,184.6L49.2,185.4L45.7,185.4L45.7,186.3L42.2,186.3L42.2,187.2L41.3,187.2L41.3,186.3L40.4,186.3L40.4,187.2L29.9,187.2L29.9,188.1L28.1,188.1L28.1,189L25.5,189L25.5,189.8L22,190.7L22,191.6L23.7,191.6L23.7,190.7L33.4,190.7L33.4,189.8L35.2,189.8L35.2,191.6L32.5,191.6L32.5,192.5L28.1,192.5L28.1,193.4L25.5,193.4L25.5,194.2L18.5,194.2L18.5,196L20.2,196L20.2,198.6L19.3,198.6L18.5,203.9L17.6,203.9L17.6,204.8L16.7,204.8L16.7,205.7L15.8,205.7L15.8,206.5L14.9,206.5L14.9,207.4L14.1,207.4L14.1,208.3L13.2,208.3L13.2,209.2L12.3,209.2L11.4,210.9L10.5,210.9L10.5,209.2L11.4,209.2L11.4,208.3L8.8,208.3L8.8,207.4L7,207.4L7,206.5L6.2,206.5L6.2,205.7L4.4,204.8L4.4,206.5L6.2,207.4L6.2,210.1L7,210.1L7,210.9L7.9,210.9L7.9,211.8L9.7,212.7L9.7,216.2L8.8,216.2L8.8,218L7,218L7,219.7L6.2,219.7L7,221.5L5.3,221.5L5.3,222.4L4.4,222.4L4.4,224.1L3.5,224.1L3.5,225L1.8,225L1.8,228.5L0,228.5L0,225.9L0.9,225.9L0.9,224.1L1.8,224.1L1.8,222.4L2.6,222.4L3.5,220.6L1.8,220.6L1.8,218.8L0.9,218.8L0.9,217.1L0,217.1L0,205.7L0.9,205.7L0.9,204.8L0,204.8L0,168.8L2.6,168.8L2.6,167.9L0,167.9L0,65.9L2.6,65.9L2.6,65L3.5,65L3.5,63.3L7,63.3L7,62.4L8.8,62.4L8.8,63.3L10.5,63.3L10.5,64.2L11.4,64.2L11.4,63.3L12.3,63.3L12.3,61.5L9.7,61.5L9.7,60.6L3.5,60.6L3.5,61.5L0,62.4L0,38.7L0.9,38.7L0.9,37.8L0,37.8ZM315.5,0L324.3,0L324.3,0.9L323.4,0.9L323.4,1.8L319,1.8L319,0.9L317.3,1.8L317.3,0.9L315.5,0.9ZM813,0L816.5,0L815.6,3.5L816.5,3.5L816.5,2.6L818.3,3.5L818.3,2.6L817.4,2.6L817.4,0.9L818.3,0.9L818.3,0L840.2,0L840.2,19.3L836.7,19.3L836.7,20.2L835,20.2L835,19.3L831.4,19.3L831.4,20.2L830.6,20.2L830.6,19.3L826.2,19.3L826.2,17.6L824.4,17.6L824.4,16.7L820.9,16.7L820.9,15.8L817.4,14.9L817.4,14.1L815.6,13.2L815.6,9.7L817.4,8.8L817.4,10.5L820,10.5L819.1,8.8L820,8.8L820,7L820.9,7L820.9,7.9L821.8,7.9L821.8,7L820.9,7L820,5.3L818.3,5.3L818.3,7L815.6,7L815.6,7.9L813,7.9L813,8.8L812.1,8.8L812.1,6.2L813,6.2L813,4.4L814.7,3.5L814.7,2.6L813,2.6L813,3.5L811.2,2.6L811.2,0.9L813,0.9ZM729.5,7.9L730.4,7.9L730.4,9.7L732.1,9.7L732.1,11.4L730.4,12.3L730.4,10.5L727.7,10.5L728.6,12.3L726.9,12.3L726.9,11.4L726,11.4L726,10.5L726.9,10.5L726.9,8.8L729.5,8.8ZM66.8,8.8L69.4,8.8L69.4,9.7L67.7,9.7L67.7,10.5L66.8,10.5ZM726,13.2L729.5,13.2L729.5,15.8L728.6,15.8L728.6,16.7L726.9,16.7L726.9,17.6L725.1,17.6L725.1,18.5L723.3,18.5L723.3,19.3L721.6,19.3L721.6,20.2L719.8,20.2L719.8,22L721.6,22L721.6,22.9L719.8,22.9L718.9,24.6L719.8,24.6L719.8,23.7L725.1,23.7L725.1,22.9L729.5,22.9L729.5,23.7L730.4,23.7L730.4,22.9L734.8,22.9L734.8,23.7L736.5,23.7L736.5,22.9L740.9,22.9L740.9,23.7L742.7,24.6L741.8,26.4L740,26.4L740,27.2L739.2,27.2L739.2,29.9L738.3,29.9L738.3,30.8L737.4,30.8L737.4,31.6L736.5,31.6L736.5,32.5L735.6,32.5L735.6,33.4L734.8,33.4L733.9,35.2L732.1,35.2L732.1,36.9L733.9,36.9L733.9,37.8L729.5,37.8L729.5,38.7L728.6,38.7L728.6,39.6L726.9,39.6L726.9,40.4L731.2,40.4L731.2,39.6L734.8,39.6L734.8,40.4L738.3,40.4L738.3,41.3L740,41.3L740,42.2L740.9,42.2L741.8,43.9L743.6,43.9L743.6,44.8L744.4,44.8L744.4,48.3L746.2,49.2L746.2,51L747.1,51L747.1,52.7L747.9,52.7L747.9,53.6L749.7,53.6L749.7,54.5L753.2,54.5L753.2,55.4L755,55.4L755,56.2L755.9,56.2L756.7,58L758.5,58L758.5,61.5L759.4,61.5L759.4,62.4L761.1,62.4L761.1,63.3L759.4,63.3L759.4,64.2L760.3,64.2L760.3,65L762,65L762,65.9L762.9,65.9L762.9,67.7L763.8,67.7L762.9,69.4L761.1,69.4L761.1,71.2L762,71.2L762,72.1L764.6,72.1L764.6,70.3L773.4,70.3L773.4,71.2L775.2,71.2L775.2,72.1L777,72.1L777,72.9L777.8,72.9L777.8,75.6L777,75.6L776.1,79.1L775.2,79.1L775.2,80L773.4,80L772.6,81.7L769.9,81.7L769.9,83.5L769,83.5L769,84.4L766.4,84.4L766.4,85.3L768.2,85.3L768.2,86.1L774.3,86.1L774.3,88.8L770.8,88.8L769.9,90.5L767.3,90.5L767.3,91.4L763.8,91.4L763.8,92.3L759.4,92.3L759.4,91.4L755,91.4L755,92.3L748.8,92.3L748.8,94L746.2,94L746.2,93.2L744.4,93.2L744.4,92.3L742.7,92.3L742.7,93.2L740.9,93.2L740.9,94L737.4,94L737.4,93.2L735.6,93.2L735.6,94L734.8,94L734.8,93.2L732.1,93.2L732.1,92.3L730.4,92.3L730.4,93.2L726.9,93.2L726.9,94L725.1,94L725.1,96.7L723.3,96.7L723.3,97.6L721.6,97.6L721.6,96.7L717.2,96.7L717.2,95.8L716.3,95.8L716.3,96.7L711.9,96.7L711,98.4L709.3,98.4L709.3,100.2L707.5,100.2L707.5,99.3L705.8,99.3L705.8,98.4L704.9,98.4L704.9,97.6L707.5,97.6L707.5,96.7L708.4,96.7L708.4,95.8L709.3,95.8L710.2,94L712.8,94L712.8,93.2L714.6,92.3L714.6,89.6L718.1,89.6L718.1,87.9L730.4,87.9L730.4,86.1L733.9,84.4L733.9,83.5L733,83.5L733,84.4L729.5,84.4L728.6,86.1L724.2,86.1L724.2,85.3L722.5,85.3L721.6,83.5L720.7,83.5L720.7,84.4L717.2,84.4L717.2,82.6L712.8,82.6L712.8,83.5L709.3,83.5L709.3,82.6L708.4,82.6L708.4,80L711.9,80L711.9,79.1L713.7,79.1L713.7,78.2L717.2,78.2L717.2,77.3L718.9,77.3L718.9,75.6L719.8,75.6L719.8,74.7L718.9,74.7L718.9,72.9L719.8,72.9L719.8,72.1L718.9,72.1L718.1,70.3L717.2,70.3L717.2,71.2L715.4,71.2L715.4,72.1L712.8,72.1L713.7,70.3L716.3,70.3L716.3,69.4L717.2,69.4L717.2,68.6L715.4,68.6L715.4,67.7L713.7,67.7L713.7,66.8L714.6,66.8L714.6,65.9L717.2,65.9L717.2,66.8L719.8,66.8L719.8,67.7L720.7,67.7L720.7,66.8L728.6,66.8L728.6,65.9L729.5,65.9L729.5,63.3L730.4,63.3L730.4,62.4L729.5,62.4L729.5,60.6L731.2,60.6L731.2,58.9L732.1,58.9L732.1,58L729.5,58L729.5,58.9L727.7,58.9L727.7,58L726.9,58L726.9,57.1L726,57.1L726,56.2L724.2,55.4L724.2,53.6L726,52.7L726,51L726.9,51L726.9,50.1L724.2,50.1L724.2,51L721.6,51L721.6,51.9L717.2,51.9L717.2,51L716.3,51L716.3,52.7L714.6,52.7L714.6,51.9L711.9,51.9L711.9,51L711,51L711,52.7L710.2,52.7L710.2,51.9L709.3,51.9L708.4,50.1L709.3,50.1L709.3,49.2L710.2,49.2L710.2,48.3L711,48.3L711,47.5L711.9,47.5L711.9,46.6L713.7,45.7L713.7,43.9L711.9,43.9L711.9,43.1L711,43.1L711,40.4L711.9,40.4L711.9,39.6L710.2,40.4L710.2,42.2L706.6,41.3L706.6,39.6L705.8,39.6L705.8,41.3L706.6,41.3L706.6,42.2L705.8,42.2L705.8,43.9L704.9,43.9L704.9,46.6L702.2,46.6L702.2,45.7L703.1,45.7L703.1,43.1L704,43.1L703.1,39.6L704.9,38.7L704,36.9L705.8,36L705.8,34.3L706.6,34.3L706.6,33.4L704.9,33.4L704.9,34.3L704,34.3L704,35.2L703.1,35.2L702.2,36.9L697.9,36.9L698.7,35.2L697,35.2L697,34.3L697.9,34.3L698.7,32.5L701.4,32.5L701.4,29.9L702.2,29.9L703.1,28.1L702.2,28.1L702.2,29L700.5,29L700.5,28.1L696.1,28.1L695.2,26.4L692.6,26.4L692.6,24.6L694.3,25.5L694.3,24.6L696.1,24.6L696.1,22.9L697.9,22.9L697.9,23.7L698.7,23.7L698.7,25.5L699.6,25.5L700.5,27.2L703.1,27.2L703.1,26.4L701.4,25.5L701.4,24.6L702.2,24.6L702.2,21.1L707.5,21.1L707.5,20.2L706.6,20.2L706.6,19.3L707.5,19.3L706.6,17.6L708.4,17.6L709.3,14.1L712.8,14.1L712.8,14.9L714.6,14.9L714.6,14.1L715.4,14.1L715.4,14.9L718.1,14.9L718.1,14.1L726,14.1ZM697,14.9L697.9,14.9L697.9,16.7L697,16.7L696.1,20.2L694.3,20.2L694.3,21.1L692.6,21.1L692.6,22L689.9,22L690.8,20.2L689.1,20.2L689.1,17.6L691.7,17.6L691.7,16.7L694.3,16.7L694.3,15.8L697,15.8ZM141.5,22L143.3,22L143.3,22.9L141.5,22.9ZM687.3,22.9L689.1,22.9L689.1,24.6L688.2,24.6L688.2,27.2L687.3,27.2L687.3,29L686.4,29L686.4,24.6L685.5,24.6L685.5,23.7L687.3,23.7ZM147.7,33.4L149.4,33.4L149.4,34.3L147.7,34.3ZM701.4,38.7L703.1,38.7L703.1,39.6L702.2,39.6L702.2,40.4L701.4,40.4L701.4,41.3L700.5,41.3L700.5,42.2L699.6,42.2L698.7,43.9L697,43.9L697,42.2L695.2,43.1L695.2,41.3L700.5,40.4ZM706.6,43.1L708.4,43.1L708.4,43.9L709.3,43.9L709.3,45.7L707.5,45.7L707.5,44.8L706.6,44.8ZM686.4,46.6L689.1,46.6L689.1,47.5L690.8,47.5L690.8,48.3L694.3,48.3L694.3,47.5L698.7,47.5L698.7,48.3L699.6,48.3L699.6,49.2L700.5,49.2L700.5,50.1L701.4,50.1L701.4,51L703.1,51.9L703.1,52.7L701.4,52.7L701.4,53.6L704.9,53.6L704.9,54.5L703.1,54.5L703.1,55.4L704,55.4L704.9,57.1L702.2,57.1L702.2,58L701.4,58L700.5,59.8L697,59.8L697,61.5L697.9,61.5L697.9,64.2L698.7,64.2L698.7,67.7L699.6,67.7L699.6,71.2L698.7,71.2L697.9,74.7L696.1,75.6L696.1,77.3L697,77.3L697,78.2L693.5,78.2L693.5,77.3L692.6,77.3L692.6,78.2L685.5,78.2L684.7,80L682,80L682,80.9L680.3,80.9L680.3,81.7L676.8,81.7L676.8,82.6L675,82.6L675,83.5L673.2,83.5L673.2,84.4L672.4,84.4L672.4,83.5L671.5,83.5L671.5,84.4L668,84.4L668,85.3L666.2,85.3L666.2,84.4L664.5,84.4L664.5,85.3L661.8,85.3L661.8,84.4L663.6,84.4L663.6,83.5L665.3,83.5L665.3,82.6L660.1,83.5L660.9,81.7L659.2,81.7L659.2,82.6L658.3,82.6L658.3,81.7L656.5,81.7L657.4,80L660.1,80L660.1,79.1L660.9,79.1L660.9,78.2L659.2,78.2L659.2,79.1L655.7,79.1L656.5,77.3L661.8,77.3L661.8,75.6L663.6,75.6L663.6,73.8L662.7,73.8L662.7,72.9L664.5,72.9L664.5,72.1L666.2,71.2L666.2,69.4L667.1,69.4L667.1,68.6L670.6,68.6L670.6,67.7L663.6,67.7L663.6,66.8L660.9,66.8L660.9,65.9L659.2,65.9L659.2,64.2L660.9,64.2L660.9,62.4L664.5,62.4L663.6,60.6L660.1,61.5L659.2,59.8L660.9,59.8L660.9,58L659.2,58L659.2,57.1L661.8,57.1L661.8,56.2L662.7,56.2L662.7,57.1L668,57.1L668,58L669.7,58L669.7,57.1L674.1,57.1L675,55.4L677.6,55.4L677.6,54.5L678.5,54.5L678.5,53.6L672.4,53.6L672.4,52.7L675.9,51.9L675.9,49.2L676.8,49.2L676.8,48.3L682,48.3L682,47.5L683.8,47.5L683.8,48.3L685.5,49.2L684.7,47.5L686.4,47.5ZM116.9,54.5L116,54.5L116,57.1L115.1,57.1L115.1,56.2L113.4,56.2L113.4,57.1L112.5,57.1L113.4,58.9L109,58.9L109,58L107.2,58L107.2,58.9L105.5,59.8L105.5,61.5L110.7,61.5L110.7,62.4L112.5,63.3L111.6,61.5L113.4,61.5L113.4,60.6L114.3,60.6L113.4,58.9L115.1,58.9L115.1,59.8L118.7,59.8L118.7,61.5L122.2,61.5L122.2,60.6L124.8,60.6L124.8,59.8L127.4,59.8L127.4,60.6L129.2,60.6L129.2,58.9L128.3,58.9L128.3,57.1L127.4,57.1L127.4,56.2L124.8,56.2L124.8,57.1L123.9,57.1L123.9,58L122.2,58.9L121.3,57.1L118.7,57.1L118.7,55.4L116.9,55.4ZM704.9,54.5L705.8,54.5L705.8,56.2L704.9,56.2ZM714.6,56.2L716.3,56.2L716.3,58L715.4,58L715.4,58.9L712.8,58.9L712.8,58L713.7,58ZM124.8,58L126.6,58L126.6,58.9L124.8,58.9ZM170.5,58.9L169.6,58.9L170.5,60.6L167,60.6L167,61.5L161.7,61.5L161.7,62.4L159.1,62.4L159.1,65L158.2,65L157.3,66.8L160,66.8L160.8,65L164.4,65L164.4,64.2L166.1,64.2L166.1,63.3L169.6,63.3L169.6,61.5L171.4,61.5L171.4,60.6L174,60.6L174,59.8L170.5,59.8ZM836.7,62.4L837.6,62.4L837.6,63.3L839.4,63.3L839.4,62.4L840.2,62.4L840.2,161.7L835,161.7L835,162.6L832.3,162.6L831.4,164.4L829.7,164.4L828.8,166.1L827.1,166.1L827.1,167.9L824.4,167.9L824.4,168.8L821.8,168.8L821.8,169.6L820.9,169.6L820.9,168.8L819.1,168.8L819.1,169.6L818.3,169.6L817.4,167.9L813.9,167.9L813.9,166.1L812.1,166.1L811.2,164.4L810.4,164.4L810.4,165.2L811.2,165.2L812.1,167L810.4,167L810.4,166.1L806,166.1L806,164.4L805.1,164.4L805.1,165.2L801.6,165.2L801.6,164.4L798.9,164.4L798,166.1L792.8,167L792.8,167.9L791,168.8L791,170.5L790.1,170.5L790.1,174L791,174L791,174.9L791.9,174.9L791.9,176.7L792.8,176.7L792.8,177.5L791,177.5L791,178.4L791.9,178.4L791.9,181.1L791,181.1L790.1,182.8L788.4,182.8L788.4,183.7L785.7,183.7L785.7,184.6L782.2,185.4L781.3,187.2L777.8,187.2L777.8,188.1L773.4,188.1L773.4,189L769.9,189L769.9,189.8L769,189.8L769,190.7L767.3,191.6L768.2,193.4L767.3,193.4L767.3,194.2L765.5,194.2L765.5,195.1L764.6,195.1L764.6,196L763.8,196L763.8,196.9L762.9,196.9L762.9,197.8L762,197.8L762,198.6L760.3,199.5L760.3,201.3L759.4,201.3L759.4,202.1L757.6,203L757.6,204.8L756.7,204.8L756.7,206.5L757.6,206.5L757.6,209.2L758.5,209.2L758.5,210.1L759.4,210.1L760.3,211.8L762,211.8L762,212.7L755,216.2L755,218L753.2,218.8L753.2,220.6L752.3,220.6L752.3,222.4L751.5,222.4L752.3,224.1L746.2,224.1L745.3,225.9L743.6,225.9L743.6,226.8L741.8,227.6L741.8,229.4L740.9,229.4L740.9,231.2L740,231.2L739.2,232.9L738.3,232.9L737.4,231.2L735.6,231.2L735.6,232L733.9,232L733.9,232.9L731.2,232.9L731.2,232L730.4,232L730.4,232.9L729.5,232.9L729.5,232L726.9,232L726.9,232.9L722.5,232.9L722.5,232L721.6,232L721.6,232.9L715.4,232.9L714.6,234.7L710.2,234.7L710.2,235.5L708.4,235.5L708.4,236.4L707.5,236.4L707.5,237.3L706.6,237.3L706.6,238.2L705.8,238.2L705.8,239.1L704,239.9L704,239.1L701.4,239.1L701.4,238.2L699.6,238.2L699.6,237.3L697.9,236.4L697.9,233.8L696.1,233.8L696.1,231.2L695.2,231.2L694.3,229.4L690.8,228.5L690.8,227.6L685.5,227.6L685.5,228.5L683.8,228.5L683.8,229.4L682,229.4L682,230.3L680.3,230.3L680.3,229.4L675.9,229.4L675.9,228.5L670.6,229.4L670.6,228.5L671.5,228.5L671.5,225.9L672.4,225.9L672.4,220.6L671.5,220.6L671.5,219.7L672.4,219.7L672.4,215.3L668,215.3L668,213.6L667.1,213.6L667.1,212.7L665.3,212.7L665.3,210.9L666.2,210.9L666.2,208.3L667.1,208.3L667.1,205.7L668,205.7L668,204.8L669.7,203.9L669.7,202.1L670.6,202.1L670.6,200.4L671.5,200.4L671.5,196L672.4,196L672.4,193.4L673.2,193.4L673.2,190.7L674.1,190.7L674.1,189L673.2,189L673.2,186.3L672.4,186.3L672.4,183.7L671.5,183.7L671.5,178.4L672.4,178.4L672.4,177.5L671.5,177.5L671.5,176.7L672.4,176.7L671.5,174.9L672.4,174.9L672.4,173.1L671.5,173.1L671.5,174L669.7,174.9L669.7,173.1L670.6,173.1L670.6,172.3L668.8,172.3L668.8,170.5L667.1,170.5L667.1,169.6L668,169.6L668.8,167.9L670.6,167.9L670.6,167L675,167L675,166.1L677.6,166.1L676.8,164.4L678.5,164.4L679.4,162.6L685.5,162.6L685.5,163.5L687.3,163.5L687.3,164.4L701.4,164.4L701.4,163.5L702.2,163.5L702.2,164.4L707.5,164.4L707.5,165.2L711.9,165.2L711.9,166.1L719.8,166.1L719.8,165.2L731.2,166.1L731.2,165.2L733,165.2L733,166.1L735.6,166.1L735.6,167L740.9,167L740.9,166.1L744.4,166.1L744.4,165.2L745.3,165.2L745.3,163.5L746.2,163.5L746.2,160L747.1,160L747.1,156.4L747.9,156.4L747.9,153.8L749.7,153.8L749.7,152.1L747.9,152.9L747.9,148.5L748.8,148.5L748.8,145L750.6,145L750.6,145.9L751.5,145.9L751.5,146.8L753.2,147.7L753.2,145.9L752.3,145.9L751.5,144.1L747.9,143.3L747.9,141.5L749.7,141.5L749.7,138.9L748.8,138.9L748.8,137.1L742.7,135.4L742.7,134.5L741.8,134.5L741.8,133.6L740.9,133.6L740.9,132.7L739.2,131.8L739.2,130.1L740,130.1L740,129.2L739.2,129.2L738.3,127.4L735.6,127.4L735.6,126.6L734.8,126.6L735.6,124.8L731.2,124.8L731.2,123.9L727.7,123.9L727.7,123L725.1,123L725.1,122.2L721.6,122.2L721.6,121.3L718.1,121.3L718.1,122.2L717.2,122.2L717.2,121.3L715.4,120.4L715.4,118.7L717.2,118.7L717.2,117.8L714.6,117.8L714.6,116.9L716.3,116.9L716.3,116L714.6,116L714.6,116.9L713.7,116.9L713.7,116L712.8,116L712.8,114.3L714.6,114.3L714.6,113.4L719.8,113.4L719.8,112.5L720.7,112.5L720.7,113.4L724.2,113.4L724.2,111.6L730.4,111.6L730.4,112.5L731.2,112.5L731.2,113.4L732.1,113.4L733,115.1L733.9,115.1L734.8,113.4L737.4,113.4L737.4,114.3L739.2,114.3L739.2,113.4L741.8,113.4L741.8,114.3L743.6,114.3L743.6,113.4L745.3,113.4L745.3,112.5L744.4,112.5L744.4,108.1L743.6,108.1L743.6,106.3L741.8,106.3L741.8,103.7L740.9,103.7L740.9,102.8L742.7,102.8L742.7,103.7L747.9,102.8L747.9,103.7L747.1,103.7L747.1,105.5L747.9,105.5L747.9,106.3L756.7,106.3L756.7,107.2L760.3,107.2L760.3,106.3L762,106.3L762,105.5L761.1,105.5L761.1,103.7L762,103.7L762,102.8L763.8,102.8L763.8,102L765.5,102L765.5,101.1L771.7,101.1L771.7,100.2L773.4,100.2L773.4,99.3L774.3,99.3L774.3,98.4L776.1,97.6L776.1,91.4L777,91.4L777,90.5L779.6,90.5L779.6,89.6L785.7,89.6L785.7,88.8L787.5,88.8L787.5,87.9L790.1,87.9L790.1,87L792.8,87L792.8,86.1L797.2,86.1L797.2,87L798.9,87L798,85.3L795.4,85.3L795.4,84.4L799.8,84.4L799.8,85.3L801.6,85.3L801.6,86.1L802.4,86.1L802.4,84.4L799.8,84.4L799.8,83.5L798.9,83.5L798.9,81.7L800.7,81.7L800.7,80L802.4,80L802.4,79.1L803.3,79.1L803.3,78.2L804.2,78.2L804.2,77.3L806,76.5L806,73.8L806.8,73.8L806.8,71.2L807.7,71.2L807.7,70.3L808.6,70.3L808.6,71.2L810.4,70.3L811.2,72.1L813,72.1L812.1,73.8L810.4,73.8L810.4,74.7L811.2,74.7L810.4,76.5L812.1,76.5L812.1,75.6L813.9,75.6L813.9,74.7L815.6,74.7L815.6,73.8L816.5,73.8L816.5,71.2L813.9,71.2L813.9,68.6L814.7,68.6L815.6,66.8L818.3,66.8L818.3,65.9L827.1,65.9L827.1,65L828.8,65L828.8,66.8L830.6,66.8L831.4,63.3L836.7,63.3ZM0,63.3L2.6,63.3L2.6,64.2L0.9,64.2L0.9,65L0,65ZM807.7,68.6L809.5,68.6L809.5,69.4L807.7,69.4ZM200.4,83.5L201.3,83.5L201.3,85.3L203,85.3L203,84.4L205.7,84.4L205.7,86.1L204.8,86.1L204.8,87L199.5,86.1L199.5,87.9L203,87.9L203,89.6L202.1,89.6L202.1,90.5L201.3,90.5L200.4,92.3L198.6,92.3L198.6,94L197.8,94L197.8,94.9L196.9,94.9L196.9,95.8L195.1,96.7L195.1,98.4L193.4,98.4L193.4,99.3L192.5,99.3L192.5,102L191.6,102L191.6,102.8L195.1,102L195.1,101.1L196,101.1L196,100.2L196.9,100.2L196.9,99.3L198.6,98.4L198.6,100.2L202.1,100.2L202.1,101.1L203,101.1L203,102L201.3,102L201.3,103.7L202.1,103.7L202.1,104.6L203,104.6L203,103.7L203.9,103.7L203.9,105.5L207.4,105.5L207.4,104.6L208.3,104.6L208.3,107.2L210.9,107.2L210.9,106.3L212.7,106.3L212.7,105.5L211.8,105.5L211.8,103.7L214.5,103.7L214.5,104.6L215.3,104.6L215.3,106.3L216.2,106.3L216.2,105.5L217.1,105.5L217.1,106.3L218,106.3L218,105.5L221.5,105.5L221.5,106.3L225,107.2L225,108.1L224.1,108.1L224.1,109.9L220.6,110.7L220.6,111.6L221.5,111.6L221.5,112.5L223.2,113.4L222.4,115.1L225,115.1L225,114.3L228.5,114.3L228.5,113.4L230.3,113.4L230.3,114.3L229.4,114.3L229.4,116L226.8,116L226.8,116.9L225.9,116.9L225.9,117.8L225,117.8L225,118.7L223.2,119.5L223.2,121.3L222.4,121.3L221.5,123L222.4,123L222.4,123.9L224.1,124.8L224.1,123.9L225,123.9L225,122.2L225.9,122.2L225.9,121.3L226.8,121.3L227.6,119.5L230.3,119.5L230.3,120.4L229.4,120.4L229.4,122.2L228.5,122.2L228.5,123.9L227.6,123.9L227.6,124.8L229.4,125.7L229.4,124.8L231.2,124.8L231.2,123.9L232,123.9L232,122.2L232.9,122.2L233.8,125.7L232,126.6L232,128.3L231.2,128.3L231.2,131.8L230.3,131.8L229.4,133.6L227.6,133.6L227.6,132.7L224.1,133.6L224.1,128.3L223.2,128.3L223.2,129.2L222.4,129.2L222.4,130.1L221.5,130.1L220.6,131.8L218,131.8L218,131L218.8,131L218.8,129.2L219.7,129.2L219.7,127.4L221.5,126.6L221.5,125.7L220.6,125.7L220.6,124.8L221.5,124.8L221.5,123.9L220.6,123.9L220.6,122.2L218,122.2L218,123L216.2,123.9L216.2,125.7L215.3,125.7L215.3,126.6L210.9,126.6L210.9,127.4L209.2,128.3L209.2,130.1L207.4,130.1L207.4,131L200.4,131L201.3,129.2L204.8,129.2L204.8,128.3L206.5,128.3L206.5,127.4L207.4,127.4L207.4,125.7L209.2,125.7L209.2,124.8L211.8,124.8L211.8,123.9L207.4,123.9L207.4,123L205.7,123L205.7,123.9L206.5,123.9L205.7,125.7L203.9,125.7L203.9,124.8L203,124.8L203,125.7L201.3,125.7L201.3,124.8L200.4,124.8L199.5,123L198.6,123L198.6,123.9L192.5,123.9L192.5,124.8L190.7,124.8L190.7,123.9L181.9,123.9L181.9,123L167,123.9L167,121.3L166.1,121.3L166.1,120.4L167.9,120.4L167.9,119.5L171.4,118.7L171.4,117.8L172.3,117.8L173.1,116L175.8,116L174.9,114.3L173.1,114.3L173.1,112.5L174.9,111.6L174.9,109.9L175.8,109.9L175.8,109L176.7,109L176.7,109.9L177.5,109.9L177.5,109L179.3,109L179.3,108.1L178.4,108.1L177.5,106.3L178.4,106.3L179.3,104.6L181.1,104.6L181.1,102L181.9,102L181.9,101.1L182.8,101.1L182.8,99.3L184.6,98.4L184.6,95.8L185.4,95.8L185.4,94.9L186.3,94.9L186.3,94L187.2,94L188.1,92.3L189.8,92.3L189.8,89.6L191.6,89.6L193.4,86.1L196.9,86.1L196.9,85.3L198.6,85.3L198.6,84.4L200.4,84.4ZM29.9,86.1L29,86.1L29,87L26.4,87L26.4,87.9L24.6,87.9L23.7,89.6L22,89.6L22,91.4L20.2,92.3L20.2,94L19.3,94L19.3,94.9L21.1,94.9L22,93.2L23.7,93.2L23.7,91.4L25.5,91.4L25.5,92.3L26.4,92.3L26.4,91.4L28.1,91.4L28.1,90.5L26.4,90.5L27.2,88.8L29,88.8L29,89.6L29.9,89.6L29.9,88.8L31.6,88.8L31.6,87ZM704.9,98.4L704.9,99.3L703.1,99.3L703.1,98.4ZM203,100.2L204.8,100.2L204.8,101.1L203,101.1ZM115.1,101.1L123,101.1L123,102L129.2,102L129.2,102.8L134.5,103.7L134.5,104.6L136.2,104.6L136.2,105.5L138,105.5L138,106.3L141.5,106.3L141.5,107.2L142.4,107.2L143.3,109L133.6,109L133.6,108.1L129.2,108.1L129.2,107.2L127.4,107.2L127.4,106.3L124.8,106.3L124.8,105.5L123.9,105.5L123,103.7L121.3,103.7L121.3,102.8L117.8,102.8L117.8,102L115.1,102ZM217.1,102.8L219.7,102.8L219.7,103.7L218,103.7L218,104.6L217.1,104.6ZM738.3,107.2L740,107.2L740,108.1L738.3,108.1ZM169.6,113.4L170.5,113.4L170.5,114.3L172.3,114.3L172.3,115.1L167.9,115.1L167.9,114.3L169.6,114.3ZM114.3,120.4L115.1,120.4L115.1,122.2L113.4,122.2ZM218,123.9L219.7,123.9L219.7,124.8L218,124.8ZM196,129.2L197.8,129.2L197.8,130.1L196,130.1ZM118.7,130.1L120.4,130.1L120.4,131.8L119.5,131.8L119.5,132.7L121.3,133.6L121.3,135.4L124.8,134.5L124.8,135.4L127.4,135.4L127.4,136.2L131,136.2L131,135.4L139.7,135.4L139.7,136.2L137.1,136.2L137.1,137.1L135.4,138L135.4,140.6L131.8,140.6L131.8,139.7L131,139.7L131,138L128.3,138L128.3,138.9L126.6,138.9L126.6,138L123,138L122.2,136.2L118.7,136.2L119.5,134.5L118.7,134.5L118.7,133.6L116,133.6L116,132.7L116.9,132.7L116.9,131.8L117.8,131.8ZM746.2,139.7L747.9,139.7L747.9,141.5L747.1,141.5ZM91.4,152.1L92.3,152.1L92.3,153.8L91.4,153.8ZM71.2,158.2L72.1,158.2L72.1,160L71.2,160ZM52.7,185.4L54.5,185.4L54.5,186.3L52.7,186.3ZM36,189L36.9,189L36.9,189.8L38.7,189.8L38.7,190.7L36.9,190.7L36.9,191.6L36,191.6ZM798,199.5L802.4,199.5L802.4,200.4L803.3,200.4L803.3,202.1L802.4,202.1L802.4,201.3L800.7,201.3L800.7,200.4L798,200.4ZM790.1,200.4L791.9,200.4L791.9,203L792.8,203L792.8,202.1L794.5,202.1L794.5,203.9L792.8,204.8L792.8,206.5L791,206.5L791,207.4L790.1,207.4L790.1,206.5L788.4,206.5L788.4,205.7L787.5,205.7L787.5,203.9L786.6,203.9L786.6,204.8L784,204.8L784.9,203L786.6,203L787.5,201.3L790.1,201.3ZM447.4,204.8L449.1,204.8L449.1,205.7L447.4,205.7ZM773.4,209.2L776.1,209.2L776.1,210.1L775.2,210.1L775.2,210.9L772.6,210.9ZM486.9,211.8L489.6,211.8L489.6,213.6L486.9,213.6ZM478.1,212.7L479.9,212.7L479.9,213.6L478.1,213.6ZM472,213.6L473.7,213.6L473.7,214.5L472,214.5ZM474.6,214.5L478.1,214.5L479,216.2L477.2,216.2L477.2,215.3L474.6,215.3ZM502.7,221.5L508.9,221.5L508.9,222.4L502.7,222.4ZM822.7,229.4L826.2,229.4L826.2,230.3L828.8,230.3L828.8,231.2L832.3,231.2L832.3,229.4L835.8,229.4L835.8,230.3L837.6,230.3L838.5,232L840.2,231.2L840.2,554.6L836.7,554.6L836.7,555.5L833.2,555.5L833.2,556.3L831.4,556.3L831.4,555.5L830.6,555.5L830.6,556.3L824.4,556.3L824.4,557.2L820,557.2L819.1,555.5L817.4,555.5L817.4,554.6L816.5,554.6L816.5,552.8L815.6,552.8L815.6,551.1L814.7,551.1L814.7,548.4L813.9,548.4L813.9,545.8L812.1,545.8L812.1,544L811.2,544L810.4,540.5L809.5,540.5L809.5,539.6L808.6,539.6L807.7,537.9L806,537.9L805.1,536.1L801.6,536.1L802.4,534.4L800.7,534.4L800.7,535.3L797.2,535.3L797.2,536.1L796.3,536.1L795.4,534.4L794.5,534.4L793.7,536.1L784.9,536.1L784.9,535.3L784,535.3L784,536.1L782.2,536.1L782.2,537L777,537L777,537.9L773.4,537.9L773.4,538.8L771.7,538.8L771.7,539.6L769,539.6L769,541.4L769.9,541.4L769.9,542.3L765.5,542.3L765.5,541.4L764.6,541.4L764.6,542.3L761.1,542.3L760.3,544L758.5,544L758.5,544.9L755.9,544.9L755.9,545.8L755,545.8L755,546.7L753.2,546.7L753.2,547.6L749.7,547.6L749.7,548.4L747.9,548.4L747.9,549.3L744.4,549.3L744.4,550.2L742.7,550.2L742.7,551.1L741.8,551.1L741.8,552L740,552L740,552.8L739.2,552.8L738.3,551.1L736.5,551.1L736.5,550.2L733,550.2L733,549.3L728.6,549.3L728.6,545.8L727.7,545.8L727.7,547.6L726.9,547.6L726.9,548.4L723.3,548.4L723.3,547.6L712.8,547.6L712.8,548.4L705.8,548.4L705.8,549.3L701.4,549.3L701.4,550.2L698.7,550.2L698.7,551.1L697,551.1L697,552L691.7,552.8L691.7,553.7L689.9,553.7L689.9,554.6L688.2,554.6L688.2,555.5L686.4,555.5L686.4,556.3L682,556.3L681.2,554.6L677.6,554.6L677.6,553.7L675.9,553.7L675.9,552.8L672.4,552L671.5,550.2L668,549.3L668,548.4L667.1,548.4L667.1,547.6L666.2,547.6L666.2,546.7L665.3,546.7L665.3,545.8L664.5,545.8L663.6,544L661.8,544L661.8,543.2L660.9,543.2L660.9,542.3L660.1,542.3L660.1,541.4L659.2,541.4L659.2,540.5L658.3,540.5L657.4,538.8L655.7,538.8L655.7,537.9L653,537.9L653,537L652.1,537L652.1,535.3L650.4,535.3L650.4,534.4L649.5,534.4L648.6,532.6L646.9,532.6L646.9,531.7L646,531.7L645.1,530L643.4,530L642.5,528.2L639.8,528.2L639.8,527.3L638.1,527.3L638.1,526.5L635.4,526.5L635.4,525.6L633.7,525.6L633.7,524.7L631.1,524.7L631.1,523.8L634.6,523.8L634.6,522.9L632.8,522.9L632.8,522.1L631.1,521.2L631.1,518.6L627.5,516.8L627.5,515L629.3,515.9L629.3,514.2L627.5,513.3L627.5,511.5L628.4,511.5L628.4,510.6L627.5,510.6L627.5,507.1L625.8,507.1L625.8,505.4L624,504.5L624,501.9L622.3,501.9L621.4,500.1L619.6,500.1L619.6,499.2L617.9,499.2L617,497.5L615.2,497.5L615.2,495.7L613.5,494.8L614.4,493.1L612.6,493.1L612.6,491.3L610.8,491.3L610.8,492.2L609.1,491.3L609.1,489.6L610,489.6L610,488.7L609.1,488.7L609.1,489.6L608.2,489.6L608.2,488.7L606.4,488.7L606.4,486.9L605.6,486.9L605.6,485.2L606.4,485.2L606.4,484.3L604.7,484.3L604.7,482.5L605.6,482.5L605.6,481.6L607.3,481.6L607.3,479.9L605.6,479.9L604.7,481.6L601.2,482.5L601.2,480.8L600.3,480.8L600.3,481.6L597.7,481.6L596.8,478.1L595,478.1L594.1,476.4L592.4,476.4L592.4,470.2L593.3,470.2L593.3,469.3L592.4,469.3L592.4,465.8L594.1,464.9L594.1,466.7L595,466.7L595,467.6L596.8,467.6L596.8,466.7L595,465.8L594.1,462.3L592.4,461.4L592.4,458.8L591.5,458.8L590.6,455.3L588.9,455.3L588.9,453.5L588,453.5L588,452.6L586.2,452.6L586.2,451.8L588,451.8L588,450.9L588.9,450.9L588.9,450L589.7,450L589.7,449.1L590.6,449.1L590.6,448.2L592.4,447.4L593.3,443.8L595,443L595,435.9L595.9,435.9L595.9,433.3L596.8,433.3L597.7,428L598.5,428L598.5,426.3L599.4,426.3L600.3,417.5L599.4,417.5L598.5,410.4L597.7,410.4L597.7,408.7L596.8,408.7L596.8,407.8L595,406.9L595,406.1L596.8,406.1L595,402.5L595.9,402.5L595.9,401.7L597.7,402.5L597.7,398.1L598.5,398.1L598.5,397.3L596.8,396.4L596.8,394.6L595.9,394.6L595.9,393.8L594.1,393.8L594.1,392.9L592.4,392L591.5,388.5L589.7,389.4L589.7,385L590.6,385L590.6,381.4L591.5,381.4L591.5,378.8L592.4,378.8L593.3,377.1L595,377.1L595,375.3L596.8,374.4L596.8,371.8L598.5,370.9L598.5,367.4L599.4,367.4L599.4,366.5L600.3,366.5L600.3,364.7L602.1,363.9L602.9,360.4L603.8,360.4L603.8,359.5L604.7,359.5L604.7,358.6L605.6,358.6L605.6,357.7L606.4,357.7L606.4,356.8L607.3,356.8L608.2,355.1L610,355.1L610,354.2L611.7,353.3L611.7,346.3L612.6,346.3L612.6,344.5L613.5,344.5L613.5,341.9L615.2,341L615.2,338.4L616.1,338.4L616.1,337.5L617,337.5L617.9,335.7L620.5,335.7L621.4,334L623.1,334L623.1,333.1L624.9,332.2L624.9,330.5L625.8,330.5L625.8,327.8L627.5,327L627.5,324.3L628.4,324.3L628.4,323.4L630.2,322.6L630.2,320.8L631.9,320.8L631.9,319.9L638.1,319.9L638.1,319L640.7,319L640.7,318.2L643.4,318.2L643.4,317.3L645.1,317.3L645.1,316.4L646,316.4L646,315.5L646.9,315.5L646.9,314.6L647.8,314.6L647.8,313.8L648.6,313.8L649.5,312L651.3,312L651.3,311.1L653.9,311.1L653.9,310.3L654.8,310.3L654.8,309.4L655.7,309.4L655.7,308.5L656.5,308.5L656.5,307.6L657.4,307.6L657.4,306.7L659.2,305.9L659.2,304.1L660.1,304.1L660.1,303.2L660.9,303.2L660.9,302.3L662.7,301.5L662.7,299.7L663.6,299.7L663.6,297.1L664.5,297.1L664.5,296.2L663.6,296.2L663.6,294.4L661.8,293.6L661.8,287.4L662.7,287.4L661.8,285.6L662.7,285.6L663.6,282.1L664.5,282.1L664.5,281.2L665.3,281.2L665.3,280.4L666.2,280.4L666.2,279.5L668,278.6L668,276.9L667.1,276.9L667.1,276L668,276L668,273.3L669.7,273.3L669.7,272.5L670.6,272.5L670.6,271.6L671.5,271.6L671.5,270.7L672.4,270.7L672.4,269.8L673.2,269.8L673.2,268.9L674.1,268.9L675,267.2L676.8,267.2L676.8,266.3L678.5,266.3L678.5,265.4L681.2,265.4L681.2,264.6L682.9,264.6L682.9,263.7L685.5,263.7L685.5,262.8L687.3,262.8L687.3,261.9L690.8,261L690.8,260.2L691.7,260.2L691.7,259.3L693.5,258.4L693.5,256.6L695.2,255.8L695.2,254L696.1,254L696.1,252.2L697,252.2L697,250.5L697.9,250.5L697.9,248.7L698.7,248.7L698.7,247L699.6,247L699.6,245.2L700.5,245.2L700.5,242.6L701.4,242.6L701.4,241.7L704.9,241.7L704.9,240.8L706.6,240.8L706.6,243.5L707.5,243.5L707.5,244.3L708.4,244.3L709.3,246.1L711,246.1L711.9,247.9L715.4,247.9L715.4,248.7L717.2,248.7L717.2,247.9L722.5,247.9L722.5,247L723.3,247L723.3,247.9L728.6,247.9L728.6,247L730.4,246.1L730.4,247L731.2,247L731.2,248.7L733.9,248.7L733.9,249.6L734.8,249.6L734.8,248.7L739.2,248.7L739.2,249.6L740.9,249.6L740.9,248.7L743.6,248.7L744.4,247L747.1,247L748.8,243.5L750.6,243.5L750.6,242.6L755,242.6L755.9,240.8L756.7,240.8L756.7,241.7L760.3,241.7L760.3,240.8L761.1,240.8L761.1,239.9L762,239.9L762.9,238.2L764.6,238.2L764.6,237.3L766.4,237.3L766.4,236.4L769,236.4L769,235.5L770.8,235.5L770.8,234.7L781.3,234.7L781.3,233.8L787.5,233.8L788.4,232L791,232L791,232.9L791.9,232.9L791.9,232L797.2,232L797.2,231.2L809.5,231.2L809.5,232L811.2,232L812.1,233.8L814.7,233.8L815.6,232L820,232L820,231.2L822.7,231.2ZM0,232L0.9,232L0.9,234.7L0,234.7ZM0,236.4L0.9,236.4L1.8,238.2L0,238.2ZM0.9,240.8L2.6,240.8L2.6,244.3L0.9,244.3L0.9,245.2L0,245.2L0,241.7L0.9,241.7ZM588,271.6L591.5,271.6L592.4,273.3L588.9,273.3ZM624.9,307.6L625.8,307.6L625.8,309.4L624.9,309.4L624,311.1L621.4,311.1L621.4,310.3L622.3,310.3L623.1,308.5L624.9,308.5ZM581,311.1L582.7,312L582.7,314.6L581,314.6L581,312.9L580.1,312.9ZM620.5,312.9L622.3,312.9L622.3,314.6L621.4,314.6L621.4,317.3L620.5,317.3L620.5,318.2L617.9,318.2ZM595.9,314.6L598.5,314.6L598.5,315.5L596.8,315.5L595.9,319L595,319L595,319.9L593.3,319.9L593.3,319L591.5,318.2L591.5,316.4L594.1,316.4L594.1,315.5L595.9,315.5ZM587.1,318.2L588.9,318.2L588.9,319L587.1,319.9ZM603.8,318.2L604.7,318.2L604.7,319L606.4,319L606.4,321.7L604.7,321.7L604.7,322.6L602.9,322.6L602.9,321.7L602.1,321.7L602.1,319.9L602.9,319.9ZM14.9,358.6L15.8,358.6L15.8,360.4L14.9,360.4ZM16.7,371.8L18.5,371.8L18.5,372.7L16.7,372.7ZM20.2,372.7L21.1,372.7L21.1,374.4L20.2,374.4ZM39.6,380.6L41.3,380.6L41.3,381.4L44.8,382.3L45.7,384.1L43.9,384.1L43.9,383.2L40.4,382.3ZM29,386.7L29.9,386.7L29.9,388.5L29,388.5ZM25.5,387.6L26.4,387.6L26.4,388.5L29,388.5L29,390.2L25.5,390.2L25.5,389.4L24.6,389.4ZM1.8,388.5L2.6,388.5L2.6,389.4L4.4,389.4L4.4,391.1L2.6,391.1L2.6,392.9L4.4,392.9L4.4,392L5.3,392L5.3,392.9L10.5,392.9L10.5,393.8L14.1,394.6L14.1,395.5L14.9,395.5L15.8,397.3L18.5,397.3L18.5,399L14.9,399L14.9,399.9L10.5,399.9L10.5,400.8L1.8,400.8L1.8,399.9L0,400.8L0,389.4L1.8,389.4ZM28.1,400.8L34.3,400.8L34.3,401.7L36,401.7L36,402.5L41.3,402.5L41.3,403.4L42.2,403.4L42.2,402.5L43.1,402.5L43.9,400.8L45.7,400.8L45.7,401.7L49.2,401.7L49.2,400.8L51.9,400.8L51.9,401.7L53.6,401.7L53.6,402.5L56.2,402.5L56.2,403.4L58,403.4L58,404.3L58.9,404.3L58.9,403.4L61.5,403.4L61.5,406.9L68.6,406.9L68.6,407.8L64.2,407.8L64.2,409.6L68.6,409.6L68.6,410.4L70.3,410.4L70.3,409.6L71.2,409.6L71.2,410.4L72.9,410.4L73.8,412.2L75.6,412.2L75.6,413.1L76.5,413.1L76.5,415.7L75.6,415.7L75.6,416.6L73.8,416.6L73.8,418.4L72.9,418.4L72.9,417.5L72.1,417.5L71.2,415.7L70.3,415.7L70.3,416.6L69.4,416.6L69.4,415.7L59.8,415.7L58.9,417.5L54.5,417.5L54.5,415.7L52.7,415.7L52.7,416.6L51,416.6L51,417.5L49.2,416.6L49.2,420.1L48.3,420.1L48.3,421L46.6,421.9L46.6,423.6L45.7,423.6L45.7,422.8L43.9,422.8L43.9,420.1L42.2,420.1L42.2,419.2L41.3,419.2L40.4,417.5L35.2,417.5L35.2,418.4L28.1,418.4L28.1,417.5L22.9,417.5L22.9,418.4L22,418.4L22,420.1L21.1,420.1L21.1,419.2L20.2,419.2L20.2,418.4L19.3,418.4L18.5,416.6L15.8,416.6L15.8,414L17.6,414L17.6,413.1L18.5,413.1L18.5,414L21.1,414L21.1,414.8L22,414.8L22,414L23.7,414L23.7,414.8L27.2,414.8L27.2,415.7L33.4,415.7L33.4,414.8L36.9,414.8L36.9,413.1L36,413.1L36,412.2L34.3,412.2L34.3,411.3L32.5,410.4L32.5,405.2L31.6,405.2L31.6,404.3L29.9,404.3L29.9,403.4L25.5,403.4L25.5,402.5L26.4,402.5L26.4,401.7L28.1,401.7ZM27.2,410.4L29,410.4L29,411.3L31.6,411.3L31.6,413.1L30.8,413.1L30.8,412.2L28.1,412.2ZM88.8,414.8L90.5,414.8L90.5,415.7L102.8,415.7L102.8,416.6L103.7,416.6L103.7,418.4L102,418.4L102,420.1L98.4,420.1L98.4,421L97.6,421L97.6,420.1L91.4,420.1L91.4,421L90.5,421L90.5,420.1L87.9,420.1L87.9,419.2L88.8,419.2L88.8,417.5L87.9,417.5L87.9,415.7L88.8,415.7ZM141.5,422.8L142.4,422.8L142.4,424.5L141.5,424.5ZM141.5,428L142.4,428L143.3,429.8L141.5,429.8ZM508,428L509.8,428L509.8,429.8L508.9,429.8L508.9,430.7L507.1,430.7L507.1,428.9L508,428.9ZM509.8,430.7L511.5,430.7L511.5,431.5L509.8,431.5ZM515.9,433.3L519.4,433.3L519.4,434.2L515.9,434.2ZM145,435.1L145.9,435.1L145.9,435.9L146.8,435.9L147.7,437.7L144.1,437.7L144.1,440.3L143.3,440.3L143.3,439.5L142.4,439.5L142.4,436.8L145,436.8ZM530.9,437.7L533.5,437.7L533.5,439.5L532.6,439.5L532.6,440.3L530.9,440.3ZM145.9,443.8L147.7,444.7L147.7,447.4L145.9,447.4ZM528.2,446.5L529.1,446.5L529.1,448.2L527.3,448.2ZM522.9,447.4L523.8,447.4L523.8,448.2L525.6,449.1L525.6,450.9L523.8,450.9L523.8,450L522.1,449.1ZM515.9,449.1L517.7,450L516.8,451.8L515,450.9ZM147.7,451.8L150.3,451.8L150.3,452.6L151.2,452.6L151.2,454.4L152.1,454.4L152.1,456.2L151.2,456.2L151.2,455.3L149.4,455.3L149.4,453.5L148.5,453.5ZM150.3,459.7L151.2,459.7L151.2,462.3L149.4,462.3L149.4,460.5L150.3,460.5ZM147.7,466.7L148.5,466.7L148.5,468.5L147.7,468.5ZM163.5,466.7L164.4,466.7L164.4,467.6L165.2,467.6L166.1,469.3L164.4,469.3L164.4,468.5L163.5,468.5ZM59.8,474.6L61.5,474.6L61.5,475.5L59.8,475.5ZM43.1,475.5L45.7,475.5L45.7,476.4L47.5,476.4L47.5,477.2L48.3,477.2L48.3,479L49.2,479L48.3,480.8L46.6,480.8L46.6,482.5L44.8,482.5L44.8,483.4L41.3,483.4L41.3,484.3L40.4,484.3L40.4,486.9L41.3,486.9L41.3,488.7L43.1,489.6L43.1,492.2L43.9,492.2L43.9,495.7L43.1,495.7L43.1,496.6L41.3,497.5L41.3,499.2L39.6,500.1L39.6,501.9L38.7,501.9L38.7,502.7L40.4,503.6L40.4,505.4L41.3,505.4L41.3,506.2L43.1,506.2L43.1,507.1L42.2,507.1L42.2,508.9L43.1,508.9L43.1,509.8L46.6,509.8L46.6,508.9L47.5,508.9L47.5,508L49.2,507.1L49.2,503.6L50.1,503.6L50.1,501.9L48.3,501L48.3,499.2L46.6,498.3L46.6,496.6L45.7,496.6L45.7,494.8L44.8,494.8L44.8,492.2L45.7,492.2L45.7,490.4L48.3,490.4L48.3,489.6L50.1,489.6L50.1,488.7L51.9,488.7L51.9,487.8L55.4,487.8L55.4,486.9L58,486.9L58.9,485.2L61.5,485.2L61.5,486L62.4,486L62.4,483.4L63.3,483.4L63.3,485.2L69.4,485.2L69.4,486L72.9,486L72.9,486.9L74.7,486.9L74.7,487.8L75.6,487.8L75.6,488.7L77.3,489.6L77.3,493.9L78.2,493.9L78.2,494.8L80.9,494.8L80.9,495.7L81.7,495.7L81.7,494.8L88.8,494.8L88.8,493.9L99.3,493.9L99.3,495.7L100.2,495.7L101.1,497.5L102.8,497.5L102.8,498.3L106.3,498.3L106.3,499.2L112.5,499.2L113.4,497.5L116,497.5L116.9,495.7L123,495.7L123,494.8L121.3,494.8L121.3,493.1L123,493.1L123,493.9L125.7,493.9L125.7,493.1L132.7,493.1L132.7,492.2L133.6,492.2L133.6,493.1L140.6,493.1L140.6,493.9L137.1,493.9L137.1,494.8L131.8,493.9L131.8,495.7L133.6,495.7L133.6,498.3L135.4,498.3L135.4,499.2L136.2,499.2L136.2,501L137.1,501L137.1,500.1L139.7,500.1L140.6,501.9L144.1,501.9L144.1,501L145,501L145,501.9L145.9,501.9L145.9,502.7L146.8,502.7L147.7,504.5L150.3,504.5L150.3,505.4L152.1,505.4L152.1,508L152.9,508L152.9,508.9L152.1,508.9L152.1,511.5L153.8,512.4L153.8,513.3L152.9,513.3L153.8,515L155.6,515L156.4,513.3L158.2,513.3L158.2,514.2L160,514.2L160.8,515.9L163.5,515.9L164.4,517.7L167.9,518.6L167.9,519.4L168.8,519.4L168.8,520.3L169.6,520.3L169.6,521.2L170.5,521.2L170.5,522.1L171.4,522.1L171.4,522.9L172.3,522.9L172.3,523.8L173.1,523.8L173.1,524.7L174.9,525.6L174.9,529.1L175.8,529.1L175.8,530.9L177.5,530.9L177.5,531.7L180.2,531.7L180.2,532.6L181.1,532.6L181.1,533.5L181.9,533.5L181.9,534.4L182.8,534.4L182.8,535.3L183.7,535.3L184.6,537L187.2,537L189,540.5L196.9,540.5L196.9,541.4L200.4,541.4L200.4,542.3L201.3,542.3L201.3,540.5L209.2,540.5L209.2,539.6L211.8,539.6L211.8,540.5L217.1,540.5L217.1,541.4L222.4,542.3L222.4,543.2L224.1,543.2L224.1,544L225.9,544L225.9,544.9L227.6,544.9L227.6,545.8L230.3,545.8L230.3,546.7L233.8,547.6L233.8,548.4L234.7,548.4L234.7,549.3L235.5,549.3L236.4,551.1L238.2,551.1L238.2,552.8L239.1,552.8L239.9,554.6L242.6,554.6L243.5,558.1L244.3,558.1L244.3,556.3L246.1,556.3L246.1,557.2L247.9,558.1L247.9,559.9L186.3,559.9L186.3,559L187.2,559L186.3,557.2L187.2,557.2L188.1,555.5L187.2,555.5L186.3,557.2L184.6,557.2L184.6,558.1L183.7,558.1L183.7,559.9L0,559.9L0,506.2L0.9,506.2L0.9,505.4L1.8,505.4L1.8,506.2L3.5,506.2L3.5,505.4L4.4,505.4L4.4,502.7L3.5,502.7L3.5,501.9L4.4,501.9L4.4,495.7L5.3,495.7L5.3,493.9L6.2,493.9L6.2,493.1L7.9,493.1L7.9,492.2L8.8,492.2L8.8,491.3L9.7,491.3L10.5,489.6L14.1,489.6L14.1,490.4L14.9,490.4L14.1,492.2L16.7,492.2L16.7,491.3L17.6,491.3L17.6,489.6L18.5,489.6L18.5,488.7L17.6,488.7L18.5,486.9L22,486.9L22,487.8L26.4,487.8L26.4,486.9L29.9,486L29.9,485.2L30.8,485.2L31.6,483.4L37.8,481.6L38.7,478.1L41.3,478.1L41.3,476.4L43.1,476.4ZM70.3,478.1L72.1,478.1L72.1,479L70.3,479ZM58.9,478.1L60.6,478.1L60.6,479L61.5,479L61.5,480.8L62.4,480.8L62.4,483.4L58.9,483.4L58.9,484.3L58,484.3L58,481.6L57.1,481.6L57.1,480.8L58,480.8L58,479L58.9,479ZM142.4,478.1L144.1,478.1L144.1,479.9L142.4,479.9ZM152.9,486.9L154.7,486.9L154.7,487.8L152.9,487.8ZM598.5,487.8L601.2,487.8L601.2,489.6L597.7,489.6ZM120.4,488.7L122.2,488.7L122.2,490.4L121.3,490.4L121.3,491.3L119.5,491.3L119.5,489.6L120.4,489.6ZM116,489.6L118.7,489.6L118.7,490.4L116,490.4ZM106.3,490.4L108.1,490.4L108.1,491.3L106.3,491.3ZM149.4,491.3L150.3,491.3L150.3,493.1L149.4,493.1L149.4,493.9L150.3,493.9L150.3,494.8L149.4,494.8L149.4,495.7L150.3,495.7L150.3,498.3L149.4,498.3L149.4,499.2L142.4,499.2L142.4,498.3L145.9,497.5L145.9,496.6L145,496.6L145,494.8L145.9,494.8L145.9,493.9L145,493.9L144.1,492.2L149.4,492.2ZM758.5,519.4L757.6,519.4L757.6,520.3L758.5,520.3L758.5,522.9L757.6,522.9L757.6,523.8L759.4,522.9L759.4,523.8L760.3,523.8L760.3,525.6L761.1,525.6L762,527.3L761.1,527.3L761.1,530.9L759.4,531.7L759.4,533.5L758.5,533.5L758.5,532.6L756.7,532.6L756.7,531.7L755.9,531.7L755.9,533.5L757.6,533.5L757.6,534.4L758.5,534.4L759.4,536.1L761.1,536.1L761.1,534.4L762.9,533.5L762.9,525.6L762,525.6L762,524.7L762.9,524.7L762.9,522.1L762,522.1L761.1,520.3L760.3,520.3L761.1,522.1L759.4,522.1L759.4,519.4Z"/>
+    <marker id="pointe" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#0A1F44"/></marker>
+  </defs>
 </svg>
 
 <div class="page">
@@ -291,8 +556,16 @@
     </div>
 
     <nav class="tools" aria-label="Outils de la classe">
-      <button class="pill" id="btn-carnet" type="button">Carnet de bord</button>
-      <button class="pill" id="btn-carte" type="button">Carte à imprimer</button>
+      <button class="pill" id="btn-vue" type="button" hidden></button>
+      <details class="menu" id="menu-print">
+        <summary class="pill">Imprimer ▾</summary>
+        <div class="menu-list">
+          <button type="button" data-print="carnet">Carnet de bord de l'élève</button>
+          <button type="button" data-print="carte">Carte à compléter</button>
+          <button type="button" data-print="graphique">Graphique de la température</button>
+          <button type="button" data-print="fiche">Fiche de l'enseignant</button>
+        </div>
+      </details>
       <button class="pill" id="btn-full" type="button">Plein écran</button>
     </nav>
   </header>
@@ -359,9 +632,25 @@
         <p class="also">Initiatives-Cœur</p><p class="like"></p>
       </article>
       <article class="card wide">
-        <p class="intro">Chaque matin de la course, cette page affichera <b>les 5&nbsp;chiffres du jour</b>&nbsp;: la distance parcourue, la vitesse, le chemin qui reste, la température de l'eau et le vent.</p>
+        <p class="intro">Chaque matin de la course, le bord envoie ses chiffres. La classe s'en sert pour <b>placer</b> le bateau sur la carte, <b>calculer</b> sa distance, <b>lire</b> la météo, <b>prévoir</b> sa route et <b>écrire</b> son carnet de bord.</p>
         <div><button class="pill plein" id="btn-demo" type="button">Voir une démonstration</button></div>
       </article>
+    </section>
+
+    <!-- Le rituel pas à pas : on devine, on découvre, on note -->
+    <section class="guide" id="guide" aria-label="Le rituel pas à pas" hidden>
+      <div class="g-top">
+        <p class="g-count" id="g-count"></p>
+        <ol class="g-dots" id="g-dots" aria-hidden="true"></ol>
+      </div>
+      <h2 class="g-q" id="g-q"></h2>
+      <p class="g-hint" id="g-hint"></p>
+      <div class="g-verdict" id="g-verdict" aria-live="polite" hidden></div>
+      <div class="g-stage" id="g-stage"></div>
+      <div class="g-nav">
+        <button class="pill" id="g-back" type="button">Retour</button>
+        <button class="pill plein big" id="g-next" type="button"></button>
+      </div>
     </section>
   </main>
 </div>
@@ -397,12 +686,83 @@
   <svg id="map-print" viewBox="-48 -24 936 612"></svg>
 </section>
 
+<!-- Graphique à compléter par l'élève (A4 portrait) -->
+<section class="sheet" id="sheet-graphique">
+  <div class="sheet-head">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C4 15 2 10 6 6 C9 3 11 5 12 7 C13 5 15 3 18 6 C22 10 20 15 12 21 Z" fill="#E30613"/></svg>
+    <div><h2>Mon graphique</h2><p>La température de la mer · Route du Rhum 2026 · Initiatives-Cœur</p></div>
+  </div>
+  <p class="fields">Prénom&nbsp;:<span></span>Classe&nbsp;:<span></span></p>
+  <p class="consigne">Chaque matin, place un point à la température de l'eau, dans la colonne du jour, puis relie-le au point de la veille. Que remarques-tu&nbsp;?</p>
+  <svg id="graph-print" viewBox="0 0 1000 1180"></svg>
+</section>
+
+<!-- Fiche de l'enseignant (A4 portrait) -->
+<section class="sheet" id="sheet-fiche">
+  <div class="sheet-head">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C4 15 2 10 6 6 C9 3 11 5 12 7 C13 5 15 3 18 6 C22 10 20 15 12 21 Z" fill="#E30613"/></svg>
+    <div><h2>Le rituel du matin</h2><p>Fiche de l'enseignant · Route du Rhum 2026 · Initiatives-Cœur</p></div>
+  </div>
+  <p class="chapo">Dix à quinze minutes chaque matin pour suivre le voilier Initiatives-Cœur de Saint-Malo à Pointe-à-Pitre (<span class="f-km"></span>&nbsp;km). La page donne les chiffres envoyés par le bord&nbsp;; les élèves s'en servent pour <b>placer, calculer, lire, prévoir et écrire</b>. La correction, avec la méthode, n'apparaît qu'après leur travail.</p>
+
+  <h3>Les huit étapes</h3>
+  <table class="etapes">
+    <thead><tr><th>Étape</th><th>Ce que fait l'élève</th><th>Ce qu'il travaille</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Où est le bateau&nbsp;?</td><td>Il place le bateau sur la carte à partir de sa latitude et de sa longitude.</td><td>Se repérer sur un quadrillage, coordonnées</td></tr>
+      <tr><td>2 · La distance</td><td>Il calcule&nbsp;: une différence (cycle&nbsp;2), vitesse × durée (CM), conversion des milles et vitesse moyenne (collège).</td><td>Calcul, proportionnalité, grandeurs</td></tr>
+      <tr><td>3 · Le parcours</td><td>Il situe le bateau sur une bande graduée, après avoir calculé le chemin fait ou le pourcentage accompli.</td><td>Grands nombres, droite graduée, pourcentages</td></tr>
+      <tr><td>4 · La mer</td><td>Il ajoute le point du jour sur le graphique de la température, puis commente la courbe.</td><td>Lire et construire un graphique&nbsp;; climat et latitude</td></tr>
+      <tr><td>5 · Le vent</td><td>Il retrouve la force du vent dans le tableau de Beaufort.</td><td>Lire un tableau, encadrer un nombre</td></tr>
+      <tr><td>6 · Demain</td><td>Il prolonge le déplacement du jour pour prévoir la position du lendemain. Le jour suivant, la page compare cette prévision à la réalité.</td><td>Hypothèse et vérification, calcul sur les coordonnées</td></tr>
+      <tr><td>7 · Le carnet</td><td>Il recopie la ligne du jour et rédige une à trois phrases.</td><td>Trace écrite, vocabulaire</td></tr>
+      <tr><td>8 · Le défi</td><td>Un problème de plus, différent chaque jour.</td><td>Résolution de problèmes</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cols">
+    <div>
+      <h3>Le matériel</h3>
+      <ul>
+        <li>Un écran ou un vidéoprojecteur. La page fonctionne aussi sur tablette et sur téléphone, pour un travail individuel.</li>
+        <li>Par élève&nbsp;: le carnet de bord, la carte et le graphique (menu «&nbsp;Imprimer&nbsp;»), une ardoise.</li>
+      </ul>
+
+      <h3>Trois niveaux</h3>
+      <p>Sur l'écran d'accueil, choisissez «&nbsp;CP · CE1 · CE2&nbsp;», «&nbsp;CM1 · CM2&nbsp;» ou «&nbsp;Collège&nbsp;». Les chiffres du jour sont les mêmes&nbsp;; ce sont les tâches qui changent.</p>
+
+      <h3>Mener une étape</h3>
+      <ol>
+        <li>Lisez la consigne&nbsp;: elle donne les chiffres nécessaires.</li>
+        <li>Les élèves cherchent, sur l'ardoise, la carte ou le graphique papier.</li>
+        <li>Un élève donne sa réponse au tableau (il touche la carte, écrit le nombre), puis «&nbsp;Vérifier&nbsp;». Sans réponse, «&nbsp;Voir la correction&nbsp;».</li>
+        <li>La page montre la correction et la méthode&nbsp;: faites-la reformuler.</li>
+      </ol>
+      <p>Pas le temps de tout faire&nbsp;? Les pastilles en haut du pas à pas mènent directement à une étape&nbsp;; les étapes 1, 4 et 7 suffisent pour un rituel court.</p>
+    </div>
+    <div>
+      <h3>Avant le départ</h3>
+      <p>Présentez la course&nbsp;: un voilier de 18&nbsp;mètres, <span class="f-skipper"></span> en solitaire, tout l'Atlantique à traverser. Départ le <span class="f-depart"></span>. Essayez le rituel avec le bouton «&nbsp;Voir une démonstration&nbsp;».</p>
+
+      <h3>Bon à savoir</h3>
+      <ul>
+        <li>1&nbsp;mille marin = 1,852&nbsp;km. 1&nbsp;nœud = 1&nbsp;mille par heure = 1,852&nbsp;km/h.</li>
+        <li>Ne faites pas mesurer de distance à la règle sur la carte&nbsp;: elle étire les distances d'est en ouest. Les distances se calculent.</li>
+        <li>Un tiret à la place d'un chiffre&nbsp;: il n'est pas encore arrivé. La page se met à jour toute seule.</li>
+        <li>La trace et le graphique ne connaissent que les jours où la page a été ouverte sur cet appareil. Le lundi, la consigne parle donc de «&nbsp;vendredi&nbsp;» et non d'«&nbsp;hier&nbsp;».</li>
+        <li>«&nbsp;Tous les chiffres&nbsp;» affiche le tableau complet du jour. Au clavier ou à la télécommande&nbsp;: → pour avancer, ← pour revenir.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <script>
 (() => {
   'use strict';
 
   const KM = 1.852;                 // 1 mille marin = 1,852 km ; 1 nœud = 1,852 km/h
   const STORE = 'rituel-rdr-2026';  // relevés déjà vus par ce navigateur, un par jour
+  const LEVEL = 'rituel-niveau';    // niveau choisi pour le pas à pas
   const REFRESH = 10 * 60 * 1000;
 
   // Valeurs connues avant le départ ; remplacées par celles du flux dès qu'il répond.
@@ -425,7 +785,17 @@
 
   const $ = id => document.getElementById(id);
   const params = new URLSearchParams(location.search);
-  const state = { demo: params.has('demo'), days: [], idx: 0 };
+  const state = {
+    demo: params.has('demo'), days: [], idx: 0,
+    view: 'guide',            // 'guide' (pas à pas) ou 'chiffres' (tableau des 5 chiffres)
+    step: 0,                  // 0 : accueil, puis une étape par activité
+    answers: {}, done: new Set(), guide: null,
+    level: 1,                 // 0 : CP-CE1-CE2, 1 : CM1-CM2, 2 : collège
+  };
+  try {
+    const saved = localStorage.getItem(LEVEL);
+    if (['0', '1', '2'].includes(saved)) state.level = +saved;
+  } catch { /* navigation privée */ }
 
   // ---------- Géométrie sur la sphère (points = [latitude, longitude]) ----------
   const R = 3440.065;   // rayon de la Terre en milles
@@ -449,9 +819,12 @@
   // ---------- Nombres et dates « à la française », heure de Paris ----------
   const n0 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
   const n1 = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const n2 = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const PARIS = 'Europe/Paris';
   const fDay = new Intl.DateTimeFormat('fr-FR', { timeZone: PARIS, weekday: 'long', day: 'numeric', month: 'long' });
   const fShort = new Intl.DateTimeFormat('fr-FR', { timeZone: PARIS, weekday: 'short', day: 'numeric', month: 'short' });
+  const fWeek = new Intl.DateTimeFormat('fr-FR', { timeZone: PARIS, weekday: 'long' });
+  const fDom = new Intl.DateTimeFormat('fr-FR', { timeZone: PARIS, day: 'numeric' });
   const fKey = new Intl.DateTimeFormat('en-CA', { timeZone: PARIS, year: 'numeric', month: '2-digit', day: '2-digit' });
   const fHour = new Intl.DateTimeFormat('fr-FR', { timeZone: PARIS, hour: 'numeric', minute: '2-digit' });
   const premier = s => s.replace(/(^|\s)1(\s)/, '$11er$2');
@@ -478,6 +851,7 @@
     ['Paris', 'Toulouse'], ['Paris', 'Marseille'], ['Lille', 'Toulouse'], ['Paris', 'Barcelone'],
     ['Brest', 'Strasbourg'], ['Paris', 'Madrid'], ['Paris', 'Rome'],
   ].map(([a, b]) => ({ a, b, km: dist(VILLES[a], VILLES[b]) * KM }));
+  const PARIS_MARSEILLE = TRAJETS.find(t => t.a === 'Paris' && t.b === 'Marseille').km;
 
   function likeDistance(km) {
     if (km < 120) return 'Une toute petite journée de mer.';
@@ -510,16 +884,20 @@
                : m < 6 ? 'une girafe' : 'une maison';
     return `Vagues de ${n1.format(m)} m, hautes comme ${like}.`;
   }
-  // Échelle de Beaufort : nœuds mini de chaque force, et son nom.
+  // Échelle de Beaufort en km/h : vitesse mini de chaque force (indice = force)
+  // et son nom. La force se lit sur la vitesse ARRONDIE affichée, pour que la
+  // page et le tableau donné aux élèves disent toujours la même chose.
   const BEAUFORT = [
-    [1, 'Très légère brise'], [4, 'Légère brise'], [7, 'Petite brise'], [11, 'Jolie brise'],
-    [17, 'Bonne brise'], [22, 'Vent frais'], [28, 'Grand frais'], [34, 'Coup de vent'],
-    [41, 'Fort coup de vent'], [48, 'Tempête'], [56, 'Violente tempête'], [64, 'Ouragan'],
+    [0, 'Calme'], [1, 'Très légère brise'], [6, 'Légère brise'], [12, 'Petite brise'],
+    [20, 'Jolie brise'], [29, 'Bonne brise'], [39, 'Vent frais'], [50, 'Grand frais'],
+    [62, 'Coup de vent'], [75, 'Fort coup de vent'], [89, 'Tempête'],
+    [103, 'Violente tempête'], [118, 'Ouragan'],
   ];
-  function beaufort(kn) {
-    let force = 0, name = 'Calme';
-    BEAUFORT.forEach(([min, n], i) => { if (kn >= min) { force = i + 1; name = n; } });
-    return { force, name };
+  function beaufort(kmh) {
+    let force = 0;
+    BEAUFORT.forEach(([min], i) => { if (kmh >= min) force = i; });
+    const next = BEAUFORT[force + 1];
+    return { force, name: BEAUFORT[force][1], min: BEAUFORT[force][0], max: next ? next[0] - 1 : null };
   }
   // Direction D'OÙ vient le vent (convention météo, supposée pour le flux).
   const ROSE = ['du nord', 'du nord-est', 'de l’est', 'du sud-est', 'du sud', 'du sud-ouest', 'de l’ouest', 'du nord-ouest'];
@@ -554,6 +932,10 @@
   const latName = v => v === 0 ? '0°' : `${Math.abs(v)}° ${v > 0 ? 'N' : 'S'}`;
   const lonName = v => v === 0 ? '0°' : `${Math.abs(v)}° ${v < 0 ? 'O' : 'E'}`;
   const W = (CARTE.east - CARTE.west) * CARTE.k, H = (CARTE.north - CARTE.south) * CARTE.k;
+  const FULL = { x: 0, y: 0, w: W, h: H };
+  const unXY = (x, y) => [CARTE.north - y / CARTE.k, CARTE.west + x / CARTE.k];   // → [latitude, longitude]
+  const compact = matchMedia('(max-width: 899px)');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
   const LIEUX = [
     { n: 'OCÉAN ATLANTIQUE', p: [33, -44], c: 'ocean' },
@@ -567,81 +949,197 @@
     { n: 'Canaries', p: [29.9, -16], c: 'ile' },
     { n: 'Cap-Vert', p: [18.4, -24], c: 'ile' },
   ];
+  function addPlaces(g) {
+    for (const l of LIEUX) {
+      g.append(el('text', { x: X(l.p[1]), y: Y(l.p[0]), class: l.c, 'text-anchor': 'middle' }, l.n));
+    }
+    for (const [p, name] of [[DEPART, 'Saint-Malo'], [ARRIVEE, 'Pointe-à-Pitre']]) {
+      g.append(el('circle', { cx: X(p[1]), cy: Y(p[0]), r: 4.5 }));
+      g.append(el('text', { x: X(p[1]) + 9, y: Y(p[0]) + 5, class: 'ville' }, name));
+    }
+  }
 
-  function buildMap(svg, print) {
+  // Coordonnées, dans les unités d'un SVG, d'un clic ou d'un toucher.
+  function svgPoint(svg, e) {
+    const m = svg.getScreenCTM();
+    return m ? new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse()) : null;
+  }
+
+  // Carte à imprimer : quadrillage tous les 5°, sans bateau.
+  function buildPrintMap(svg) {
     const g = el('g', { class: 'grille' });
-    const step = print ? 5 : 10;
-    for (let lon = Math.ceil(CARTE.west / step) * step; lon <= CARTE.east; lon += step) {
+    for (let lon = Math.ceil(CARTE.west / 5) * 5; lon <= CARTE.east; lon += 5) {
       const main = lon % 10 === 0;
       g.append(el('line', { x1: X(lon), x2: X(lon), y1: 0, y2: H, class: main ? '' : 'fin' }));
       if (!main || lon === CARTE.west || lon === CARTE.east) continue;
-      if (print) {
-        g.append(el('text', { x: X(lon), y: -7, 'text-anchor': 'middle' }, lonName(lon)));
-        g.append(el('text', { x: X(lon), y: H + 16, 'text-anchor': 'middle' }, lonName(lon)));
-      } else {
-        g.append(el('text', { x: X(lon) + 4, y: H - 6 }, lonName(lon)));
-      }
+      g.append(el('text', { x: X(lon), y: -7, 'text-anchor': 'middle' }, lonName(lon)));
+      g.append(el('text', { x: X(lon), y: H + 16, 'text-anchor': 'middle' }, lonName(lon)));
     }
-    for (let lat = Math.ceil(CARTE.south / step) * step; lat <= CARTE.north; lat += step) {
+    for (let lat = Math.ceil(CARTE.south / 5) * 5; lat <= CARTE.north; lat += 5) {
       const main = lat % 10 === 0;
       g.append(el('line', { y1: Y(lat), y2: Y(lat), x1: 0, x2: W, class: main ? '' : 'fin' }));
       if (!main || lat === CARTE.north || lat === CARTE.south) continue;
-      if (print) {
-        g.append(el('text', { x: -7, y: Y(lat) + 4, 'text-anchor': 'end' }, latName(lat)));
-        g.append(el('text', { x: W + 7, y: Y(lat) + 4 }, latName(lat)));
-      } else {
-        g.append(el('text', { x: 6, y: Y(lat) - 5 }, latName(lat)));
-      }
+      g.append(el('text', { x: -7, y: Y(lat) + 4, 'text-anchor': 'end' }, latName(lat)));
+      g.append(el('text', { x: W + 7, y: Y(lat) + 4 }, latName(lat)));
     }
-    const land = el('use', { href: '#terres', class: 'terres' });
     const places = el('g', { class: 'lieux' });
-    for (const l of LIEUX) {
-      places.append(el('text', { x: X(l.p[1]), y: Y(l.p[0]), class: l.c, 'text-anchor': 'middle' }, l.n));
-    }
-    places.append(el('circle', { cx: X(DEPART[1]), cy: Y(DEPART[0]), r: 4.5 }));
-    places.append(el('text', { x: X(DEPART[1]) + 9, y: Y(DEPART[0]) + 5 }, 'Saint-Malo'));
-    places.append(el('circle', { cx: X(ARRIVEE[1]), cy: Y(ARRIVEE[0]), r: 4.5 }));
-    places.append(el('text', { x: X(ARRIVEE[1]) + 9, y: Y(ARRIVEE[0]) + 5 }, 'Pointe-à-Pitre'));
-
-    if (print) {
-      // Sur le papier, la grille passe PAR-DESSUS les terres : on doit pouvoir
-      // lire une latitude partout.
-      svg.append(land, g, places, el('rect', { x: 0, y: 0, width: W, height: H, class: 'cadre' }));
-      return;
-    }
-    svg.append(
-      el('rect', { x: 0, y: 0, width: W, height: H, fill: 'var(--mer)' }),
-      g, land, places,
-      el('path', { id: 'reste', class: 'reste' }),
-      el('path', { id: 'trace', class: 'trace' }),
-      el('g', { id: 'points', class: 'points' }),
-    );
-    const boat = el('g', { id: 'bateau', class: 'bateau' });
-    boat.append(
-      el('circle', { class: 'pouls', r: 9 }),
-      el('path', { class: 'coeur', transform: 'translate(-12 -13)',
-                   d: 'M12 21 C4 15 2 10 6 6 C9 3 11 5 12 7 C13 5 15 3 18 6 C22 10 20 15 12 21 Z' }),
-    );
-    svg.append(boat);
+    addPlaces(places);
+    // Sur le papier, la grille passe PAR-DESSUS les terres : on doit pouvoir
+    // lire une latitude partout.
+    svg.append(el('use', { href: '#terres', class: 'terres' }), g, places,
+               el('rect', { x: 0, y: 0, width: W, height: H, class: 'cadre' }));
   }
 
+  // Carte à l'écran. Elle a une « vue » : tout l'océan, ou une zone agrandie
+  // où le quadrillage est tracé degré par degré, pour les exercices. Toutes
+  // les tailles (textes, traits, marqueurs) suivent --u, le nombre d'unités de
+  // carte qui font 1 rem à l'écran : elles restent lisibles à tout zoom, sur
+  // un vidéoprojecteur comme sur un téléphone.
+  const map = { svg: null, L: {}, o: {}, view: FULL, raf: 0 };
   const line = pts => pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[1]).toFixed(1)},${Y(p[0]).toFixed(1)}`).join('');
 
-  function drawBoat(pos, past) {
-    // Chemin restant : par le plus court, une fois la Bretagne contournée.
+  function buildMap() {
+    const svg = map.svg = $('map'), L = map.L;
+    const g = (name, ...kids) => { const n = L[name] = el('g', { class: name }); n.append(...kids); return n; };
+    L.reste = el('path', { class: 'reste' });
+    L.trace = el('path', { class: 'trace' });
+    svg.append(
+      el('rect', { x: 0, y: 0, width: W, height: H, fill: 'var(--mer)' }),
+      g('grille'), el('use', { href: '#terres', class: 'terres' }), g('lieux'),
+      L.reste, L.trace, g('points'), g('aides'),
+      g('ancien', el('circle', { r: 9 })),
+      g('prevu', el('circle', { r: 10 })),
+      g('essai', el('circle', { r: 9 }), el('circle', { class: 'centre', r: 3 })),
+      g('bateau', el('circle', { class: 'pouls', r: 9 }),
+        el('path', { class: 'coeur', transform: 'translate(-12 -13)',
+                     d: 'M12 21 C4 15 2 10 6 6 C9 3 11 5 12 7 C13 5 15 3 18 6 C22 10 20 15 12 21 Z' })),
+    );
+    addPlaces(L.lieux);
+    svg.addEventListener('click', e => {
+      if (!map.o.tap) return;
+      const p = svgPoint(svg, e);
+      if (p && p.x >= 0 && p.x <= W && p.y >= 0 && p.y <= H) map.o.tap(unXY(p.x, p.y));
+    });
+    new ResizeObserver(() => paint()).observe(svg);
+  }
+
+  // Fenêtre de zoom pour un exercice : assez serrée pour compter les degrés,
+  // et décalée (toujours pareil pour un jour donné) pour que la réponse ne
+  // soit pas simplement « au milieu ».
+  function zoneView(points, seed) {
+    const wDeg = compact.matches ? 30 : 40, hDeg = wDeg * H / W;
+    const lats = points.map(p => p[0]), lons = points.map(p => p[1]);
+    const lat0 = Math.min(...lats), lat1 = Math.max(...lats), lon0 = Math.min(...lons), lon1 = Math.max(...lons);
+    const fx = ((seed * 37) % 11 - 5) / 5, fy = ((seed * 53) % 11 - 5) / 5;          // entre −1 et 1
+    const slackX = Math.min(wDeg * 0.22, Math.max(0, (wDeg - (lon1 - lon0)) / 2 - wDeg * 0.15));
+    const slackY = Math.min(hDeg * 0.22, Math.max(0, (hDeg - (lat1 - lat0)) / 2 - hDeg * 0.18));
+    let west = (lon0 + lon1) / 2 + fx * slackX - wDeg / 2;
+    let north = (lat0 + lat1) / 2 + fy * slackY + hDeg / 2;
+    west = Math.max(CARTE.west, Math.min(CARTE.east - wDeg, west));
+    north = Math.min(CARTE.north, Math.max(CARTE.south + hDeg, north));
+    return { x: X(west), y: Y(north), w: wDeg * CARTE.k, h: hDeg * CARTE.k };
+  }
+
+  // Chemin restant : par le plus court, une fois la Bretagne contournée.
+  function restPath(pos) {
     const legs = [pos, ...(pos[0] > 47.5 ? SORTIE.filter(w => w[1] < pos[1] - 0.3) : []), ARRIVEE];
     const rest = [];
     for (let i = 1; i < legs.length; i++) {
       for (let f = 0; f <= 1.0001; f += 1 / 24) rest.push(between(legs[i - 1], legs[i], Math.min(f, 1)));
     }
-    $('reste').setAttribute('d', dist(pos, ARRIVEE) > 5 ? line(rest) : '');
-    // Trace : du départ au bateau, en passant par les relevés connus (un par jour).
-    const known = [...past, pos];
-    const track = [DEPART, ...SORTIE.filter(w => w[1] > known[0][1] + 0.3), ...known];
-    $('trace').setAttribute('d', dist(DEPART, pos) > 5 ? line(track) : '');
-    const dots = past.map(p => el('circle', { cx: X(p[1]), cy: Y(p[0]), r: 3.4 }));
-    $('points').replaceChildren(...dots);
-    $('bateau').setAttribute('transform', `translate(${X(pos[1]).toFixed(1)} ${Y(pos[0]).toFixed(1)})`);
+    return rest;
+  }
+
+  // Affiche la carte. o = {
+  //   view   : portion affichée (par défaut tout l'océan) ; fine : lignes de 1° dans une zone
+  //   pos, past : le bateau et ses relevés précédents ; secret : le bateau reste à trouver
+  //   essai  : le point posé par l'élève ; prevu / ancien : positions prévues (demain / hier)
+  //   lignes : [lat, lon] à souligner pour la correction ; fleche : [de, vers]
+  //   tap    : fonction appelée avec [lat, lon] quand on touche la carte
+  // }
+  function drawMap(o) {
+    const from = map.view, to = o.view || FULL;
+    map.o = o;
+    cancelAnimationFrame(map.raf);
+    const same = ['x', 'y', 'w', 'h'].every(k => Math.abs(from[k] - to[k]) < 0.01);
+    if (same || reduced.matches || document.hidden || !map.svg.clientWidth) { map.view = to; paint(); return; }
+    const t0 = performance.now();
+    const tick = now => {
+      const k = Math.min(1, (now - t0) / 550), e = 1 - (1 - k) ** 3;
+      map.view = k === 1 ? to : {
+        x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e,
+        w: from.w + (to.w - from.w) * e, h: from.h + (to.h - from.h) * e,
+      };
+      paint();
+      if (k < 1) map.raf = requestAnimationFrame(tick);
+    };
+    map.raf = requestAnimationFrame(tick);
+  }
+
+  function paint() {
+    const { svg, L, o } = map, v = map.view;
+    if (!svg || !o.pos) return;
+    svg.setAttribute('viewBox', `${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`);
+    const pxPerUnit = Math.min(svg.clientWidth / v.w, svg.clientHeight / v.h) || 0.8;
+    const u = parseFloat(getComputedStyle(document.documentElement).fontSize) / pxPerUnit;
+    const s = u / 18;                       // les marqueurs gardent la même taille à l'écran
+    const zoomed = v.w < W * 0.7;
+    svg.style.setProperty('--u', `${u.toFixed(2)}px`);
+    svg.classList.toggle('actif', !!o.tap);
+    svg.classList.toggle('zoom', zoomed);
+    svg.classList.toggle('lointain', !zoomed && svg.clientWidth < 520);
+
+    // Quadrillage : de 10° en 10° vu de loin ; 5° (et 1°) dans une zone.
+    const grid = [], step = zoomed ? (o.fine ? 1 : 5) : 10;
+    const cls = d => d % 10 === 0 ? '' : d % 5 === 0 ? 'moyen' : 'fin';
+    for (let lon = Math.ceil(CARTE.west / step) * step; lon <= CARTE.east; lon += step) {
+      grid.push(el('line', { x1: X(lon), x2: X(lon), y1: 0, y2: H, class: cls(lon) }));
+    }
+    for (let lat = Math.ceil(CARTE.south / step) * step; lat <= CARTE.north; lat += step) {
+      grid.push(el('line', { y1: Y(lat), y2: Y(lat), x1: 0, x2: W, class: cls(lat) }));
+    }
+    // Les lignes épaisses sont numérotées : latitudes à gauche, longitudes en bas.
+    const pad = u * 0.35;
+    for (let lon = Math.ceil(CARTE.west / 10) * 10; lon < CARTE.east; lon += 10) {
+      const x = X(lon);
+      if (x > v.x + u * 3 && x < v.x + v.w - u * 2) grid.push(el('text', { x: x + pad, y: v.y + v.h - pad }, lonName(lon)));
+    }
+    for (let lat = Math.ceil(CARTE.south / 10) * 10; lat < CARTE.north; lat += 10) {
+      const y = Y(lat);
+      if (y > v.y + u * 1.2 && y < v.y + v.h - u * 1.8) grid.push(el('text', { x: v.x + pad, y: y - pad }, latName(lat)));
+    }
+    L.grille.replaceChildren(...grid);
+
+    // Trace : du départ au bateau, en passant par les relevés connus (un par
+    // jour). Tant que le bateau est « secret », elle s'arrête au relevé précédent.
+    const past = o.past || [];
+    const known = o.secret ? past : [...past, o.pos];
+    const last = known[known.length - 1];
+    const track = last ? [DEPART, ...SORTIE.filter(w => w[1] > known[0][1] + 0.3), ...known] : [];
+    L.trace.setAttribute('d', last && dist(DEPART, last) > 5 ? line(track) : '');
+    L.reste.setAttribute('d', !o.secret && !o.fleche && dist(o.pos, ARRIVEE) > 5 ? line(restPath(o.pos)) : '');
+    L.points.replaceChildren(...past.map(p => el('circle', { cx: X(p[1]), cy: Y(p[0]), r: (3.4 * s).toFixed(2) })));
+
+    const aides = [];
+    if (o.lignes) {
+      aides.push(el('line', { x1: v.x - v.w, x2: v.x + 2 * v.w, y1: Y(o.lignes[0]), y2: Y(o.lignes[0]) }),
+                 el('line', { y1: v.y - v.h, y2: v.y + 2 * v.h, x1: X(o.lignes[1]), x2: X(o.lignes[1]) }));
+    }
+    if (o.fleche) {
+      const [a, b] = o.fleche;        // la pointe s'arrête juste avant le bateau
+      aides.push(el('path', { class: 'fleche', 'marker-end': 'url(#pointe)',
+                              d: line([a, [a[0] + (b[0] - a[0]) * 0.86, a[1] + (b[1] - a[1]) * 0.86]]) }));
+    }
+    L.aides.replaceChildren(...aides);
+
+    const place = (g, p) => {
+      g.style.display = p ? '' : 'none';
+      if (p) g.setAttribute('transform', `translate(${X(p[1]).toFixed(1)} ${Y(p[0]).toFixed(1)}) scale(${s.toFixed(3)})`);
+    };
+    place(L.ancien, o.ancien);
+    place(L.prevu, o.prevu);
+    place(L.essai, o.essai);
+    place(L.bateau, o.secret ? null : o.pos);
   }
 
   // ---------- Affichage ----------
@@ -654,107 +1152,798 @@
     set('.like', like == null ? '' : esc(like));
   }
   const WAIT = 'Ce chiffre n’est pas encore arrivé.';
+  const ordinal = n => `${n}<sup>${n === 1 ? 'er' : 'e'}</sup>`;
+  const N = n => n0.format(n);
+  const dec = x => n1.format(x).replace(/,0$/, '');        // une décimale, seulement si elle est utile
+  const round1 = x => Math.round(x * 10) / 10;
 
   function show(section) {
-    $('cards-jour').hidden = section !== 'jour';
-    $('cards-avant').hidden = section !== 'avant';
+    for (const id of ['cards-jour', 'cards-avant', 'guide']) $(id).hidden = id !== section;
   }
 
-  // Sur l'écran de classe rien ne défile : si une phrase déborde de sa carte
+  // Sur l'écran de classe rien ne défile : si un texte déborde de son cadre
   // (projecteur très étroit, mot long), on réduit un peu toute la page.
   const classe = matchMedia('(min-width: 900px) and (min-height: 540px)');
   function fit() {
     const root = document.documentElement;
     root.style.fontSize = '';
     if (!classe.matches) return;
-    const clipped = () => [...document.querySelectorAll('.card')]
+    const clipped = () => [...document.querySelectorAll('.card, .guide')]
       .some(c => c.clientHeight && c.scrollHeight > c.clientHeight + 1);
     let size = parseFloat(getComputedStyle(root).fontSize);
     for (let i = 0; i < 8 && clipped(); i++) root.style.fontSize = `${size *= 0.96}px`;
   }
 
-  function renderDay() {
-    const d = state.days[state.idx];
+  // Tout ce que la page dit d'un relevé. Les nombres sont arrondis ICI, une
+  // fois pour toutes : le tableau des 5 chiffres et les exercices du pas à pas
+  // affichent ainsi exactement les mêmes valeurs.
+  function facts(d) {
     const pos = [d.lat, d.lon];
-    const name = esc(course.firstname);
-    show('jour');
-    $('day-date').textContent = cap(dayLabel(d.t));
-    $('day-num').textContent = `Jour ${dayNumber(d.t)} de course · relevé de ${hourLabel(d.t)}`;
-    $('prev').disabled = state.idx === 0;
-    $('next').disabled = state.idx === state.days.length - 1;
+    const arrived = has(d.arrived);
+    const f = {
+      pos, arrived,
+      day: dayNumber(d.t),
+      first: d.t - course.start < 864e5,          // moins de 24 h de course
+      total: Math.round(course.distance * KM),
+      lat: `${n0.format(Math.abs(d.lat))}° ${d.lat >= 0 ? 'Nord' : 'Sud'}`,
+      lon: `${n0.format(Math.abs(d.lon))}° ${d.lon < 0 ? 'Ouest' : 'Est'}`,
+      zone: zone(pos),
+      rank: has(d.rank) ? d.rank : null,
+      nm24: has(d.d24) ? Math.round(d.d24) : null,
+      km24: has(d.d24) ? Math.round(d.d24 * KM) : null,
+      rest: has(d.dtf) ? Math.round(d.dtf * KM) : null,
+      pct: has(d.dtf) ? Math.max(0, Math.min(1, 1 - d.dtf / course.distance)) : null,
+      water: has(d.water) ? Math.round(d.water) : null,
+      windKn: has(d.wind) ? d.wind : null,
+      windKmh: has(d.wind) ? Math.round(d.wind * KM) : null,
+      windDir: has(d.windDir) ? d.windDir : null,
+      vagues: has(d.wave) ? likeWave(d.wave) : '',
+    };
 
-    drawBoat(pos, state.days.slice(0, state.idx).map(x => [x.lat, x.lon]));
-    $('where-line').innerHTML = has(d.arrived)
-      ? `<b>${name}</b> a franchi la ligne d’arrivée à <b class="z">Pointe-à-Pitre</b> !`
-      : `<b>${name}</b> navigue <b class="z">${esc(zone(pos))}</b>.`;
-    const bits = [`Position : ${n0.format(Math.abs(d.lat))}° ${d.lat >= 0 ? 'Nord' : 'Sud'} · ${n0.format(Math.abs(d.lon))}° ${d.lon < 0 ? 'Ouest' : 'Est'}`];
-    if (has(d.rank)) bits.push(`${d.rank}<sup>${d.rank === 1 ? 'er' : 'e'}</sup> sur ${course.boats} ${esc(course.cls)}`);
-    $('where-pos').innerHTML = bits.join(' · ');
-
-    // 1 — distance en 24 h (ou temps de course, une fois arrivé)
-    if (has(d.arrived)) {
-      const h = Math.round((d.arrived - course.start) / 36e5);
-      setCard('c-dist', {
+    // 1 — distance en 24 h (ou durée de la course, une fois arrivé)
+    if (arrived) {
+      f.hours = Math.round((d.arrived - course.start) / 36e5);
+      f.dist = {
         label: 'Le bateau est arrivé ! Sa course a duré',
-        value: n0.format(Math.floor(h / 24)), unit: 'jours',
-        also: `et ${h % 24} heures, pour ${n0.format(course.distance * KM)} km`,
+        value: n0.format(Math.floor(f.hours / 24)), unit: 'jours',
+        also: `et ${f.hours % 24} heures, pour ${n0.format(f.total)} km`,
         like: `Bravo ${course.firstname} !`,
-      });
+      };
     } else {
-      const first = d.t - course.start < 864e5;
-      const km = has(d.d24) ? d.d24 * KM : null;
-      setCard('c-dist', {
-        label: first ? 'Depuis le départ, le bateau a parcouru' : 'En 24 heures, le bateau a parcouru',
-        value: km == null ? null : n0.format(km), unit: 'km',
-        also: km == null ? '' : `${n0.format(d.d24)} milles marins`,
-        like: km == null ? WAIT : likeDistance(km),
-      });
+      f.dist = {
+        label: f.first ? 'Depuis le départ, le bateau a parcouru' : 'En 24 heures, le bateau a parcouru',
+        value: f.km24 == null ? null : n0.format(f.km24), unit: 'km',
+        also: f.km24 == null ? '' : `${n0.format(f.nm24)} milles marins`,
+        like: f.km24 == null ? WAIT : likeDistance(f.km24),
+      };
     }
 
     // 2 — vitesse (à défaut de la vitesse instantanée, la moyenne des 24 h ;
     //     une fois arrivé, la moyenne de toute la course)
-    const kn = has(d.arrived) ? course.distance / ((d.arrived - course.start) / 36e5)
-             : has(d.speed) ? d.speed : (has(d.d24) ? d.d24 / 24 : null);
-    setCard('c-vit', {
-      label: has(d.arrived) ? 'La vitesse moyenne' : 'La vitesse du bateau',
-      value: kn == null ? null : n0.format(kn * KM), unit: 'km/h',
-      also: kn == null ? '' : `${n0.format(kn)} nœuds`,
-      like: kn == null ? WAIT : likeSpeed(kn * KM),
-    });
+    f.kn = arrived ? course.distance / ((d.arrived - course.start) / 36e5)
+         : has(d.speed) ? d.speed : (has(d.d24) ? d.d24 / 24 : null);
+    f.kmh = f.kn == null ? null : Math.round(f.kn * KM);
+    f.vit = {
+      label: arrived ? 'La vitesse moyenne' : 'La vitesse du bateau',
+      value: f.kmh == null ? null : n0.format(f.kmh), unit: 'km/h',
+      also: f.kn == null ? '' : `${n0.format(f.kn)} nœuds`,
+      like: f.kmh == null ? WAIT : likeSpeed(f.kmh),
+    };
 
     // 3 — reste à parcourir
-    const pct = has(d.dtf) ? Math.max(0, Math.min(1, 1 - d.dtf / course.distance)) : null;
-    setCard('c-reste', {
-      value: pct == null ? null : n0.format(d.dtf * KM), unit: 'km',
-      like: pct == null ? WAIT : `${n0.format(pct * 100)} % du chemin est fait.`,
-    });
-    $('bar-fill').style.width = `${(pct || 0) * 100}%`;
+    f.reste = {
+      label: 'Il reste à parcourir',
+      value: f.rest == null ? null : n0.format(f.rest), unit: 'km',
+      like: f.rest == null ? WAIT : `${n0.format(f.pct * 100)} % du chemin est fait.`,
+    };
 
     // 4 — température de l'eau
-    setCard('c-eau', has(d.water) ? {
-      value: n0.format(d.water), unit: '°C',
-      also: has(d.air) ? `Air : ${n0.format(d.air)} °C` : '', like: likeWater(d.water),
-    } : { value: null, like: WAIT });
+    f.eau = {
+      label: 'L’eau de la mer',
+      value: f.water == null ? null : n0.format(f.water), unit: '°C',
+      also: f.water != null && has(d.air) ? `Air : ${n0.format(d.air)} °C` : '',
+      like: f.water == null ? WAIT : likeWater(f.water),
+    };
 
     // 5 — vent
-    if (has(d.wind)) {
-      const b = beaufort(d.wind);
-      setCard('c-vent', {
-        value: n0.format(d.wind * KM), unit: 'km/h',
-        also: `${n0.format(d.wind)} nœuds · force ${b.force}`,
-        like: `${b.name}${has(d.windDir) ? ` ${windFrom(d.windDir)}` : ''}.${has(d.wave) ? ` ${likeWave(d.wave)}` : ''}`,
-      });
-    } else {
-      setCard('c-vent', { value: null, like: WAIT });
-    }
+    const b = f.beaufort = f.windKmh == null ? null : beaufort(f.windKmh);
+    f.vent = {
+      label: 'Le vent',
+      value: b ? n0.format(f.windKmh) : null, unit: 'km/h',
+      also: b ? `${n0.format(d.wind)} nœuds · force ${b.force}` : '',
+      like: b ? `${b.name}${f.windDir == null ? '' : ` ${windFrom(f.windDir)}`}.${f.vagues ? ` ${f.vagues}` : ''}` : WAIT,
+    };
+    return f;
+  }
+
+  function renderCards(f) {
+    setCard('c-dist', f.dist);
+    setCard('c-vit', f.vit);
+    setCard('c-reste', f.reste);
+    $('bar-fill').style.width = `${(f.pct || 0) * 100}%`;
+    setCard('c-eau', f.eau);
+    setCard('c-vent', f.vent);
     // La flèche montre où VA le vent (elle part de là d'où il vient).
-    $('dial-arrow').setAttribute('transform', `rotate(${has(d.windDir) ? d.windDir + 180 : 0} 20 22)`);
-    $('dial-arrow').style.display = has(d.windDir) ? '' : 'none';
+    $('dial-arrow').setAttribute('transform', `rotate(${f.windDir == null ? 0 : f.windDir + 180} 20 22)`);
+    $('dial-arrow').style.display = f.windDir == null ? 'none' : '';
+  }
+
+  const whereHtml = (f, cls) => f.arrived
+    ? `<b>${esc(course.firstname)}</b> a franchi la ligne d’arrivée à <b class="${cls}">Pointe-à-Pitre</b> !`
+    : `<b>${esc(course.firstname)}</b> navigue <b class="${cls}">${esc(f.zone)}</b>.`;
+
+  // Comment nommer le relevé précédent : la veille, ou plus loin (le lundi, le
+  // relevé précédent est souvent celui du vendredi).
+  function ago(prev, now) {
+    const n = dayNumber(now) - dayNumber(prev);
+    if (n === 1) return { debut: 'Hier', adv: 'hier', que: 'qu’hier' };
+    if (n > 6) return { debut: 'La dernière fois', adv: 'la dernière fois', que: 'que la dernière fois' };
+    const day = fWeek.format(prev);
+    return { debut: cap(day), adv: day, que: `que ${day}` };
+  }
+
+  const pastPoints = () => state.days.slice(0, state.idx).map(x => [x.lat, x.lon]);
+
+  // Sous la carte : où est le bateau — ou, tant qu'il reste à trouver, un indice.
+  function whereBox(f, secret) {
+    if (secret) {
+      const d = state.days[state.idx], p = state.days[state.idx - 1];
+      $('where-line').innerHTML = p
+        ? `La trace rouge s’arrête là où était le bateau <b>${ago(p.t, d.t).adv}</b>.`
+        : 'Le bateau est parti de <b>Saint-Malo</b>.';
+      $('where-pos').textContent = 'Où est-il ce matin ?';
+      return;
+    }
+    $('where-line').innerHTML = whereHtml(f, 'z');
+    const bits = [`Position : ${f.lat} · ${f.lon}`];
+    if (f.rank) bits.push(`${ordinal(f.rank)} sur ${course.boats} ${esc(course.cls)}`);
+    $('where-pos').innerHTML = bits.join(' · ');
+  }
+
+  // ---------- Le rituel pas à pas ----------
+  // Principe : la page DONNE les chiffres du bord et demande d'en faire quelque
+  // chose — placer, calculer, lire, prévoir, écrire. Ce qui reste caché jusqu'au
+  // bout, c'est la correction et la méthode ; jamais la donnée.
+  const NIVEAUX = ['CP · CE1 · CE2', 'CM1 · CM2', 'Collège'];
+
+  const parseNum = s => {
+    const v = parseFloat(String(s == null ? '' : s).replace(/[\s  ]/g, '').replace(',', '.'));
+    return Number.isFinite(v) ? v : null;
+  };
+  const verdictHtml = (ok, rest, mots = ['Exact !', 'Pas tout à fait.']) =>
+    (ok == null ? '' : `<b class="v ${ok ? 'ok' : 'non'}">${mots[ok ? 0 : 1]}</b> `) + rest;
+  const bloc = ({ label, value, unit, also, like }, extra = '') =>
+    '<div class="card hero answer">' +
+    (label ? `<p class="label">${esc(label)}</p>` : '') +
+    `<p class="value">${value == null ? '—' : esc(value)}${unit ? `<span class="u">${esc(unit)}</span>` : ''}</p>` +
+    (also ? `<p class="also">${esc(also)}</p>` : '') +
+    (like ? `<p class="like">${esc(like)}</p>` : '') + extra + '</div>';
+  const aide = (titre, items, etat, plus = '') =>
+    `<div class="aide"><p class="aide-t">${titre}</p><ul>${items.map(x => `<li>${x}</li>`).join('')}</ul>${plus}</div>` +
+    `<p class="etat">${etat}</p>`;
+
+  // Déplacement moyen du bateau en un jour, d'après le relevé précédent (ou
+  // le départ) : [degrés de latitude, degrés de longitude].
+  function dailyMove(d, p) {
+    const ref = p || { lat: DEPART[0], lon: DEPART[1], t: course.start };
+    const perDay = 864e5 / (d.t - ref.t);
+    return [(d.lat - ref.lat) * perDay, (d.lon - ref.lon) * perDay];
+  }
+  // Où l'on attendait le bateau ce matin, s'il avait continué tout droit.
+  function previousForecast(i) {
+    const d = state.days[i], p = state.days[i - 1];
+    if (!p) return null;
+    const m = dailyMove(p, state.days[i - 2]), n = (d.t - p.t) / 864e5;
+    return [p.lat + m[0] * n, p.lon + m[1] * n];
+  }
+
+  // Étape « je calcule » : une réponse chiffrée, puis le calcul corrigé.
+  const nombre = ({ id, menu, q, consigne, cible, tol = 0, autres = [], unite, calc, note = '', apres }) => ({
+    id, menu, q, consigne, outil: 'nombre', verifie: true,
+    verdict(ans) {
+      const v = parseNum(ans);
+      const ok = v == null ? null : Math.abs(v - cible) <= tol + 1e-9 || autres.includes(v);
+      return verdictHtml(ok, `<span class="calcul">${calc}.</span>${note}`);
+    },
+    stage: (ans, fait) => fait ? apres
+      : '<label class="saisie"><span>Ta réponse</span>' +
+        `<input id="g-input" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" value="${esc(ans || '')}">` +
+        `<span class="u">${unite}</span></label><p class="etat">Calcule sur ton ardoise, puis écris ta réponse.</p>`,
+  });
+
+  // Bande graduée du parcours : Saint-Malo à gauche, Pointe-à-Pitre à droite.
+  // ans et vrai sont des fractions du parcours (0 à 1).
+  function bandSvg({ max, pas, petit, fin }, ans, vrai) {
+    const c = compact.matches, VW = c ? 640 : 1000, x0 = c ? 34 : 50, x1 = VW - x0, y = 108;
+    const gx = v => x0 + v / max * (x1 - x0);
+    let s = `<svg class="bande${vrai == null ? ' actif' : ''}" viewBox="0 0 ${VW} 190" data-x0="${x0}" data-x1="${x1}" role="img" aria-label="Bande graduée du parcours">` +
+      `<text class="bout" x="${x0}" y="34">Saint-Malo</text><text class="bout" x="${x1}" y="34" text-anchor="end">Pointe-à-Pitre · ${fin}</text>` +
+      `<line class="axe" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/>`;
+    for (let v = 0; v <= max + 1e-9; v += petit) {
+      const main = Math.round(v) % (c ? pas * 2 : pas) === 0;
+      s += `<line class="${main ? 'grand' : 'petit'}" x1="${gx(v)}" x2="${gx(v)}" y1="${y - (main ? 16 : 9)}" y2="${y + (main ? 16 : 9)}"/>`;
+      if (main && gx(v) < x1 - 60) s += `<text class="num" x="${gx(v)}" y="${y + 50}" text-anchor="middle">${N(v)}</text>`;
+    }
+    s += `<line class="grand" x1="${x1}" x2="${x1}" y1="${y - 16}" y2="${y + 16}"/>`;
+    if (ans != null) s += `<path class="essai" d="M${gx(ans * max)},${y - 12}l-14,-26h28z"/>`;
+    if (vrai != null) {
+      s += `<path class="vrai" transform="translate(${gx(vrai * max) - 15} ${y - 17}) scale(1.25)" d="M12 21 C4 15 2 10 6 6 C9 3 11 5 12 7 C13 5 15 3 18 6 C22 10 20 15 12 21 Z"/>`;
+    }
+    return s + '</svg>';
+  }
+
+  // Graphique « température de l'eau, jour après jour ». pts : les jours
+  // précédents ; ans : la température placée ; fait : la correction est montrée.
+  function graphSvg(pts, day, temp, ans, fait) {
+    const c = compact.matches, VW = c ? 640 : 1000, VH = 470;
+    const m = { l: c ? 64 : 80, r: 18, t: 40, b: 66 };
+    const all = [...pts.map(p => p.t), temp];
+    const lo = Math.min(10, Math.floor((Math.min(...all) - 1) / 5) * 5);
+    const hi = Math.max(30, Math.ceil((Math.max(...all) + 1) / 5) * 5);
+    const nDays = Math.max(15, day), pw = VW - m.l - m.r, ph = VH - m.t - m.b;
+    const gx = j => m.l + (j - 0.5) / nDays * pw, gy = t => m.t + (hi - t) / (hi - lo) * ph;
+    let s = `<svg class="graphe${fait ? '' : ' actif'}" viewBox="0 0 ${VW} ${VH}" data-lo="${lo}" data-hi="${hi}" data-top="${m.t}" data-ph="${ph}" role="img" aria-label="Température de l’eau, jour après jour">` +
+      `<rect class="fond" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}"/>` +
+      `<rect class="colonne" x="${m.l + (day - 1) / nDays * pw}" y="${m.t}" width="${pw / nDays}" height="${ph}"/>`;
+    for (let t = lo; t <= hi; t++) {
+      const main = t % 5 === 0;
+      s += `<line class="${main ? 'grand' : 'petit'}" x1="${m.l}" x2="${m.l + pw}" y1="${gy(t)}" y2="${gy(t)}"/>`;
+      if (main) s += `<text class="num" x="${m.l - 12}" y="${gy(t) + 9}" text-anchor="end">${t}</text>`;
+    }
+    for (let j = 1; j <= nDays; j++) {
+      s += `<line class="petit" x1="${gx(j)}" x2="${gx(j)}" y1="${m.t}" y2="${m.t + ph}"/>`;
+      if (j === day || !c || j % 2 === 1) s += `<text class="num${j === day ? ' auj' : ''}" x="${gx(j)}" y="${m.t + ph + 32}" text-anchor="middle">${j}</text>`;
+    }
+    s += `<text class="titre" x="${m.l - 12}" y="${m.t - 14}" text-anchor="end">°C</text>` +
+      `<text class="titre" x="${m.l + pw}" y="${VH - 6}" text-anchor="end">jour de course</text>`;
+    const known = fait ? [...pts, { day, t: temp }] : pts;
+    if (known.length > 1) s += `<polyline class="courbe" points="${known.map(p => `${gx(p.day)},${gy(p.t)}`).join(' ')}"/>`;
+    for (const p of pts) s += `<circle class="pt" cx="${gx(p.day)}" cy="${gy(p.t)}" r="9"/>`;
+    if (ans != null) s += `<circle class="essai" cx="${gx(day)}" cy="${gy(ans)}" r="13"/>`;
+    if (fait) s += `<circle class="vrai" cx="${gx(day)}" cy="${gy(temp)}" r="10"/>`;
+    return s + '</svg>';
+  }
+
+  // Échelle de Beaufort, ligne par ligne (les forces 10 à 12 sont regroupées).
+  function beaufortTable(choix, juste) {
+    let s = '<div class="beaufort" role="group" aria-label="Échelle de Beaufort">' +
+      '<div class="tete"><span>Force</span><span>Nom du vent</span><span>Vitesse</span></div>';
+    for (let k = 0; k <= 10; k++) {
+      const [min, name] = BEAUFORT[k];
+      const range = k === 0 ? 'moins de 1 km/h' : k === 10 ? '89 km/h et plus' : `de ${min} à ${BEAUFORT[k + 1][0] - 1} km/h`;
+      const cls = juste == null ? (choix === k ? 'choisi' : '') : k === juste ? 'juste' : choix === k ? 'faux' : '';
+      s += `<button type="button" class="${cls}" data-row="${k}"${juste == null ? '' : ' disabled'} aria-pressed="${choix === k}">` +
+        `<span class="bf">${k === 10 ? '10 à 12' : k}</span><span>${name}</span><span>${range}</span></button>`;
+    }
+    return s + '</div>';
+  }
+
+  // Le défi du jour : un problème de plus, fabriqué avec les chiffres affichés.
+  // Il ne change pas au rechargement : le choix ne dépend que du jour de course.
+  function defi(f, g, when, L) {
+    const list = [];
+    const T = f.total, R = f.rest, racing = !f.arrived;
+    const jours = f.arrived ? Math.floor(f.hours / 24) : 0;
+
+    if (L === 0) {                // comparer, ajouter, retrancher de petits nombres
+      if (g && f.water != null && g.water != null && f.water !== g.water) {
+        const hi = Math.max(f.water, g.water), lo = Math.min(f.water, g.water);
+        const sens = f.water > g.water ? 'plus' : 'moins';
+        list.push({
+          q: `${when.debut}, l’eau de la mer était à ${g.water} °C. Aujourd’hui, elle est à ${f.water} °C. Combien de degrés de ${sens} ?`,
+          a: `${hi - lo} °C de ${sens}`, how: `${hi} − ${lo} = ${hi - lo}`,
+        });
+      }
+      if (f.rank && f.rank < course.boats) {
+        const k = course.boats - f.rank;
+        list.push({
+          q: `Il y a ${course.boats} bateaux dans la course. Celui de ${esc(course.firstname)} est ${ordinal(f.rank)}. Combien de bateaux sont derrière lui ?`,
+          a: `${k} bateau${k > 1 ? 'x' : ''}`, how: `${course.boats} − ${f.rank} = ${k}`,
+        });
+      }
+      if (racing && f.kmh != null && f.kmh !== 20) {
+        const hi = Math.max(f.kmh, 20), lo = Math.min(f.kmh, 20);
+        list.push({
+          q: `Le bateau avance à ${f.kmh} km/h. Un vélo roule à 20 km/h. Lequel va le plus vite ? De combien ?`,
+          a: `${f.kmh > 20 ? 'Le bateau' : 'Le vélo'}, de ${hi - lo} km/h`, how: `${hi} − ${lo} = ${hi - lo}`,
+        });
+      }
+      if (f.water != null && f.water !== 27) {
+        const hi = Math.max(f.water, 27), lo = Math.min(f.water, 27);
+        list.push({
+          q: `L’eau de la mer est à ${f.water} °C. À la piscine, l’eau est à 27 °C. Combien de degrés d’écart ?`,
+          a: `${hi - lo} °C`, how: `${hi} − ${lo} = ${hi - lo}`,
+        });
+      }
+    } else if (L === 1) {         // grands nombres, multiplication, moitié, partage
+      if (racing && g && !g.arrived && !g.first && !f.first && f.km24 != null && g.km24 != null && f.km24 !== g.km24) {
+        const hi = Math.max(f.km24, g.km24), lo = Math.min(f.km24, g.km24);
+        const sens = f.km24 > g.km24 ? 'plus' : 'moins';
+        list.push({
+          q: `${when.debut}, le bateau avait parcouru ${N(g.km24)} km en 24 heures. Aujourd’hui : ${N(f.km24)} km. Combien de kilomètres de ${sens} ?`,
+          a: `${N(hi - lo)} km de ${sens}`, how: `${N(hi)} − ${N(lo)} = ${N(hi - lo)}`,
+        });
+      }
+      if (racing && f.kmh != null && f.kmh >= 5) {
+        const h = 2 + f.day % 3;
+        list.push({
+          q: `Le bateau avance à ${f.kmh} km/h. S’il garde cette vitesse, quelle distance parcourt-il en ${h} heures ?`,
+          a: `${N(f.kmh * h)} km`, how: `${f.kmh} × ${h} = ${N(f.kmh * h)}`,
+        });
+      }
+      if (racing && f.kmh != null && f.kmh >= 5) {
+        list.push({
+          q: `Le bateau avance à ${f.kmh} km/h. En une demi-heure, quelle distance parcourt-il ?`,
+          a: `${dec(f.kmh / 2)} km`, how: `${f.kmh} ÷ 2 = ${dec(f.kmh / 2)}`,
+        });
+      }
+      if (f.arrived && jours > 0) {
+        list.push({
+          q: `Le bateau a parcouru ${N(T)} km en un peu plus de ${jours} jours. Environ combien de kilomètres par jour ?`,
+          a: `Environ ${N(Math.round(T / jours))} km par jour`, how: `${N(T)} ÷ ${jours} ≈ ${N(Math.round(T / jours))}`,
+        });
+      }
+    } else {                      // proportionnalité, ordres de grandeur
+      if (racing && R != null && f.kmh != null && f.kmh >= 5) {
+        const h = Math.round(R / f.kmh), j = h / 24;
+        list.push({
+          q: `Il reste ${N(R)} km. Si le bateau garde sa vitesse de ${f.kmh} km/h, dans combien de temps arrivera-t-il ?`,
+          a: `Dans environ ${N(h)} heures, soit ${dec(j)} jour${j >= 2 ? 's' : ''}`,
+          how: `${N(R)} ÷ ${f.kmh} ≈ ${N(h)} h, puis ${N(h)} ÷ 24 ≈ ${dec(j)} j`,
+        });
+      }
+      if (racing && !f.first && f.km24 != null && f.km24 >= 100) {
+        list.push({
+          q: `En 24 heures, le bateau a parcouru ${N(f.km24)} km. À cette allure, combien de jours lui faudrait-il pour faire le tour de la Terre (40 075 km) ?`,
+          a: `Environ ${N(Math.round(40075 / f.km24))} jours`, how: `40 075 ÷ ${N(f.km24)} ≈ ${n1.format(40075 / f.km24)}`,
+        });
+      }
+      if (f.arrived && f.kmh) {
+        const h = Math.round(40075 / f.kmh), j = h / 24;
+        list.push({
+          q: `Le bateau a tenu ${f.kmh} km/h de moyenne. À cette vitesse, combien de temps lui faudrait-il pour faire le tour de la Terre (40 075 km) ?`,
+          a: `Environ ${N(h)} heures, soit ${dec(j)} jours`,
+          how: `40 075 ÷ ${f.kmh} ≈ ${N(h)} h, puis ${N(h)} ÷ 24 ≈ ${dec(j)} j`,
+        });
+      }
+    }
+    return list.length ? list[f.day % list.length] : null;
+  }
+
+  // Les étapes du jour, selon le niveau (0 : cycle 2, 1 : CM, 2 : collège).
+  // Chaque étape : { id, outil, menu, q, consigne, verifie, verdict(ans),
+  // stage(ans, fait), map(ans, fait) }.
+  function activities(d, f, p, L) {
+    const g = p ? facts(p) : null;
+    const when = p ? ago(p.t, d.t) : null;
+    const past = pastPoints();
+    const acts = [];
+    const digits = L === 2 ? 1 : 0;                         // le collège travaille au dixième de degré
+    const rnd = v => digits ? round1(v) : Math.round(v);
+    const num = v => digits ? n1.format(v) : N(v);
+    const latTxt = v => `${num(Math.abs(v))}° ${v >= 0 ? 'Nord' : 'Sud'}`;
+    const lonTxt = v => `${num(Math.abs(v))}° ${v < 0 ? 'Ouest' : 'Est'}`;
+    const delta = (now, then, unit) => {
+      const diff = now - then;
+      return diff ? `${N(Math.abs(diff))} ${unit} de ${diff > 0 ? 'plus' : 'moins'} ${when.que}.` : `Autant ${when.que}.`;
+    };
+    const pluriel = (n, mot) => `${n} ${mot.replace(/(\S+)/g, n > 1 ? '$1s' : '$1')}`;
+
+    // 1 — Se repérer : placer le bateau avec ses coordonnées
+    {
+      const P = [rnd(d.lat), rnd(d.lon)];
+      const cible = L === 0 ? [Math.round(d.lat / 10) * 10, Math.round(d.lon / 10) * 10] : P;
+      const tol = [330, 230, 140][L];
+      const view = zoneView([cible, f.pos], f.day);
+      // « 3 petites lignes au-dessus de la ligne 30° » : on compte depuis la
+      // ligne numérotée la plus proche. loin / pres : le mot pour s'éloigner
+      // de l'équateur (ou de Greenwich), et celui pour s'en rapprocher.
+      const pas = (v, loin, pres) => {
+        const a = Math.abs(v), base = Math.floor(a / 10) * 10, r = a - base;
+        if (r === 0) return `c’est la ligne ${base}°`;
+        return r <= 5 ? `${pluriel(r, 'petite ligne')} ${loin} la ligne ${base}°`
+                      : `${pluriel(10 - r, 'petite ligne')} ${pres} la ligne ${base + 10}°`;
+      };
+      const entre = v => {
+        const a = Math.abs(v), lo = Math.floor(a);
+        return a === lo ? `sur la ligne ${lo}°` : `entre les lignes ${lo}° et ${lo + 1}°`;
+      };
+      const methode = L === 0
+        ? `Les lignes ${latTxt(cible[0])} et ${lonTxt(cible[1])} se croisent là où se coupent les deux traits rouges. Le bateau est juste à côté, à ${f.lat} et ${f.lon}.`
+        : L === 1
+        ? `${latTxt(P[0])} : ${P[0] >= 0 ? pas(P[0], 'au-dessus de', 'en dessous de') : pas(P[0], 'en dessous de', 'au-dessus de')}. ${lonTxt(P[1])} : ${P[1] < 0 ? pas(P[1], 'à gauche de', 'à droite de') : pas(P[1], 'à droite de', 'à gauche de')}.`
+        : `Latitude : ${entre(P[0])}. Longitude : ${entre(P[1])}.`;
+      acts.push({
+        id: 'position', outil: 'carte', verifie: true,
+        menu: 'Je place le bateau sur la carte',
+        q: 'Où est le bateau ce matin ?',
+        consigne: L === 0
+          ? `Le bateau est tout près du croisement de la ligne <b>${latTxt(cible[0])}</b> et de la ligne <b>${lonTxt(cible[1])}</b>. Touche cet endroit sur la carte.`
+          : `Ce matin, le bateau est à <b>${latTxt(P[0])}</b> et <b>${lonTxt(P[1])}</b>. Touche la carte à cet endroit.`,
+        verdict(ans) {
+          const km = ans ? Math.round(dist(ans, cible) * KM) : null;
+          return verdictHtml(km == null ? null : km <= tol,
+            (km == null ? '' : `Ton point est à ${N(km)} km ${L === 0 ? 'du croisement' : 'du bateau'}. `) + methode,
+            ['Bien placé !', 'Pas tout à fait.']);
+        },
+        stage(ans, fait) {
+          if (fait) {
+            return '<div class="card hero answer"><p class="label">Le bateau est ici</p>' +
+              `<p class="value texte">${L === 0 ? `${f.lat} · ${f.lon}` : `${latTxt(P[0])} · ${lonTxt(P[1])}`}</p><p class="like">${whereHtml(f, '')}</p>` +
+              (f.rank ? `<p class="also">${ordinal(f.rank)} sur ${course.boats} ${esc(course.cls)}</p>` : '') + '</div>';
+          }
+          return aide('Pour lire la carte', L === 0
+            ? ['Les lignes épaisses sont numérotées : les latitudes à gauche, les longitudes en bas.',
+               'Suis chaque ligne du doigt, jusqu’à l’endroit où elles se croisent.']
+            : ['Les lignes épaisses sont numérotées de 10 en 10 : latitudes à gauche, longitudes en bas.',
+               'Entre deux petites lignes, il y a 1 degré.',
+               'Le Nord est en haut, l’Ouest est à gauche.'],
+            ans ? 'Point placé. Tu peux le déplacer, puis vérifier.' : 'Touche la carte pour placer ton point.');
+        },
+        map: (ans, fait) => ({
+          view, fine: L > 0, pos: f.pos, past, secret: !fait, essai: ans || null,
+          lignes: fait ? cible : null, tap: fait ? null : pt => answer('position', pt),
+        }),
+      });
+    }
+
+    // 2 — Calculer : la distance du jour (ou la durée de la course, à l'arrivée)
+    if (f.arrived) {
+      const jours = Math.floor(f.hours / 24), heures = f.hours % 24;
+      const base = { id: 'duree', menu: 'Je calcule la durée de la course', q: 'Combien de temps a duré la course ?', apres: bloc({ ...f.dist, label: '' }) };
+      if (L === 0) {
+        const j0 = +fDom.format(course.start), j1 = +fDom.format(d.arrived), n = dayNumber(d.arrived) - 1;
+        acts.push(nombre({ ...base, cible: n, unite: 'jours',
+          consigne: `Le bateau est parti le <b>${dayLabel(course.start)}</b>. Il est arrivé le <b>${dayLabel(d.arrived)}</b>. Combien de jours après le départ ?`,
+          calc: j1 > j0 ? `${j1} − ${j0} = ${n} jours` : `${n} jours` }));
+      } else if (L === 1) {
+        acts.push(nombre({ ...base, cible: f.hours, unite: 'heures',
+          consigne: `La course a duré <b>${jours} jours et ${heures} heures</b>. Combien d’heures en tout ?`,
+          calc: `${jours} × 24 = ${jours * 24}, puis ${jours * 24} + ${heures} = ${f.hours} heures` }));
+      } else {
+        const v = round1(f.total / f.hours);
+        acts.push(nombre({ ...base, cible: v, tol: 0.15, unite: 'km/h',
+          consigne: `Le bateau a parcouru <b>${N(f.total)} km</b> en <b>${jours} jours et ${heures} heures</b>. Calcule sa vitesse moyenne en km/h.`,
+          calc: `${jours} × 24 + ${heures} = ${f.hours} h, puis ${N(f.total)} ÷ ${f.hours} ≈ ${n1.format(v)} km/h` }));
+      }
+    } else if (f.km24 != null) {
+      const hours = f.first ? Math.max(1, Math.round((d.t - course.start) / 36e5)) : 24;
+      const cmp = g && !g.arrived && !g.first && !f.first && g.km24 != null;
+      const base = {
+        id: 'distance', menu: 'Je calcule la distance parcourue', q: 'Quelle distance a parcourue le bateau ?',
+        apres: bloc({ ...f.dist, label: f.dist.label }, cmp ? `<p class="delta">${delta(f.km24, g.km24, 'km')}</p>` : ''),
+      };
+      if (L === 0) {
+        const ref = cmp ? g.km24 : Math.round(PARIS_MARSEILLE);
+        const hi = Math.max(ref, f.km24), lo = Math.min(ref, f.km24);
+        acts.push(nombre({ ...base, q: 'Plus loin, ou moins loin ?', cible: hi - lo, unite: 'km',
+          consigne: cmp
+            ? `${when.debut}, le bateau a parcouru <b>${N(g.km24)} km</b>. Aujourd’hui, <b>${N(f.km24)} km</b>. Quel jour est-il allé le plus loin ? Calcule la différence.`
+            : `De Paris à Marseille, il y a <b>${N(ref)} km</b>. Le bateau a parcouru <b>${N(f.km24)} km</b>. Quel est le plus grand trajet ? Calcule la différence.`,
+          calc: `${N(hi)} − ${N(lo)} = ${N(hi - lo)} km` }));
+      } else if (L === 1) {
+        const v = Math.round(f.km24 / hours);
+        acts.push(nombre({ ...base, cible: v * hours, autres: [f.km24], unite: 'km',
+          consigne: `${f.first ? `Le bateau navigue depuis <b>${hours} heures</b>` : 'Depuis hier matin, le bateau a navigué <b>24 heures</b>'}, à <b>${v} km/h</b> en moyenne. Quelle distance a-t-il parcourue ?`,
+          calc: `${v} × ${hours} = ${N(v * hours)} km`,
+          note: v * hours === f.km24 ? '' : ` Le relevé du bord indique ${N(f.km24)} km : la vitesse de ${v} km/h est arrondie.` }));
+      } else {
+        const km = f.nm24 * KM, v = round1(km / hours);
+        acts.push(nombre({ ...base, q: 'À quelle vitesse moyenne ?', cible: v, tol: 0.15, unite: 'km/h',
+          consigne: `En <b>${hours} heures</b>, le bateau a parcouru <b>${N(f.nm24)} milles marins</b>. Un mille marin vaut 1,852 km. Calcule sa vitesse moyenne en km/h.`,
+          calc: `${N(f.nm24)} × 1,852 ≈ ${n1.format(km)} km, puis ${n1.format(km)} ÷ ${hours} ≈ ${n1.format(v)} km/h` }));
+      }
+    }
+
+    // 3 — Nombres : situer le bateau sur une bande graduée
+    if (!f.arrived && f.rest != null) {
+      const T = f.total, R = f.rest, done = T - R, pct = Math.round(done / T * 100);
+      const moitie = `${done > T / 2 ? 'Le bateau a dépassé la moitié du chemin' : 'Le bateau n’a pas encore fait la moitié du chemin'} (${dec(T / 2)} km).`;
+      const bande = L === 2 ? { max: 100, pas: 10, petit: 5, fin: '100 %' } : { max: T, pas: 1000, petit: 500, fin: `${N(T)} km` };
+      acts.push({
+        id: 'reste', outil: 'bande', verifie: true,
+        menu: 'Je situe le bateau sur le parcours',
+        q: 'Où en est le bateau sur son parcours ?',
+        consigne: L === 0 ? `Depuis Saint-Malo, le bateau a déjà parcouru <b>${N(done)} km</b>. Touche la bande graduée à cet endroit.`
+                : L === 1 ? `La course fait <b>${N(T)} km</b>. Il reste <b>${N(R)} km</b>. Calcule le chemin déjà fait, puis touche la bande graduée à cet endroit.`
+                : `La course fait <b>${N(T)} km</b> et il en reste <b>${N(R)}</b>. Calcule le pourcentage du parcours accompli, puis touche la bande graduée à cet endroit.`,
+        verdict(ans) {
+          const calc = L === 0 ? '' : L === 1 ? `<span class="calcul">${N(T)} − ${N(R)} = ${N(done)} km.</span> `
+                     : `<span class="calcul">(${N(T)} − ${N(R)}) ÷ ${N(T)} ≈ ${n2.format(pct / 100)}, soit ${pct} %.</span> `;
+          return verdictHtml(ans == null ? null : Math.abs(ans - done / T) <= 0.035, calc + moitie, ['Bien placé !', 'Pas tout à fait.']);
+        },
+        stage: (ans, fait) => bandSvg(bande, ans == null ? null : ans, fait ? done / T : null) +
+          `<p class="etat">${fait ? `Il reste ${N(R)} km jusqu’à Pointe-à-Pitre.`
+            : ans == null ? 'Touche la bande pour y placer le bateau.' : 'Bateau placé. Tu peux le déplacer, puis vérifier.'}</p>`,
+      });
+    }
+
+    // 4 — Données : compléter le graphique de la température de l'eau
+    if (f.water != null) {
+      const pts = state.days.slice(0, state.idx).filter(x => has(x.water))
+        .map(x => ({ day: dayNumber(x.t), t: Math.round(x.water) }));
+      const base = Math.floor(f.water / 5) * 5, r = f.water - base;
+      const lire = r === 0 ? `${f.water} °C, c’est une ligne épaisse du graphique.`
+        : `Pour ${f.water} °C : pars de la ligne ${base} et monte de ${pluriel(r, 'petite ligne')}.`;
+      const tendance = g && g.water != null ? ` ${delta(f.water, g.water, '°C')}` : '';
+      const science = pts.length && f.water - pts[0].t >= 2 && d.lat < state.days[0].lat - 3
+        ? ' La courbe monte : plus le bateau descend vers le sud, plus la mer est chaude, car le soleil y chauffe davantage.' : '';
+      acts.push({
+        id: 'eau', outil: 'graphique', verifie: true,
+        menu: 'Je complète le graphique de la température',
+        q: 'La mer se réchauffe-t-elle ?',
+        consigne: `Ce matin, l’eau de la mer est à <b>${f.water} °C</b>. Sur le graphique, touche l’endroit où va le point du <b>jour ${f.day}</b>.`,
+        verdict(ans) {
+          const ok = ans == null ? null : ans === f.water;
+          return verdictHtml(ok, (ok === false ? `Ton point est à ${ans} °C. ` : '') + lire + tendance + science,
+            ['Exact !', ans != null && Math.abs(ans - f.water) === 1 ? 'Presque.' : 'Pas tout à fait.']);
+        },
+        stage: (ans, fait) => graphSvg(pts, f.day, f.water, ans == null ? null : ans, fait) +
+          (fait ? '' : `<p class="etat">${ans == null ? 'Touche le graphique pour placer le point.' : 'Point placé. Tu peux le déplacer, puis vérifier.'}</p>`),
+      });
+    }
+
+    // 5 — Données : lire la force du vent dans le tableau de Beaufort
+    if (f.windKmh != null) {
+      const kn = round1(f.windKn);
+      const kmh = L === 2 ? Math.round(kn * KM) : f.windKmh;       // au collège, on part des nœuds
+      const b = beaufort(kmh), row = Math.min(b.force, 10);
+      const intervalle = b.force === 0 ? 'Moins de 1 km/h'
+        : b.max == null ? `${N(kmh)} km/h, c’est ${b.min} km/h ou plus`
+        : `${N(kmh)} km/h est entre ${b.min} et ${b.max}`;
+      acts.push({
+        id: 'vent', outil: 'tableau', verifie: true,
+        menu: 'Je lis la force du vent dans un tableau',
+        q: 'Quelle est la force du vent ?',
+        consigne: L === 2
+          ? `Le vent souffle à <b>${dec(kn)} nœuds</b>. Un nœud vaut 1,852 km/h. Convertis en km/h, puis touche la bonne ligne du tableau.`
+          : `Le vent souffle à <b>${N(kmh)} km/h</b>. Touche la ligne du tableau qui correspond.`,
+        verdict(ans) {
+          const conv = L === 2 ? `<span class="calcul">${dec(kn)} × 1,852 ≈ ${N(kmh)} km/h.</span> ` : '';
+          const dir = f.windDir == null ? '' : ` Il vient ${windFrom(f.windDir)}.`;
+          return verdictHtml(ans == null ? null : ans === row,
+            `${conv}${intervalle} : force ${b.force}, « ${b.name.toLowerCase()} ».${dir}${f.vagues ? ` ${f.vagues}` : ''}`);
+        },
+        stage: (ans, fait) => beaufortTable(ans == null ? null : ans, fait ? row : null),
+      });
+    }
+
+    // 6 — Prévoir : prolonger le déplacement du jour, puis vérifier demain.
+    //     Il faut deux relevés pour prolonger une route : pas d'étape le premier jour.
+    if (!f.arrived && p) {
+      const m = dailyMove(d, p);
+      const A = [rnd(d.lat), rnd(d.lon)];
+      const mv = [rnd(m[0]), rnd(m[1])];
+      const cible = L === 0 ? [d.lat + m[0], d.lon + m[1]] : [rnd(A[0] + mv[0]), rnd(A[1] + mv[1])];
+      const tol = [420, 230, 140][L];
+      const depuis = [d.lat - m[0], d.lon - m[1]];              // où était le bateau un jour plus tôt
+      const vieux = previousForecast(state.idx);
+      const proche = vieux && Math.abs(vieux[0] - d.lat) < 8 && Math.abs(vieux[1] - d.lon) < 11;
+      const view = zoneView([f.pos, cible, depuis, ...(proche ? [vieux] : [])], f.day + 3);
+      const seuil = digits ? 0.05 : 0.5, parts = [];
+      if (Math.abs(mv[0]) >= seuil) parts.push(`de <b>${num(Math.abs(mv[0]))}°</b> vers le ${mv[0] < 0 ? 'sud' : 'nord'}`);
+      if (Math.abs(mv[1]) >= seuil) parts.push(`de <b>${num(Math.abs(mv[1]))}°</b> vers l’${mv[1] < 0 ? 'ouest' : 'est'}`);
+      const calcul = (a, dv, txt) => `${num(Math.abs(a))} ${a * dv >= 0 ? '+' : '−'} ${num(Math.abs(dv))} = ${txt(rnd(a + dv))}`;
+      const methode = L === 0 ? 'En reportant la flèche une deuxième fois, on arrive au cercle en pointillés.'
+        : `<span class="calcul">Latitude : ${calcul(A[0], mv[0], latTxt)}. Longitude : ${calcul(A[1], mv[1], lonTxt)}.</span> C’est le cercle en pointillés.`;
+      let retour = '';
+      if (vieux) {
+        const km = Math.round(dist(vieux, f.pos) * KM);
+        const dy = (d.lat - vieux[0]) * 111, dx = (d.lon - vieux[1]) * 111 * Math.cos(rad(d.lat));
+        const sens = Math.abs(dy) >= Math.abs(dx) ? (dy > 0 ? 'plus au nord' : 'plus au sud') : (dx > 0 ? 'plus à l’est' : 'plus à l’ouest');
+        retour = `<p class="retour"><b>Et la prévision précédente ?</b> En continuant tout droit depuis ${when.adv}, on attendait le bateau à ${N(km)} km d’ici${proche ? ' (cercle gris)' : ''}. ` +
+          (km < 90 ? 'Il a presque gardé sa route.' : `Il est allé ${sens} : un voilier choisit sa route selon le vent.`) + '</p>';
+      }
+      acts.push({
+        id: 'demain', outil: 'carte', verifie: true,
+        menu: 'Je prévois où il sera demain',
+        q: 'Où sera le bateau demain ?',
+        consigne: L === 0
+          ? 'La flèche montre le chemin du bateau en un jour. S’il continue tout droit, aussi loin, où sera-t-il demain matin ? Touche la carte.'
+          : `En un jour, le bateau ${parts.length ? `se déplace ${parts.join(' et ')}` : 'ne bouge presque pas'} (la flèche). Il est à <b>${latTxt(A[0])}</b> et <b>${lonTxt(A[1])}</b>. S’il continue ainsi, où sera-t-il demain matin ? Calcule, puis touche la carte.`,
+        verdict(ans) {
+          const km = ans ? Math.round(dist(ans, cible) * KM) : null;
+          return verdictHtml(km == null ? null : km <= tol,
+            (km == null ? '' : `Ton point est à ${N(km)} km de la position prévue. `) + methode +
+            ' Rendez-vous demain pour voir si le bateau a continué tout droit.', ['Bien prévu !', 'Pas tout à fait.']);
+        },
+        stage(ans, fait) {
+          if (fait) {
+            return '<div class="card hero answer"><p class="label">Prévision pour demain matin</p>' +
+              `<p class="value texte">${latTxt(rnd(cible[0]))} · ${lonTxt(rnd(cible[1]))}</p>` +
+              `<p class="like">S’il continue tout droit, le bateau sera ${esc(zone(cible))}.</p></div>`;
+          }
+          return aide('Pour prévoir', L === 0
+            ? ['Pose ton doigt sur le bateau, au bout de la flèche.', 'Avance encore d’une flèche, dans la même direction.']
+            : ['Vers le sud, la latitude Nord diminue ; vers le nord, elle augmente.',
+               'Vers l’ouest, la longitude Ouest augmente ; vers l’est, elle diminue.'],
+            ans ? 'Point placé. Tu peux le déplacer, puis vérifier.' : 'Touche la carte pour placer ta prévision.', retour);
+        },
+        map: (ans, fait) => ({
+          view, fine: L > 0, pos: f.pos, past, essai: ans || null, fleche: [depuis, f.pos],
+          ancien: proche ? vieux : null, prevu: fait ? cible : null, tap: fait ? null : pt => answer('demain', pt),
+        }),
+      });
+    }
+
+    // 7 — Écrire : la ligne du carnet de bord et la phrase du jour
+    {
+      const tiret = (v, unit) => v == null ? '—' : `${N(v)} ${unit}`;
+      const rows = [
+        ['Latitude', f.lat], ['Longitude', f.lon],
+        [f.first ? 'Distance depuis le départ' : 'Distance en 24 h', tiret(f.km24, 'km')],
+        ['Vitesse', f.arrived ? '—' : tiret(f.kmh, 'km/h')],
+        ['Reste à parcourir', tiret(f.rest, 'km')],
+        ['Eau de la mer', tiret(f.water, '°C')],
+        ['Vent', tiret(f.windKmh, 'km/h')],
+      ];
+      const table = `<table class="ligne"><tbody>${rows.map(([k, v]) => `<tr><th scope="row">${k}</th><td>${v}</td></tr>`).join('')}</tbody></table>`;
+      const name = esc(course.firstname);
+      let ecrire, exemple;
+      if (f.arrived) {
+        ecrire = 'Puis raconte l’arrivée en une ou deux phrases.';
+        exemple = `${name} a franchi la ligne d’arrivée à Pointe-à-Pitre après ${Math.floor(f.hours / 24)} jours et ${f.hours % 24} heures de course.`;
+      } else if (L === 0) {
+        ecrire = 'Puis complète la phrase : « Aujourd’hui, le bateau est … L’eau de la mer est à … °C. »';
+        exemple = `Aujourd’hui, le bateau est ${esc(f.zone)}.` + (f.water == null ? '' : ` L’eau de la mer est à ${f.water} °C.`);
+      } else if (L === 1) {
+        ecrire = `Puis écris deux phrases : où est le bateau, et ce qui a changé depuis ${when ? when.adv : 'le départ'}.`;
+        exemple = `Le bateau de ${name} navigue ${esc(f.zone)}.` +
+          (f.km24 == null ? '' : ` Il a parcouru ${N(f.km24)} km` +
+            (g && g.km24 != null && !g.first && !f.first && g.km24 !== f.km24 ? `, ${N(Math.abs(f.km24 - g.km24))} km de ${f.km24 > g.km24 ? 'plus' : 'moins'} ${when.que}` : '') +
+            (g && g.water != null && f.water != null && g.water !== f.water ? `, et l’eau est passée de ${g.water} à ${f.water} °C` : '') + '.');
+      } else {
+        ecrire = 'Puis rédige le bulletin du jour en trois phrases : position, allure, météo.';
+        exemple = `Position : ${latTxt(rnd(d.lat))}, ${lonTxt(rnd(d.lon))}, ${esc(f.zone)}.` +
+          (f.kn == null ? '' : ` Allure : ${dec(round1(f.kn))} nœuds, soit ${f.kmh} km/h` + (f.nm24 == null ? '' : ` ; ${N(f.nm24)} milles en 24 heures`) + '.') +
+          (f.beaufort ? ` Météo : vent ${f.windDir == null ? '' : `${windFrom(f.windDir)} `}force ${f.beaufort.force}` + (f.water == null ? '' : `, mer à ${f.water} °C`) + '.' : '');
+      }
+      acts.push({
+        id: 'carnet', outil: 'carnet', verifie: false,
+        menu: 'J’écris dans mon carnet de bord',
+        q: 'À ton carnet !',
+        consigne: `Recopie la ligne du <b>jour ${f.day}</b> dans ton carnet de bord. ${ecrire}`,
+        stage: ans => table + (ans ? `<p class="exemple"><b>Un exemple.</b> « ${exemple} »</p>`
+          : '<p><button class="pill" type="button" data-exemple>Voir un exemple de phrase</button></p>'),
+      });
+    }
+
+    // 8 — Le défi du jour
+    const item = defi(f, g, when, L);
+    if (item) {
+      acts.push({
+        id: 'defi', outil: 'defi', verifie: true,
+        menu: 'Je relève le défi du jour',
+        q: 'Le défi du jour',
+        consigne: item.q,
+        verdict: () => `<b class="v ok">Réponse :</b> ${item.a}. <span class="calcul">${item.how}</span>`,
+        stage: (ans, fait) => fait ? '' : '<p class="etat">Cherche sur ton ardoise, puis regarde la réponse.</p>',
+      });
+    }
+    return acts;
+  }
+
+  function renderGuide(d, f, p) {
+    const acts = activities(d, f, p, state.level);
+    const n = acts.length;
+    const i = state.step = Math.min(state.step, n);
+    const a = acts[i - 1];
+    state.guide = { acts };
+    show('guide');
+    document.body.dataset.outil = a ? a.outil : 'accueil';
+    $('g-dots').innerHTML = acts.map((x, k) =>
+      `<li><button type="button" data-go="${k + 1}" class="${state.done.has(x.id) ? 'fait' : ''}${k + 1 === i ? ' ici' : ''}" ` +
+      `aria-label="Étape ${k + 1} : ${esc(x.menu)}"></button></li>`).join('');
+    $('g-back').style.visibility = i ? '' : 'hidden';
+    const hint = $('g-hint'), verdict = $('g-verdict'), stage = $('g-stage');
+
+    if (!a) {       // l'accueil : le niveau, et ce qu'on va faire aujourd'hui
+      $('g-count').textContent = `Jour ${f.day} de course`;
+      $('g-q').textContent = 'Le rituel du jour';
+      hint.innerHTML = 'Chaque matin, le bord envoie ses chiffres. À toi de t’en servir !';
+      hint.classList.remove('vu');
+      verdict.hidden = true;
+      stage.className = 'g-stage haut';
+      stage.innerHTML = '<div class="levels" role="group" aria-label="Niveau"><span>Niveau</span>' +
+        NIVEAUX.map((name, k) => `<button class="pill" type="button" data-level="${k}" aria-pressed="${k === state.level}">${name}</button>`).join('') + '</div>' +
+        `<ol class="menu-etapes">${acts.map((x, k) => `<li><button type="button" data-go="${k + 1}"><b>${k + 1}</b><span>${x.menu}</span></button></li>`).join('')}</ol>`;
+      $('g-next').textContent = 'Commencer';
+      const secret = !state.done.has('position');
+      drawMap({ pos: f.pos, past: pastPoints(), secret });
+      whereBox(f, secret);
+      return;
+    }
+
+    const ans = state.answers[a.id], fait = state.done.has(a.id);
+    $('g-count').textContent = `Étape ${i} sur ${n}`;
+    $('g-q').textContent = a.q;
+    hint.innerHTML = a.consigne;
+    hint.classList.toggle('vu', fait && a.outil !== 'defi');
+    verdict.hidden = !(fait && a.verdict);
+    verdict.innerHTML = fait && a.verdict ? a.verdict(ans) : '';
+    stage.className = `g-stage outil-${a.outil}`;
+    stage.innerHTML = a.stage(ans, fait);
+    const answered = a.outil === 'nombre' ? parseNum(ans) != null : ans != null;
+    $('g-next').textContent = !a.verifie || fait ? (i < n ? 'Étape suivante' : 'Terminer')
+      : a.outil === 'defi' ? 'Voir la réponse' : answered ? 'Vérifier' : 'Voir la correction';
+    const secret = i === 1 && !fait;
+    drawMap(a.map ? a.map(ans, fait) : { pos: f.pos, past: pastPoints() });
+    whereBox(f, secret);
+  }
+
+  // Une réponse donnée sur la carte, la bande, le graphique ou le tableau.
+  function answer(id, value) {
+    if (state.done.has(id)) return;
+    state.answers[id] = value;
+    render();
+  }
+
+  // Le bouton principal fait toujours « la suite » : vérifier, puis avancer.
+  function advance() {
+    const { acts } = state.guide, i = state.step, a = acts[i - 1];
+    let scroll = 'top';
+    if (a && a.verifie && !state.done.has(a.id)) { state.done.add(a.id); scroll = 'verdict'; }
+    else if (i < acts.length) state.step = i + 1;
+    else state.view = 'chiffres';
+    render(scroll);
+  }
+  function goTo(step) {
+    state.step = step;
+    render('top');
+  }
+  function setView(view) {
+    state.view = view;
+    state.step = 0;
+    render('top');
+  }
+  function setLevel(level) {
+    state.level = level;
+    try { localStorage.setItem(LEVEL, level); } catch { /* navigation privée */ }
+    state.answers = {};
+    state.done.clear();
+    render();
+  }
+
+  // scroll : 'top' après un changement d'étape, 'verdict' après une vérification.
+  function render(scroll) {
+    const d = state.days[state.idx], p = state.days[state.idx - 1];
+    const f = facts(d), guide = state.view === 'guide';
+    $('day-date').textContent = cap(dayLabel(d.t));
+    $('day-num').textContent = `Jour ${f.day} de course · relevé de ${hourLabel(d.t)}`;
+    $('prev').disabled = state.idx === 0;
+    $('next').disabled = state.idx === state.days.length - 1;
+    document.body.classList.toggle('en-guide', guide);
+    const vue = $('btn-vue');
+    vue.hidden = false;
+    vue.textContent = guide ? 'Tous les chiffres' : 'Le rituel pas à pas';
+    vue.classList.toggle('plein', !guide);
+    if (guide) {
+      renderGuide(d, f, p);
+    } else {
+      delete document.body.dataset.outil;
+      show('cards-jour');
+      drawMap({ pos: f.pos, past: pastPoints() });
+      whereBox(f, false);
+      renderCards(f);
+    }
     fit();
+    if (!scroll || !guide) return;
+    if (compact.matches) {
+      // Sur téléphone, on remonte en haut de l'étape ; après une vérification,
+      // on amène la correction sous les yeux.
+      if (scroll === 'verdict' && !$('g-verdict').hidden) $('g-verdict').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      else window.scrollTo({ top: 0 });
+    } else {
+      const input = $('g-input');
+      (input || $('g-next')).focus();
+    }
   }
 
   function renderBefore(note) {
-    show('avant');
+    show('cards-avant');
+    document.body.classList.remove('en-guide');
+    delete document.body.dataset.outil;
+    $('btn-vue').hidden = true;
     const days = 1 - dayNumber(Date.now());   // jours entiers avant le jour du départ
     $('day-date').textContent = cap(dayLabel(Date.now()));
     $('day-num').textContent = 'Avant le départ';
@@ -773,7 +1962,7 @@
     setCard('c-route', { value: n0.format(course.distance * KM), unit: 'km',
                          also: `${n0.format(course.distance)} milles marins` });
     $('c-bateau').querySelector('.like').textContent = `${course.skipper} navigue en solitaire.`;
-    drawBoat(DEPART, []);
+    drawMap({ pos: DEPART, past: [] });
     $('where-line').innerHTML = `Le départ sera donné à <b class="z">Saint-Malo</b>, en Bretagne.`;
     $('where-pos').innerHTML = `${course.boats} bateaux ${esc(course.cls)} · arrivée à Pointe-à-Pitre, en Guadeloupe`;
     fit();
@@ -841,7 +2030,7 @@
     state.days = days;
     state.idx = wasLast ? days.length - 1 : Math.min(state.idx, days.length - 1);
     banner(failed ? `Le relevé en direct est indisponible pour le moment : voici le dernier relevé enregistré sur cet ordinateur.` : '');
-    renderDay();
+    render();
   }
 
   // ---------- Démonstration : une course plausible, toujours la même ----------
@@ -897,11 +2086,34 @@
     state.days = simulate();
     state.idx = Math.min(3, state.days.length - 1);
     banner('<b>Démonstration</b> : les chiffres de cette page sont simulés. <a href="rituel.html">Quitter la démonstration</a>');
-    renderDay();
+    state.answers = {};
+    state.done.clear();
+    setView('guide');
   }
 
   // ---------- Impression ----------
-  function buildCarnet() {
+  // Feuille « graphique » : la température de l'eau, un point par jour.
+  function buildPrintGraph(svg) {
+    const VW = 1000, VH = 1180, m = { l: 80, r: 20, t: 44, b: 70 }, lo = 10, hi = 30, days = 15;
+    const pw = VW - m.l - m.r, ph = VH - m.t - m.b;
+    const gx = j => m.l + (j - 0.5) / days * pw, gy = t => m.t + (hi - t) / (hi - lo) * ph;
+    const kids = [];
+    for (let t = lo; t <= hi; t++) {
+      const main = t % 5 === 0;
+      kids.push(el('line', { x1: m.l, x2: m.l + pw, y1: gy(t), y2: gy(t), class: main ? 'grand' : 'petit' }));
+      kids.push(el('text', { x: m.l - 12, y: gy(t) + 8, 'text-anchor': 'end', class: main ? 'num fort' : 'num' }, String(t)));
+    }
+    for (let j = 1; j <= days; j++) {
+      kids.push(el('line', { x1: gx(j), x2: gx(j), y1: m.t, y2: m.t + ph, class: 'petit' }));
+      kids.push(el('text', { x: gx(j), y: m.t + ph + 34, 'text-anchor': 'middle', class: 'num fort' }, String(j)));
+    }
+    kids.push(el('rect', { x: m.l, y: m.t, width: pw, height: ph, class: 'cadre' }));
+    kids.push(el('text', { x: m.l + pw, y: VH - 6, 'text-anchor': 'end', class: 'titre' }, 'jour de course'));
+    kids.push(el('text', { x: m.l - 12, y: 22, 'text-anchor': 'end', class: 'titre' }, '°C'));
+    svg.replaceChildren(...kids);
+  }
+
+  function buildSheets() {
     $('carnet-consigne').textContent =
       `Chaque matin, je note les chiffres du jour du bateau de ${course.firstname}.`;
     const rows = [];
@@ -912,36 +2124,108 @@
                 (i ? '<td></td>'.repeat(7) : '<td colspan="7">Départ de Saint-Malo</td>') + '</tr>');
     }
     $('carnet-rows').innerHTML = rows.join('');
+
+    const fill = (cls, text) => { for (const n of document.querySelectorAll(cls)) n.textContent = text; };
+    fill('.f-km', n0.format(course.distance * KM));
+    fill('.f-skipper', course.skipper);
+    fill('.f-depart', `${dayLabel(course.start)} à ${hourLabel(course.start)}`);
   }
 
+  const SHEETS = ['carnet', 'carte', 'graphique', 'fiche'];
   function preparePrint(what) {
     document.body.dataset.print = what;
     let style = $('page-size');
     if (!style) { style = document.createElement('style'); style.id = 'page-size'; document.head.append(style); }
     style.textContent = `@page { size: A4 ${what === 'carte' ? 'landscape' : 'portrait'}; margin: 11mm; }`;
-    buildCarnet();
+    buildSheets();
   }
 
   // ---------- Démarrage ----------
-  buildMap($('map'), false);
-  buildMap($('map-print'), true);
+  buildMap();
+  buildPrintMap($('map-print'));
+  buildPrintGraph($('graph-print'));
 
-  const step = n => {
+  const stepDay = n => {
     const i = state.idx + n;
-    if (!state.days.length || i < 0 || i >= state.days.length) return;
+    if (i < 0 || i >= state.days.length) return;
     state.idx = i;
-    renderDay();
+    state.answers = {};
+    state.done.clear();
+    render();
   };
   addEventListener('resize', fit);
-  if (document.fonts) document.fonts.ready.then(fit);
-  $('prev').addEventListener('click', () => step(-1));
-  $('next').addEventListener('click', () => step(1));
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft' || e.key === 'PageUp') step(-1);
-    if (e.key === 'ArrowRight' || e.key === 'PageDown') step(1);
+  if (document.fonts) document.fonts.ready.then(() => { fit(); paint(); });
+  // Passage téléphone ↔ grand écran : les outils se redessinent à la bonne taille.
+  compact.addEventListener('change', () => { if (state.days.length) render(); });
+
+  $('prev').addEventListener('click', () => stepDay(-1));
+  $('next').addEventListener('click', () => stepDay(1));
+  $('btn-vue').addEventListener('click', () => setView(state.view === 'guide' ? 'chiffres' : 'guide'));
+  $('g-next').addEventListener('click', advance);
+  $('g-back').addEventListener('click', () => { if (state.step > 0) goTo(state.step - 1); });
+  $('g-dots').addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) goTo(+go.dataset.go);
   });
-  $('btn-carnet').addEventListener('click', () => { preparePrint('carnet'); window.print(); });
-  $('btn-carte').addEventListener('click', () => { preparePrint('carte'); window.print(); });
+
+  // Tout ce qu'on peut toucher dans une étape : niveau, sommaire, outils.
+  $('g-stage').addEventListener('click', e => {
+    const t = e.target;
+    const go = t.closest('[data-go]');
+    if (go) { goTo(+go.dataset.go); return; }
+    const level = t.closest('[data-level]');
+    if (level) { setLevel(+level.dataset.level); return; }
+    const a = state.guide && state.guide.acts[state.step - 1];
+    if (!a || state.done.has(a.id)) return;
+    if (t.closest('[data-exemple]')) { answer(a.id, true); return; }
+    const row = t.closest('[data-row]');
+    if (row) { answer(a.id, +row.dataset.row); return; }
+    const band = t.closest('svg.bande');
+    if (band) {
+      const p = svgPoint(band, e), x0 = +band.dataset.x0, x1 = +band.dataset.x1;
+      if (p) answer(a.id, Math.max(0, Math.min(1, (p.x - x0) / (x1 - x0))));
+      return;
+    }
+    const graph = t.closest('svg.graphe');
+    if (graph) {
+      const p = svgPoint(graph, e), lo = +graph.dataset.lo, hi = +graph.dataset.hi;
+      if (p) answer(a.id, Math.max(lo, Math.min(hi, Math.round(hi - (p.y - +graph.dataset.top) / +graph.dataset.ph * (hi - lo)))));
+    }
+  });
+  // La réponse écrite : on la retient sans redessiner l'étape (le curseur resterait perdu).
+  $('g-stage').addEventListener('input', e => {
+    if (e.target.id !== 'g-input') return;
+    const a = state.guide.acts[state.step - 1];
+    state.answers[a.id] = e.target.value;
+    $('g-next').textContent = parseNum(e.target.value) != null ? 'Vérifier' : 'Voir la correction';
+  });
+  $('g-stage').addEventListener('keydown', e => {
+    if (e.target.id === 'g-input' && e.key === 'Enter') { e.preventDefault(); advance(); }
+  });
+
+  // Flèches du clavier ou télécommande de présentation : la suite du pas à
+  // pas, ou le jour suivant dans le tableau des chiffres.
+  document.addEventListener('keydown', e => {
+    const fwd = e.key === 'ArrowRight' || e.key === 'PageDown';
+    const back = e.key === 'ArrowLeft' || e.key === 'PageUp';
+    if (!state.days.length || !(fwd || back)) return;
+    if (e.target instanceof HTMLInputElement && e.key.startsWith('Arrow')) return;   // le curseur dans la réponse
+    e.preventDefault();
+    if (state.view !== 'guide') stepDay(fwd ? 1 : -1);
+    else if (fwd) advance();
+    else if (state.step > 0) goTo(state.step - 1);
+  });
+
+  const menu = $('menu-print');
+  menu.addEventListener('click', e => {
+    const item = e.target.closest('[data-print]');
+    if (!item) return;
+    menu.open = false;
+    preparePrint(item.dataset.print);
+    window.print();
+  });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.open = false; });
+
   $('btn-demo').addEventListener('click', () => { history.replaceState(null, '', '?demo'); startDemo(); });
   if (document.fullscreenEnabled) {
     $('btn-full').addEventListener('click', () => {
@@ -951,14 +2235,14 @@
     $('btn-full').hidden = true;
   }
 
-  // ?imprimer=carnet|carte : choisit la feuille qui sortira au prochain Ctrl+P.
+  // ?imprimer=carnet|carte|graphique|fiche : choisit la feuille qui sortira au prochain Ctrl+P.
   const sheet = params.get('imprimer');
-  preparePrint(sheet === 'carte' ? 'carte' : 'carnet');
+  preparePrint(SHEETS.includes(sheet) ? sheet : 'carnet');
 
   if (state.demo) {
     startDemo();
   } else {
-    loadLive().then(() => { buildCarnet(); });
+    loadLive().then(buildSheets);
     setInterval(loadLive, REFRESH);
   }
 })();
